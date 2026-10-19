@@ -1,1 +1,3 @@
 .*/
+tools/nauty/
+__pycache__/
