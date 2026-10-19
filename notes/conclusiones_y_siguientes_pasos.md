@@ -54,7 +54,7 @@ Entonces el límite es otra vez un **SDP, pero sin h y bien condicionado**. Eso 
 patrones arbitrarios: mitades desiguales, asimetrías, más piezas. Si algún punto supera μ0, el
 camino a una prueba ya está armado:
 1. elegir un miembro finito (t, h);
-2. certificarlo con `src/certify.py`;
+2. certificarlo con `src/certificado.py`;
 3. convertirlo en grafos con el Lema 2 de O'Keeffe, que se cita.
 
 Primer paso: derivar e implementar ese SDP y validarlo recuperando q*, w* y μ0 desde el patrón de S7.

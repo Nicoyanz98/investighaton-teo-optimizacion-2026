@@ -1,44 +1,61 @@
 """Reconstrucción independiente del estado S7 de O'Keeffe (arXiv 2610.21271, Tabla II y Apéndice A).
 
 Clusters en el orden (Am, Ap, Bm, Bp, Cm, Cp, W):
-  tamaños  x = (a, a, a, a, a, a, 1 − 6a),  a = 1/(7 + q)
-  fases    φ_c = j_c π/2 + h s_c,  j = (0,0,1,1,2,2,3),  s = (−1, 1, −w, w, −1, 1, 0)
+  tamaños   x = (a, a, a, a, a, a, 1 − 6a),  a = 1/(7 + q)
+  fases     φ_c = j_c π/2 + h s_c,  j = (0,0,1,1,2,2,3),  s = (−1, 1, −w, w, −1, 1, 0)
   densidades P(h) = p + h p′ + Δ(h)
 con q = q* − t, w = w*, u = u13(q, w), κ = 19/10. Δ = O(h²) vive en el camino
 Am–Bm–Cm–W–Cp–Bp–Ap y se elige para que el equilibrio sea exacto (F es afín en P).
 """
 import mpmath as mp
 
-NAMES = ["Am", "Ap", "Bm", "Bp", "Cm", "Cp", "W"]
-IDX = {n: i for i, n in enumerate(NAMES)}
-J = [0, 0, 1, 1, 2, 2, 3]
-PATH = [("Am", "Bm"), ("Bm", "Cm"), ("Cm", "W"), ("W", "Cp"), ("Cp", "Bp"), ("Bp", "Ap")]
+from .plantillas import fuerzas
+
+NOMBRES = ["Am", "Ap", "Bm", "Bp", "Cm", "Cp", "W"]
+INDICE = {nombre: i for i, nombre in enumerate(NOMBRES)}
+CUARTOS = [0, 0, 1, 1, 2, 2, 3]
+CAMINO = [("Am", "Bm"), ("Bm", "Cm"), ("Cm", "W"), ("W", "Cp"), ("Cp", "Bp"), ("Bp", "Ap")]
 
 
 def f_e(q, w):
+    """Las dos condiciones de neutralidad del modelo límite (Apéndice A, (I5))."""
     f = -2 * q**2 * w**2 - 4 * q**2 * w - 3 * q**2 - 2 * q + 4 * w + 1
     e = -q**2 * w**2 + q**2 - 2 * q * w**2 + 6 * q - w**2 + 1
     return f, e
 
 
 def u13(q, w):
+    """Parámetro u13(q, w) del Apéndice A, ec. (A3)."""
     return (2 * q**2 * w**2 + 2 * q**2 * w - q**2 - 6 * q + 4 * w**2 - 2 * w + 3) / 2
 
 
-def poly3(q):
-    return 9*q**8 + 72*q**7 + 288*q**6 + 448*q**5 + 470*q**4 + 88*q**3 - 208*q**2 - 128*q - 15
+def polinomio_3(q):
+    """Polinomio (3) de O'Keeffe, cuya única raíz en (0, 1) es q*."""
+    return (9 * q**8 + 72 * q**7 + 288 * q**6 + 448 * q**5 + 470 * q**4
+            + 88 * q**3 - 208 * q**2 - 128 * q - 15)
 
 
-def corner(dps=50):
+def esquina(dps=50):
     """(q*, w*, μ0): punto donde los dos dipolos del modelo límite son exactamente neutros."""
     with mp.workdps(dps):
-        q, w = mp.findroot(lambda q, w: f_e(q, w), (mp.mpf("0.65"), mp.mpf("1.4")))
+        q, w = mp.findroot(f_e, (mp.mpf("0.65"), mp.mpf("1.4")))
         return q, w, (4 + 2 * q) / (7 + q)
 
 
-def limit_pattern(q):
-    """Patrón límite de la Tabla II (1 completo, q adelgazado, 0 vacío)."""
-    rows = [
+def matriz_cero(m=7):
+    """Matriz m × m de ceros como lista de listas."""
+    return [[mp.mpf(0)] * m for _ in range(m)]
+
+
+def _poner(P, nombre1, nombre2, valor):
+    """Escribe un valor simétrico en P para el par de clusters (nombre1, nombre2)."""
+    P[INDICE[nombre1]][INDICE[nombre2]] = valor
+    P[INDICE[nombre2]][INDICE[nombre1]] = valor
+
+
+def patron_limite(q):
+    """Patrón límite de la Tabla II: 1 completo, q adelgazado, 0 vacío."""
+    filas = [
         [1, 1, 1, q, 0, 0, 1],
         [1, 1, q, 1, 0, 0, 1],
         [1, q, 1, 1, 1, q, 0],
@@ -47,87 +64,79 @@ def limit_pattern(q):
         [0, 0, q, 1, 1, 1, 1],
         [1, 1, 0, 0, 1, 1, 1],
     ]
-    return mp.matrix([[mp.mpf(v) for v in r] for r in rows])
+    P = []
+    for fila in filas:
+        P.append([mp.mpf(v) for v in fila])
+    return P
 
 
-def first_order(q, w, a, xW, kappa=mp.mpf(19) / 10):
+def primer_orden(q, w, a, xW, kappa=mp.mpf(19) / 10):
+    """Corrección de primer orden p′ (Apéndice A, después de la ec. (A1))."""
     u = u13(q, w)
     A1 = w * (w + 1) - u / 2
     A2 = u / 2 - w * (w - 1)
-    pp = mp.matrix(7, 7)
-
-    def put(n1, n2, val):
-        pp[IDX[n1], IDX[n2]] = val
-        pp[IDX[n2], IDX[n1]] = val
-
-    put("Am", "Bm", A1 - kappa); put("Bp", "Cp", A1 - kappa)
-    put("Ap", "Bm", A2 - kappa); put("Bp", "Cm", A2 - kappa)
-    for n1, n2 in [("Ap", "Bp"), ("Bm", "Cm"), ("Am", "Bp"), ("Bm", "Cp")]:
-        put(n1, n2, -kappa)
-    put("Am", "W", a / xW * (A1 + 2 - 2 * kappa)); put("Cp", "W", a / xW * (A1 + 2 - 2 * kappa))
-    put("Ap", "W", a / xW * (A2 - 2 - 2 * kappa)); put("Cm", "W", a / xW * (A2 - 2 - 2 * kappa))
-    return pp
-
-
-def forces(x, phi, P):
-    m = len(x)
-    return [mp.fsum(P[a, b] * x[b] * mp.sin(phi[a] - phi[b]) for b in range(m)) for a in range(m)]
+    P = matriz_cero()
+    _poner(P, "Am", "Bm", A1 - kappa)
+    _poner(P, "Bp", "Cp", A1 - kappa)
+    _poner(P, "Ap", "Bm", A2 - kappa)
+    _poner(P, "Bp", "Cm", A2 - kappa)
+    for nombre1, nombre2 in [("Ap", "Bp"), ("Bm", "Cm"), ("Am", "Bp"), ("Bm", "Cp")]:
+        _poner(P, nombre1, nombre2, -kappa)
+    _poner(P, "Am", "W", a / xW * (A1 + 2 - 2 * kappa))
+    _poner(P, "Cp", "W", a / xW * (A1 + 2 - 2 * kappa))
+    _poner(P, "Ap", "W", a / xW * (A2 - 2 - 2 * kappa))
+    _poner(P, "Cm", "W", a / xW * (A2 - 2 - 2 * kappa))
+    return P
 
 
-def build(t, h, dps=60, solve_delta=True):
-    """Plantilla S7 para (t, h). Devuelve dict con x, phi, P (mpmath) y parámetros."""
+def _corregir_equilibrio(x, phi, P):
+    """Resuelve Δ sobre el CAMINO para que F = 0 exacto (F es afín en P).
+
+    Se descarta la ecuación del cluster W, que se deduce de Σ x_a F_a = 0. Devuelve Δ y P corregida.
+    """
+    F_actual = fuerzas(x, phi, P, mp)
+    columnas = []
+    for nombre1, nombre2 in CAMINO:
+        E = matriz_cero()
+        _poner(E, nombre1, nombre2, mp.mpf(1))
+        columnas.append(fuerzas(x, phi, E, mp))
+    J = mp.matrix(6, 6)
+    for fila in range(6):
+        for columna in range(6):
+            J[fila, columna] = columnas[columna][fila]
+    lado_derecho = mp.matrix([-F_actual[fila] for fila in range(6)])
+    delta = mp.lu_solve(J, lado_derecho)
+    for k, (nombre1, nombre2) in enumerate(CAMINO):
+        i, j = INDICE[nombre1], INDICE[nombre2]
+        _poner(P, nombre1, nombre2, P[i][j] + delta[k])
+    return delta, P
+
+
+def construir(t, h, dps=60, corregir=True):
+    """Plantilla S7 para (t, h): dict con x, phi, P (mpmath, listas), q, w, F_primer_orden y delta."""
     with mp.workdps(dps):
-        t, h = mp.mpf(t), mp.mpf(h)
-        qs, ws, _ = corner(dps)
-        q, w = qs - t, ws
+        t = mp.mpf(t)
+        h = mp.mpf(h)
+        q_estrella, w, _ = esquina(dps)
+        q = q_estrella - t
         a = 1 / (7 + q)
         xW = 1 - 6 * a
         x = [a] * 6 + [xW]
-        s = [-1, 1, -w, w, -1, 1, 0]
-        phi = [J[c] * mp.pi / 2 + h * s[c] for c in range(7)]
-        P = limit_pattern(q) + h * first_order(q, w, a, xW)
-        F_first = forces(x, phi, P)
-        if solve_delta:
-            # F es afín en las 6 entradas del camino: resolver J Δ = −F (descartando la ecuación de W,
-            # que se deduce de Σ x_a F_a = 0)
-            cols = []
-            for n1, n2 in PATH:
-                E = mp.matrix(7, 7)
-                E[IDX[n1], IDX[n2]] = 1
-                E[IDX[n2], IDX[n1]] = 1
-                cols.append(forces(x, phi, E))
-            Jm = mp.matrix([[cols[k][r] for k in range(6)] for r in range(6)])
-            delta = mp.lu_solve(Jm, mp.matrix([-v for v in F_first[:6]]))
-            for k, (n1, n2) in enumerate(PATH):
-                P[IDX[n1], IDX[n2]] += delta[k]
-                P[IDX[n2], IDX[n1]] += delta[k]
-        else:
-            delta = None
+        desplazamientos = [-1, 1, -w, w, -1, 1, 0]
+        phi = []
+        for c in range(7):
+            phi.append(CUARTOS[c] * mp.pi / 2 + h * desplazamientos[c])
+
+        limite = patron_limite(q)
+        correccion = primer_orden(q, w, a, xW)
+        P = matriz_cero()
+        for i in range(7):
+            for j in range(7):
+                P[i][j] = limite[i][j] + h * correccion[i][j]
+
+        F_primer_orden = fuerzas(x, phi, P, mp)
+        delta = None
+        if corregir:
+            delta, P = _corregir_equilibrio(x, phi, P)
         return {"x": x, "phi": phi, "P": P, "q": q, "w": w, "t": t, "h": h,
-                "F_first": F_first, "delta": delta}
-
-
-def analyze(S, dps=60):
-    """μ, equilibrio, c_a y autovalores de L (en ⊥ de la rotación, vía M = X^{-1/2} L X^{-1/2} + v vᵀ)."""
-    with mp.workdps(dps):
-        x, phi, P = S["x"], S["phi"], S["P"]
-        m = len(x)
-        d = [mp.fsum(P[a, b] * x[b] for b in range(m)) for a in range(m)]
-        F = forces(x, phi, P)
-        c = [mp.fsum(P[a, b] * x[b] * mp.cos(phi[a] - phi[b]) for b in range(m)) for a in range(m)]
-        L = mp.matrix(m, m)
-        for a in range(m):
-            for b in range(m):
-                if a != b:
-                    L[a, b] = -x[a] * x[b] * P[a, b] * mp.cos(phi[a] - phi[b])
-            L[a, a] = -mp.fsum(L[a, b] for b in range(m) if b != a)
-        M = mp.matrix(m, m)
-        v = [mp.sqrt(xa) for xa in x]
-        for a in range(m):
-            for b in range(m):
-                M[a, b] = L[a, b] / (v[a] * v[b])
-        eig = sorted(mp.eigsy(M)[0])  # el primero es el 0 de la rotación
-        Pmin = min(P[a, b] for a in range(m) for b in range(m))
-        Pmax = max(P[a, b] for a in range(m) for b in range(m))
-        return {"mu": min(d), "max|F|": max(abs(f) for f in F), "min c": min(c),
-                "eig": eig, "P range": (Pmin, Pmax)}
+                "F_primer_orden": F_primer_orden, "delta": delta}

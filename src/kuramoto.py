@@ -1,123 +1,185 @@
-"""Funciones básicas de Kuramoto homogéneo.
-
-Copiadas de notebooks/Calentamientos.ipynb (secciones 1–3) para reusarlas desde módulos y otros
-notebooks. El notebook original no se modifica.
-"""
+"""Modelo de Kuramoto homogéneo sobre un grafo con pesos W: dinámica, energía, Hessiano y twisted states."""
 import numpy as np
 
 
-def complete_graph(n):
-    # K_n: todos con todos, sin self-loops
-    return np.ones((n, n)) - np.eye(n)
+# ---------------------------------------------------------------- dinámica y energía
 
-
-def phase_diff(theta):
-    # D[v, u] = θ_u − θ_v
+def diferencias_fase(theta):
+    """Matriz D con D[v, u] = θ_u − θ_v."""
     return theta[None, :] - theta[:, None]
 
 
-def velocity(theta, W):
-    # θ̇_v = Σ_u w_uv sin(θ_u − θ_v)   ( = −∇E )
-    return (W * np.sin(phase_diff(theta))).sum(axis=1)
+def velocidad(theta, W):
+    """θ̇_v = Σ_u w_uv sin(θ_u − θ_v), que es −∇E."""
+    return (W * np.sin(diferencias_fase(theta))).sum(axis=1)
 
 
-def energy(theta, W):
-    # E = ½ Σ_{u,v} w_uv (1 − cos(θ_u − θ_v))
-    return 0.5 * (W * (1 - np.cos(phase_diff(theta)))).sum()
+def energia(theta, W):
+    """E = ½ Σ_{u,v} w_uv (1 − cos(θ_u − θ_v))."""
+    return 0.5 * (W * (1 - np.cos(diferencias_fase(theta)))).sum()
 
 
-def order_parameter(theta):
-    # r = (1/n) Σ e^{iθ_v};  |r| = cuán agrupadas,  ψ = arg r = hacia dónde
+def parametro_orden(theta):
+    """r = (1/n) Σ e^{iθ_v}: |r| mide cuán agrupadas están las fases y arg r hacia dónde."""
     return np.exp(1j * theta).mean()
 
 
-def hessian(theta, W):
-    # Laplaciano con pesos w_uv cos(θ_u − θ_v)
-    C = W * np.cos(phase_diff(theta))
+def hessiano(theta, W):
+    """Hessiano de E: Laplaciano con pesos w_uv cos(θ_u − θ_v)."""
+    C = W * np.cos(diferencias_fase(theta))
     return np.diag(C.sum(axis=1)) - C
 
 
 def wrap(x):
-    # lleva ángulos a (−π, π]
+    """Lleva ángulos a (−π, π]."""
     return np.angle(np.exp(1j * x))
 
 
-def simulate(theta0, W, h=None, tol=1e-10, max_steps=200_000, record=True):
-    # Descenso de gradiente sobre E desde theta0. Devuelve el estado final y (opcional) la historia.
+def simular(theta0, W, h=None, tol=1e-10, max_pasos=200_000, guardar=True):
+    """Descenso de gradiente (Euler) sobre E desde theta0, hasta que ‖θ̇‖ < tol.
+
+    El paso por defecto h = 1/(2·grado máximo) garantiza que la energía no suba.
+    Devuelve el estado final y, si guardar=True, la historia con t, E y r.
+    """
     if h is None:
         h = 1.0 / (2 * W.sum(axis=1).max())
     theta = np.array(theta0, dtype=float)
-    history = [theta.copy()]
-    converged = False
-    for step in range(1, max_steps + 1):
-        v = velocity(theta, W)
+    historia = [theta.copy()]
+    convergio = False
+    for paso in range(1, max_pasos + 1):
+        v = velocidad(theta, W)
         if np.linalg.norm(v) < tol:
-            converged = True
+            convergio = True
             break
         theta = theta + h * v
-        if record:
-            history.append(theta.copy())
-    out = {"theta": theta, "steps": step, "converged": converged, "h": h}
-    if record:
-        H = np.array(history)
-        out["t"] = h * np.arange(len(H))
-        out["history"] = H
-        out["E"] = np.array([energy(th, W) for th in H])
-        out["r"] = np.array([order_parameter(th) for th in H])
-    return out
+        if guardar:
+            historia.append(theta.copy())
+    salida = {"theta": theta, "pasos": paso, "convergio": convergio, "h": h}
+    if guardar:
+        historia = np.array(historia)
+        salida["t"] = h * np.arange(len(historia))
+        salida["historia"] = historia
+        salida["E"] = np.array([energia(th, W) for th in historia])
+        salida["r"] = np.array([parametro_orden(th) for th in historia])
+    return salida
 
 
-def classify(theta, W, tol=1e-6):
-    # Clasifica un equilibrio por los autovalores del Hessiano (el 0 de la rotación global siempre está).
-    eig = np.linalg.eigvalsh(hessian(theta, W))
-    scale = max(1.0, np.abs(eig).max())
-    neg = int(np.sum(eig < -tol * scale))
-    pos = int(np.sum(eig > tol * scale))
-    zero = len(eig) - neg - pos
-    if neg == 0 and zero == 1:
-        label = "mínimo estricto"
-    elif pos == 0 and zero == 1:
-        label = "máximo estricto"
-    elif neg > 0:
-        label = "silla" if pos > 0 else "máximo (degenerado)"
+def clasificar(theta, W, tol=1e-6):
+    """Clasifica un equilibrio por los autovalores del Hessiano (el 0 de la rotación global siempre está)."""
+    autovalores = np.linalg.eigvalsh(hessiano(theta, W))
+    escala = max(1.0, np.abs(autovalores).max())
+    negativos = int(np.sum(autovalores < -tol * escala))
+    positivos = int(np.sum(autovalores > tol * escala))
+    nulos = len(autovalores) - negativos - positivos
+    if negativos == 0 and nulos == 1:
+        tipo = "mínimo estricto"
+    elif positivos == 0 and nulos == 1:
+        tipo = "máximo estricto"
+    elif negativos > 0:
+        tipo = "silla" if positivos > 0 else "máximo (degenerado)"
     else:
-        label = "degenerado"
-    return label, eig
+        tipo = "degenerado"
+    return tipo, autovalores
 
 
-def cycle_graph(n):
-    # C_n: v conectado con v−1 y v+1 (módulo n)
-    W = np.zeros((n, n))
-    v = np.arange(n)
-    W[v, (v + 1) % n] = 1
-    W[(v + 1) % n, v] = 1
-    return W
-
+# ---------------------------------------------------------------- twisted states
 
 def twisted_state(n, q):
-    """θ_v = 2π q v / n"""
+    """θ_v = 2π q v / n."""
     return 2 * np.pi * q * np.arange(n) / n
 
 
 def winding_number(theta):
-    """q = (1/2π) Σ_v wrap(θ_{v+1} − θ_v)"""
-    d = wrap(np.roll(theta, -1) - theta)
-    return int(np.rint(d.sum() / (2 * np.pi)))
+    """q = (1/2π) Σ_v wrap(θ_{v+1} − θ_v), recorriendo el ciclo una vez."""
+    saltos = wrap(np.roll(theta, -1) - theta)
+    return int(np.rint(saltos.sum() / (2 * np.pi)))
 
 
-def circulant_graph(n, k):
-    # C_{n,k}: v conectado con v±1, …, v±k (módulo n)
-    W = np.zeros((n, n))
-    v = np.arange(n)
-    for j in range(1, k + 1):
-        W[v, (v + j) % n] = 1
-        W[(v + j) % n, v] = 1
-    return W
-
-
-def twisted_eigs(n, k, q):
-    """λ_m = Σ_j cos(j d) (2 − 2 cos(2π j m / n)),  m = 0..n−1"""
+def autovalores_twisted(n, k, q):
+    """Fórmula cerrada en C_{n,k}: λ_m = Σ_j cos(j d)(2 − 2 cos(2π j m / n)), d = 2πq/n, m = 0..n−1."""
     d = 2 * np.pi * q / n
     m = np.arange(n)[:, None]
     j = np.arange(1, k + 1)[None, :]
-    return (np.cos(j * d) * (2 - 2 * np.cos(2 * np.pi * j * m / n))).sum(axis=1)
+    terminos = np.cos(j * d) * (2 - 2 * np.cos(2 * np.pi * j * m / n))
+    return terminos.sum(axis=1)
+
+
+def es_trampa(n, k, q):
+    """¿El twisted state q es mínimo estricto en C_{n,k}? (todos los λ_m con m ≠ 0 positivos)."""
+    return autovalores_twisted(n, k, q)[1:].min() > 1e-12
+
+
+def k_max(n):
+    """Mayor k con algún twisted state q ≠ 0 estable en C_{n,k}.
+
+    Devuelve (k_max, lista de k estables, q estables en k_max).
+    """
+    qs = range(1, n // 2 + 1)
+    ks_estables = []
+    for k in range(1, (n - 1) // 2 + 1):
+        if any(es_trampa(n, k, q) for q in qs):
+            ks_estables.append(k)
+    if not ks_estables:
+        return 0, [], []
+    ultimo = ks_estables[-1]
+    qs_ultimo = []
+    for q in qs:
+        if es_trampa(n, ultimo, q):
+            qs_ultimo.append(q)
+    return ultimo, ks_estables, qs_ultimo
+
+
+def k_max_clasificando(n):
+    """Igual que k_max pero clasificando con el Hessiano numérico (sin fórmula cerrada)."""
+    from .grafos import grafo_circulante
+
+    mejor = 0
+    for k in range(1, (n - 1) // 2 + 1):
+        W = grafo_circulante(n, k)
+        for q in range(1, n // 2 + 1):
+            if clasificar(twisted_state(n, q), W)[0] == "mínimo estricto":
+                mejor = k
+                break
+    return mejor
+
+
+def k_max_q1(n):
+    """k_max solo para q = 1, acumulando la suma de λ_m al crecer k (sirve para n grande)."""
+    m = np.arange(n)
+    d = 2 * np.pi / n
+    autovalores = np.zeros(n)
+    mejor = 0
+    for k in range(1, (n - 1) // 2 + 1):
+        autovalores += np.cos(k * d) * (2 - 2 * np.cos(2 * np.pi * k * m / n))
+        if autovalores[1:].min() <= 1e-12:
+            break
+        mejor = k
+    return mejor
+
+
+# ---------------------------------------------------------------- clasificación abreviada
+
+ABREVIATURA = {
+    "mínimo estricto": "mín",
+    "máximo estricto": "máx",
+    "máximo (degenerado)": "máx",
+    "silla": "silla",
+    "degenerado": "deg",
+}
+
+
+def tipo_predicho_ciclo(n, q):
+    """Tipo del twisted state q en C_n según el signo de cos(2πq/n): mín, máx o deg."""
+    c = np.cos(2 * np.pi * q / n)
+    if c > 1e-12:
+        return "mín"
+    if c < -1e-12:
+        return "máx"
+    return "deg"
+
+
+def autovalor_no_nulo_min(autovalores):
+    """Menor autovalor sacando el más cercano a 0 (la rotación global)."""
+    resto = np.delete(autovalores, np.argmin(np.abs(autovalores)))
+    menor = resto.min()
+    return menor if abs(menor) > 1e-12 else 0.0

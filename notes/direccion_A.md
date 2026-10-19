@@ -16,9 +16,9 @@ Notebook: `notebooks/02_plantillas.ipynb`. Código en `src/`, scripts en `script
 | Blow-up G[K_m] | μ igual, trampa preservada | Hessiano; el cartesiano baja μ |
 | C4 | μ = 3/4, L ≡ 0 | degenerado |
 | Twisted como LP | **0.683876** (m = 19) | = Yoneda et al. 0.6838 |
-| Canale | 11/16 | plantilla + k-spinnings reales con `classify` y simulación |
+| Canale | 11/16 | plantilla + k-spinnings reales con `clasificar` y simulación |
 | S7 límite | q*, w*, μ0 = 0.69290770637 | 20 dígitos, polinomio (3) |
-| S7 finito | μ = 0.6929050246494 | **certificado propio**: Krawczyk + Cholesky por intervalos (`scripts/certify_s7.py`) |
+| S7 finito | μ = 0.6929050246494 | **certificado propio**: Krawczyk + Cholesky por intervalos (`scripts/certificar_s7.py`) |
 
 Detalles:
 - **Canale:** el paper tiene erratas en los conjuntos de aristas E_t. Usamos la geometría de la
@@ -30,7 +30,7 @@ Detalles:
 
 ## Exploración (evidencia numérica, no certificada)
 
-**Patrones de partición de C4** (`scripts/explore_splits.py`, SDP interno + Nelder–Mead):
+**Patrones de partición de C4** (`scripts/explorar_particiones.py`, SDP interno + Nelder–Mead):
 - Con arranques al azar no se reencuentra ni S7 (0.587 frente a 0.691). Las cuencas son angostas,
   como advierte O'Keeffe.
 - Con arranques "estilo S7": partir el cluster ancla, o menos de tres clusters, empeora.
@@ -45,7 +45,7 @@ Detalles:
   Es consistente con O'Keeffe ("más piezas no mejoran μ0").
 - Nuestros valores de S7 coinciden con su tabla: 0.6919 con h = 0.01 y 0.6924 con h = 0.005.
 
-**Caso 0/1, blow-ups completos** (`scripts/explore_01.py`, nauty): con k ≤ 7 el mejor μ es ≈ 0.616.
+**Caso 0/1, blow-ups completos** (`scripts/explorar_01.py`, nauty): con k ≤ 7 el mejor μ es ≈ 0.616.
 Hacen falta densidades intermedias.
 
 ## Pendientes posibles
@@ -53,3 +53,21 @@ Hacen falta densidades intermedias.
 - Modelo límite h → 0 para otros patrones (estilo Apéndice A).
 - El estado "satélite" (0.69155) de O'Keeffe.
 - Análogos con ℓ = 5, 6 clusters (dirección C).
+
+## Mapa del código (después del refactor del 19/10)
+
+| dónde | qué |
+|---|---|
+| `src/grafos.py` | grafos (completo, ciclo, circulante), blow-ups, conectividad, grafos de nauty |
+| `src/kuramoto.py` | dinámica, energía, Hessiano, simulación, clasificación, twisted states |
+| `src/plantillas.py` | **única** implementación de d, F, c, L (float, mpmath o intervalos); `Plantilla`; `realizar`; C4 y Canale |
+| `src/twisted_lp.py` | twisted como LP |
+| `src/s7.py` | construcción de S7 |
+| `src/certificado.py` | racionalizar, Newton, Krawczyk + Cholesky por intervalos |
+| `src/busqueda.py` | SDP interno; `FamiliaParticiones` sobre cualquier `Base` (`base_c4`, `base_canale`); semillas |
+| `src/experimentos.py` | paralelismo y JSON en `data/` |
+| `scripts/` | `explorar_particiones.py`, `explorar_01.py`, `certificar_s7.py`, `barrer_semillas.py` |
+| `tests/test_regresion.py` | fija todos los números de arriba: `.venv/bin/python -m pytest tests` |
+
+Para probar la vía B (partir Canale) ya alcanza con:
+`scripts/explorar_particiones.py --base canale --h 0.02 --patrones 21212121`.
