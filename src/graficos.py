@@ -20,11 +20,3 @@ def dibujar_ciclo(ax, theta, titulo=""):
     z = np.exp(1j * np.append(theta, theta[0]))
     ax.plot(z.real, z.imag, color="tab:blue", lw=0.8, alpha=0.6, zorder=2)
     dibujar_circulo(ax, theta, titulo)
-
-
-def mostrar_codigo(*funciones):
-    """Imprime el código fuente de cada función (para mostrarlas en los notebooks)."""
-    import inspect
-
-    for funcion in funciones:
-        print(inspect.getsource(funcion))

@@ -1,6 +1,8 @@
 """Modelo de Kuramoto homogéneo sobre un grafo con pesos W: dinámica, energía, Hessiano y twisted states."""
 import numpy as np
 
+from .grafos import grafo_circulante
+
 
 # ---------------------------------------------------------------- dinámica y energía
 
@@ -131,8 +133,6 @@ def k_max(n):
 
 def k_max_clasificando(n):
     """Igual que k_max pero clasificando con el Hessiano numérico (sin fórmula cerrada)."""
-    from .grafos import grafo_circulante
-
     mejor = 0
     for k in range(1, (n - 1) // 2 + 1):
         W = grafo_circulante(n, k)

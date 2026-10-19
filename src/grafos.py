@@ -15,7 +15,11 @@ def grafo_completo(n):
 
 def grafo_ciclo(n):
     """C_n: cada v conectado con v − 1 y v + 1 (módulo n)."""
-    return grafo_circulante(n, 1)
+    W = np.zeros((n, n))
+    v = np.arange(n)
+    W[v, (v + 1) % n] = 1
+    W[(v + 1) % n, v] = 1
+    return W
 
 
 def grafo_circulante(n, k):
