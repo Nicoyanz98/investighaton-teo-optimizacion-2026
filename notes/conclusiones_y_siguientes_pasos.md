@@ -35,6 +35,17 @@ por sí misma.
 
 **No mejoramos la cota.** Lo de la exploración es evidencia numérica, no está certificado.
 
+**5. Analizamos una familia completa: el girasol** (21/10, `notes/familia_aurea.md`,
+`notebooks/Familia_aurea.ipynb`). Osciladores en x_v = v/φ mod 1 (ángulo áureo), en tres variantes:
+- circulantes con distancias de Fibonacci: **demostrado** que son twisted states q = 1 (vía la
+  congruencia de las espirales del girasol), así que μ ≤ 0.6838; en la práctica μ → 0;
+- grafo geométrico áureo: con n de Fibonacci es **exactamente** un anillo C_{n,ρ} (demostrado); con n
+  no Fibonacci queda por debajo del anillo (numérico);
+- plantillas en las fases áureas: ≤ 0.679 para m ≤ 40 (numérico).
+
+Resultado negativo pero explicado: el ángulo áureo reparte parejo, y eso tiende al mismo límite que
+los anillos; los récords concentran los osciladores en pocos clusters desparejos.
+
 ## Por dónde seguir para subir la cota
 
 ### A. Modelo límite h → 0 general (recomendado)

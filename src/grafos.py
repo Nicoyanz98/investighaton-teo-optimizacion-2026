@@ -32,6 +32,32 @@ def grafo_circulante(n, k):
     return W
 
 
+def grafo_circulante_conjunto(n, S):
+    """C_n(S): u ~ v si v − u ∈ S (mod n). S se simetriza: se agregan los −s que falten."""
+    W = np.zeros((n, n))
+    v = np.arange(n)
+    for s in S:
+        s = s % n
+        if s == 0:
+            continue
+        W[v, (v + s) % n] = 1
+        W[(v + s) % n, v] = 1
+    return W
+
+
+def distancias_circulares(x):
+    """Matriz de distancias en el círculo [0, 1) entre las posiciones x."""
+    diferencias = np.abs(x[:, None] - x[None, :]) % 1
+    return np.minimum(diferencias, 1 - diferencias)
+
+
+def grafo_geometrico_circular(x, r):
+    """Une u y v si la distancia circular entre x_u y x_v es ≤ r (posiciones en [0, 1))."""
+    W = (distancias_circulares(x) <= r).astype(float)
+    np.fill_diagonal(W, 0)
+    return W
+
+
 def blowup_lexicografico(W, m):
     """G[K_m]: cada vértice pasa a ser un clique de m copias unido a todas las copias de sus vecinos."""
     unos = np.ones((m, m))

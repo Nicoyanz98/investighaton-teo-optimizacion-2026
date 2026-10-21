@@ -106,6 +106,17 @@ def autovalores_twisted(n, k, q):
     return terminos.sum(axis=1)
 
 
+def autovalores_twisted_conjunto(n, S, q):
+    """Autovalores del twisted state q en C_n(S), S simétrico (Lema 1 de notes/familia_aurea.md).
+
+    λ_m = Σ_{s∈S} cos(2π q s/n)(1 − cos(2π m s/n)), m = 0..n−1; S tiene que incluir s y −s.
+    """
+    S = np.asarray(sorted({s % n for s in S} - {0}))
+    m = np.arange(n)[:, None]
+    terminos = np.cos(2 * np.pi * q * S / n)[None, :] * (1 - np.cos(2 * np.pi * m * S[None, :] / n))
+    return terminos.sum(axis=1)
+
+
 def es_trampa(n, k, q):
     """¿El twisted state q es mínimo estricto en C_{n,k}? (todos los λ_m con m ≠ 0 positivos)."""
     return autovalores_twisted(n, k, q)[1:].min() > 1e-12

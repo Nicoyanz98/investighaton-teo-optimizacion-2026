@@ -1,0 +1,290 @@
+[
+ {
+  "m": 5,
+  "fibonacci": true,
+  "twisted_lp": 0.6583592117919224,
+  "iguales": 0.5675958530904537,
+  "arcos": 0.5200513905623225,
+  "geometricos": 0.30021797021021585
+ },
+ {
+  "m": 6,
+  "fibonacci": false,
+  "twisted_lp": 0.6111111071111112,
+  "iguales": 0.4948351789910647,
+  "arcos": 0.5380186480337534,
+  "geometricos": 0.3003008217878503
+ },
+ {
+  "m": 7,
+  "fibonacci": false,
+  "twisted_lp": 0.6751247472647295,
+  "iguales": 0.4963516270962498,
+  "arcos": 0.5646737702263093,
+  "geometricos": 0.2971210413795665
+ },
+ {
+  "m": 8,
+  "fibonacci": true,
+  "twisted_lp": 0.667893215499744,
+  "iguales": 0.6164618179870605,
+  "arcos": 0.6480068727979763,
+  "geometricos": 0.3165889579264335
+ },
+ {
+  "m": 9,
+  "fibonacci": false,
+  "twisted_lp": 0.65117476210234,
+  "iguales": 0.5711025892339163,
+  "arcos": 0.6472643610017043,
+  "geometricos": 0.3142824633109695
+ },
+ {
+  "m": 10,
+  "fibonacci": false,
+  "twisted_lp": 0.6819659988894254,
+  "iguales": 0.5703691322659142,
+  "arcos": 0.6411098857126317,
+  "geometricos": 0.31512689323585036
+ },
+ {
+  "m": 11,
+  "fibonacci": false,
+  "twisted_lp": 0.6722377663310732,
+  "iguales": 0.5543780349793634,
+  "arcos": 0.6376428404741173,
+  "geometricos": 0.3161175057918689
+ },
+ {
+  "m": 12,
+  "fibonacci": false,
+  "twisted_lp": 0.6646723039520975,
+  "iguales": 0.5721776543241689,
+  "arcos": 0.6454832302699639,
+  "geometricos": 0.3160505108263409
+ },
+ {
+  "m": 13,
+  "fibonacci": true,
+  "twisted_lp": 0.683483629201906,
+  "iguales": 0.6551067656680968,
+  "arcos": 0.6708339632950827,
+  "geometricos": 0.3187270757831739
+ },
+ {
+  "m": 14,
+  "fibonacci": false,
+  "twisted_lp": 0.6751247343988089,
+  "iguales": 0.6307919327601503,
+  "arcos": 0.6766461838667098,
+  "geometricos": 0.3185580108078247
+ },
+ {
+  "m": 15,
+  "fibonacci": false,
+  "twisted_lp": 0.670834802643116,
+  "iguales": 0.6121010135970615,
+  "arcos": 0.6742887993831734,
+  "geometricos": 0.3184536766924273
+ },
+ {
+  "m": 16,
+  "fibonacci": false,
+  "twisted_lp": 0.683847693740578,
+  "iguales": 0.6139470809507787,
+  "arcos": 0.673964097330726,
+  "geometricos": 0.31868191033428767
+ },
+ {
+  "m": 17,
+  "fibonacci": false,
+  "twisted_lp": 0.6760622492374021,
+  "iguales": 0.614499226655497,
+  "arcos": 0.6742619389571152,
+  "geometricos": 0.31862525236367917
+ },
+ {
+  "m": 18,
+  "fibonacci": false,
+  "twisted_lp": 0.6741604878959765,
+  "iguales": 0.635713716779652,
+  "arcos": 0.669688885155042,
+  "geometricos": 0.31879076160019987
+ },
+ {
+  "m": 19,
+  "fibonacci": false,
+  "twisted_lp": 0.6838758038523634,
+  "iguales": 0.622282420325284,
+  "arcos": 0.6684509757936395,
+  "geometricos": 0.3187977598441828
+ },
+ {
+  "m": 20,
+  "fibonacci": false,
+  "twisted_lp": 0.6819659865287447,
+  "iguales": 0.6345850120220864,
+  "arcos": 0.670882049603883,
+  "geometricos": 0.31879217181084957
+ },
+ {
+  "m": 21,
+  "fibonacci": true,
+  "twisted_lp": 0.6761584515965744,
+  "iguales": 0.6670424902035563,
+  "arcos": 0.6745510940351246,
+  "geometricos": 0.31883789002547297
+ },
+ {
+  "m": 22,
+  "fibonacci": false,
+  "twisted_lp": 0.6828905965310351,
+  "iguales": 0.6525243327765666,
+  "arcos": 0.6733909114680731,
+  "geometricos": 0.31883314365682897
+ },
+ {
+  "m": 23,
+  "fibonacci": false,
+  "twisted_lp": 0.6777386935792604,
+  "iguales": 0.6407261911829341,
+  "arcos": 0.6737535120599754,
+  "geometricos": 0.3188307815218359
+ },
+ {
+  "m": 24,
+  "fibonacci": false,
+  "twisted_lp": 0.6774522854613637,
+  "iguales": 0.6331609365156075,
+  "arcos": 0.6743292055974968,
+  "geometricos": 0.3188341498791484
+ },
+ {
+  "m": 25,
+  "fibonacci": false,
+  "twisted_lp": 0.6821404508893315,
+  "iguales": 0.6346828125894608,
+  "arcos": 0.6741651827784211,
+  "geometricos": 0.31883369318225424
+ },
+ {
+  "m": 26,
+  "fibonacci": false,
+  "twisted_lp": 0.6834836156700919,
+  "iguales": 0.6586405665033447,
+  "arcos": 0.6735545113217094,
+  "geometricos": 0.31883870095614125
+ },
+ {
+  "m": 27,
+  "fibonacci": false,
+  "twisted_lp": 0.6783380119479765,
+  "iguales": 0.6501021036362785,
+  "arcos": 0.6739446361628739,
+  "geometricos": 0.3188385410276816
+ },
+ {
+  "m": 28,
+  "fibonacci": false,
+  "twisted_lp": 0.6816373065861676,
+  "iguales": 0.6491359478938307,
+  "arcos": 0.6742203184501203,
+  "geometricos": 0.3188383964058585
+ },
+ {
+  "m": 29,
+  "fibonacci": false,
+  "twisted_lp": 0.6786609883846181,
+  "iguales": 0.6559979865275276,
+  "arcos": 0.6746139285893021,
+  "geometricos": 0.31883901909071044
+ },
+ {
+  "m": 30,
+  "fibonacci": false,
+  "twisted_lp": 0.6819659741680657,
+  "iguales": 0.6554134073651039,
+  "arcos": 0.6746840254752093,
+  "geometricos": 0.31883891034411116
+ },
+ {
+  "m": 31,
+  "fibonacci": false,
+  "twisted_lp": 0.6812921922634254,
+  "iguales": 0.6522942733167407,
+  "arcos": 0.6748695434457128,
+  "geometricos": 0.3188390424815196
+ },
+ {
+  "m": 32,
+  "fibonacci": false,
+  "twisted_lp": 0.6838476786214212,
+  "iguales": 0.6477652672743335,
+  "arcos": 0.675155898162991,
+  "geometricos": 0.3188390703502432
+ },
+ {
+  "m": 33,
+  "fibonacci": false,
+  "twisted_lp": 0.679438829877268,
+  "iguales": 0.651689062846807,
+  "arcos": 0.6756762378984378,
+  "geometricos": 0.31883905382353883
+ },
+ {
+  "m": 34,
+  "fibonacci": true,
+  "twisted_lp": 0.6810518509898382,
+  "iguales": 0.6771105431539415,
+  "arcos": 0.6785671886191327,
+  "geometricos": 0.31883916829438114
+ },
+ {
+  "m": 35,
+  "fibonacci": false,
+  "twisted_lp": 0.6792392995134181,
+  "iguales": 0.6627936652737985,
+  "arcos": 0.6786592572381289,
+  "geometricos": 0.31883916430619275
+ },
+ {
+  "m": 36,
+  "fibonacci": false,
+  "twisted_lp": 0.6797945213585569,
+  "iguales": 0.6543855307646899,
+  "arcos": 0.6785513125103452,
+  "geometricos": 0.3188391381659099
+ },
+ {
+  "m": 37,
+  "fibonacci": false,
+  "twisted_lp": 0.680882994932281,
+  "iguales": 0.654363338713691,
+  "arcos": 0.678543591991979,
+  "geometricos": 0.3188391538901448
+ },
+ {
+  "m": 38,
+  "fibonacci": false,
+  "twisted_lp": 0.6838757869801106,
+  "iguales": 0.6564212415035654,
+  "arcos": 0.6786374238611788,
+  "geometricos": 0.31883914911337763
+ },
+ {
+  "m": 39,
+  "fibonacci": false,
+  "twisted_lp": 0.683483602138279,
+  "iguales": 0.6629419616106408,
+  "arcos": 0.6788057050014097,
+  "geometricos": 0.0
+ },
+ {
+  "m": 40,
+  "fibonacci": false,
+  "twisted_lp": 0.6819659618073852,
+  "iguales": 0.6577225157631762,
+  "arcos": 0.6788355087891469,
+  "geometricos": 0.0
+ }
+]

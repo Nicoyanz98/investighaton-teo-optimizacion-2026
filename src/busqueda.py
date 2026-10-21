@@ -16,6 +16,7 @@ import cvxpy as cp
 import numpy as np
 from scipy.optimize import minimize
 
+from .aurea import PHI, puntos_aureos
 from .plantillas import Plantilla, base_perpendicular, plantilla_c4, plantilla_canale
 
 
@@ -202,4 +203,29 @@ def dos_redes(l, r, beta):
     red = 2 * np.pi * np.arange(l) / l
     x = np.concatenate([np.full(l, r / l), np.full(l, (1 - r) / l)])
     phi = np.concatenate([red, red + beta])
+    return x, phi
+
+
+def red_aurea(m, pesos="iguales"):
+    """m clusters en las fases áureas 2π a/φ (variante 3 de la familia girasol).
+
+    pesos: "iguales" (1/m), "arcos" (cada cluster pesa el arco del círculo más cercano a él que a los
+    demás) o "geometricos" (proporcionales a φ^{−a}).
+    """
+    x_posiciones = puntos_aureos(m)
+    phi = 2 * np.pi * x_posiciones
+    if pesos == "iguales":
+        x = np.full(m, 1 / m)
+    elif pesos == "arcos":
+        orden = np.argsort(x_posiciones)
+        ordenadas = x_posiciones[orden]
+        huecos = np.diff(np.concatenate([ordenadas, [ordenadas[0] + 1]]))
+        arcos_ordenados = (huecos + np.roll(huecos, 1)) / 2
+        x = np.zeros(m)
+        x[orden] = arcos_ordenados
+    elif pesos == "geometricos":
+        x = PHI ** -np.arange(m, dtype=float)
+        x = x / x.sum()
+    else:
+        raise ValueError(f"pesos desconocidos: {pesos}")
     return x, phi

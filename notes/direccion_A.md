@@ -64,13 +64,16 @@ Hacen falta densidades intermedias.
 | `src/twisted_lp.py` | twisted como LP |
 | `src/s7.py` | construcción de S7 |
 | `src/certificado.py` | racionalizar, Newton, Krawczyk + Cholesky por intervalos |
-| `src/busqueda.py` | SDP interno; `FamiliaParticiones` sobre cualquier `Base` (`base_c4`, `base_canale`); semillas |
+| `src/busqueda.py` | SDP interno; `FamiliaParticiones` sobre cualquier `Base` (`base_c4`, `base_canale`); semillas; geometrías `una_red`, `dos_redes`, `red_aurea` |
+| `src/aurea.py` | familia girasol: puntos y estado áureo, circulantes de Fibonacci, grafo geométrico áureo (`notes/familia_aurea.md`) |
 | `src/experimentos.py` | paralelismo y JSON en `data/` |
-| `scripts/` | `explorar_particiones.py`, `explorar_01.py`, `certificar_s7.py`, `barrer_semillas.py` |
+| `scripts/` | `explorar_particiones.py`, `explorar_01.py`, `certificar_s7.py`, `barrer_semillas.py`, `explorar_aurea.py` |
 | `tests/test_regresion.py` | fija todos los números de arriba: `.venv/bin/python -m pytest tests` |
+| `tests/test_aurea.py` | verifica numéricamente los lemas y proposiciones de la familia girasol |
 | `tests/test_notebook_sincronizado.py` | avisa si las funciones copiadas en `Calentamientos.ipynb` dejan de coincidir con `src/` |
 | `notebooks/Calentamientos.ipynb` | autocontenido (funciones copiadas de `src/`): se abre directo en Colab |
 | `notebooks/Implementacion_papers.ipynb` | reproducción de los papers, explicada para quien no los leyó; usa `src/` y `data/` |
+| `notebooks/Familia_aurea.ipynb` | familia girasol (ángulo áureo): teoría, tres variantes y resultados; usa `src/` y `data/` |
 
 Para probar la vía B (partir Canale) ya alcanza con:
 `scripts/explorar_particiones.py --base canale --h 0.02 --patrones 21212121`.
