@@ -30,7 +30,7 @@ cada vecino u de v.
 - Sigue siendo mínimo estricto. Toda perturbación se descompone en dos subespacios ortogonales que el
   Hessiano no mezcla:
   1. **constantes por cluster** (todas las copias de v se mueven igual): ahí el Hessiano actúa como
-     m·H_G, que es > 0 en ⊥1;
+     m·H_G, que es > 0 en 1^⊥ (todas las direcciones salvo la rotación global 1 = (1, …, 1));
   2. **de media cero dentro de cada cluster**: los términos entre clusters se cancelan y queda el
      autovalor m·(1 + Σ_{u~v} cos(θ_u − θ_v)), que es > 0 porque la diagonal de H_G es positiva.
 
@@ -44,7 +44,7 @@ Cada vértice v de una plantilla chica H pasa a ser un clique de m_v = N·p_v v�
 
 - μ = min_v p(N[v]) = min_v (p_v + Σ_{u~v} p_u);
 - equilibrio: Σ_{u~v} p_u sin(θ_u − θ_v) = 0 para todo v;
-- estabilidad entre clusters: el Laplaciano con pesos p_u p_v cos(θ_u − θ_v) es > 0 en ⊥1;
+- estabilidad entre clusters: el Laplaciano con pesos p_u p_v cos(θ_u − θ_v) es > 0 en 1^⊥;
 - estabilidad dentro del cluster v: p_v + Σ_{u~v} p_u cos(θ_u − θ_v) > 0.
 
 Los pesos permiten "engordar" a los vecinos del vértice que limita el grado mínimo. Con eso, la

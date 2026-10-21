@@ -1,6 +1,6 @@
 # Dirección A: plantillas de clusters (19/10/2026, con Claude)
 
-Notebook: `notebooks/02_plantillas.ipynb`. Código en `src/`, scripts en `scripts/`, datos en `data/`.
+Notebook: `notebooks/Implementacion_papers.ipynb`. Código en `src/`, scripts en `scripts/`, datos en `data/`.
 
 ## Contexto
 - La idea del "stackeo" (`notes/idea.md`) lleva al marco de plantillas (x, φ, P).
@@ -68,6 +68,18 @@ Hacen falta densidades intermedias.
 | `src/experimentos.py` | paralelismo y JSON en `data/` |
 | `scripts/` | `explorar_particiones.py`, `explorar_01.py`, `certificar_s7.py`, `barrer_semillas.py` |
 | `tests/test_regresion.py` | fija todos los números de arriba: `.venv/bin/python -m pytest tests` |
+| `tests/test_notebook_sincronizado.py` | avisa si las funciones copiadas en `Calentamientos.ipynb` dejan de coincidir con `src/` |
+| `notebooks/Calentamientos.ipynb` | autocontenido (funciones copiadas de `src/`): se abre directo en Colab |
+| `notebooks/Implementacion_papers.ipynb` | reproducción de los papers, explicada para quien no los leyó; usa `src/` y `data/` |
 
 Para probar la vía B (partir Canale) ya alcanza con:
 `scripts/explorar_particiones.py --base canale --h 0.02 --patrones 21212121`.
+
+**Colab.** `Implementacion_papers.ipynb` empieza con una celda que, solo en Colab, clona el repo (privado)
+con un token de GitHub guardado en los Secrets como `GITHUB_TOKEN`. En local no hace nada.
+Para lo pesado (scripts de exploración) conviene la máquina local: Colab gratuito tiene 2 núcleos y
+nada del cálculo usa GPU (SDP con Clarabel, mpmath e intervalos son solo CPU).
+
+**Notación.** **1** = (1, …, 1) es la rotación global, que nunca cambia la energía; **1**^⊥
+("1 perpendicular") son los vectores que suman 0. "L ≻ 0 en **1**^⊥" = definida positiva salvo en la
+rotación global, que es lo que se pide para un mínimo estricto.

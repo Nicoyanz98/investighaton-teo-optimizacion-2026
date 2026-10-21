@@ -1,6 +1,6 @@
 # Dirección A: qué logramos y por dónde seguir (19/10/2026)
 
-Detalle técnico y números: `notes/direccion_A.md`. Notebook: `notebooks/02_plantillas.ipynb`.
+Detalle técnico y números: `notes/direccion_A.md`. Notebook: `notebooks/Implementacion_papers.ipynb`.
 
 ## Qué logramos
 

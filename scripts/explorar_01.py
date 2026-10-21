@@ -3,7 +3,7 @@
 Cada vértice de H es un clique y cada arista de H un bipartito completo: P = A_H + I, sin densidades
 intermedias. Para cada H conexo con k vértices (nauty) se busca
     max μ = min_a d_a   sobre tamaños x y fases φ (φ_0 = 0)
-    s.t. F = 0,  c_a ≥ margen_c,  λ_min(L en ⊥1) ≥ margen,  fases no todas iguales
+    s.t. F = 0,  c_a ≥ margen_c,  λ_min(L en 1^⊥) ≥ margen,  fases no todas iguales
 con SLSQP desde varios arranques al azar. Prefiltro: el LP max_x min_a x(N[a]) tiene que superar
 --piso (ignorar la estabilidad solo puede dar más).
 
@@ -41,7 +41,7 @@ class Restricciones:
     """Desempaqueta v = (logits de x, φ_1..φ_{k−1}, t) y evalúa las restricciones de una plantilla 0/1."""
 
     def __init__(self, M, margen, margen_c):
-        """Guarda M = A + I, la base de ⊥1 y los márgenes."""
+        """Guarda M = A + I, la base de 1^⊥ y los márgenes."""
         self.M = M
         self.k = len(M)
         self.Q = base_perpendicular(self.k)
@@ -72,7 +72,7 @@ class Restricciones:
         return np.array(splitting(x, phi, self.M)) - self.margen_c
 
     def autovalor_min(self, v):
-        """Menor autovalor de L en ⊥1."""
+        """Menor autovalor de L en 1^⊥ (sin la rotación global)."""
         x, phi = self.desempaquetar(v)
         L = np.array(matriz_clusters(x, phi, self.M))
         return np.linalg.eigvalsh(self.Q.T @ L @ self.Q).min()

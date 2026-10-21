@@ -1,8 +1,8 @@
 # Notas: presentaciones, teoría y calentamientos 1–2
 
-Resumen de lo charlado en la sesión del 17–18/10/2026 (con Claude). Complementa a `text.md`
+Resumen de lo charlado en la sesión del 17–18/10/2026 (con Claude). Complementa a `aclaraciones_presentacion.md`
 (explicación larga de energía / sincronización / paisaje benigno) y al notebook
-`notebooks/01_calentamiento_Kn.ipynb` (secciones 1 y 2).
+`notebooks/Calentamientos.ipynb`.
 
 ---
 
@@ -108,8 +108,8 @@ modelo, la energía y la pregunta central.
 ## 2. Calentamiento 1: K_n (notebook, sección 1)
 
 - **Pipeline:**
-  - `simulate`: descenso de gradiente con Euler y h = 1/(2·deg máx), lo que garantiza que la energía no suba. Para cuando ‖∇𝓔‖ < tol.
-  - `classify`: autovalores del Hessiano → mínimo estricto, silla, máximo o degenerado.
+  - `simular`: descenso de gradiente con Euler y h = 1/(2·deg máx), lo que garantiza que la energía no suba. Para cuando ‖∇𝓔‖ < tol.
+  - `clasificar`: autovalores del Hessiano → mínimo estricto, silla, máximo o degenerado.
 - **Chequeos:** gradiente y Hessiano coinciden con diferencias finitas; la identidad 𝓔 = (n²/2)(1 − |r|²) y θ̇_v = n|r| sin(ψ − θ_v) se cumplen.
 - **Una corrida (n = 10):** la energía baja de 34.8 a 0 en 37 pasos; |r| → 1; el final es un mínimo estricto.
 - **Muchas corridas:** n ∈ {3, …, 100}, 200 cada uno → **100 % sincronizan**, todas en mínimo estricto. En el estado sincronizado el Hessiano es el Laplaciano de K_n (autovalores 0 y n).
@@ -120,7 +120,7 @@ modelo, la energía y la pregunta central.
 
 ## 3. Calentamiento 2: C_n (notebook, sección 2)
 
-- **Funciones nuevas:** `cycle_graph`, `twisted_state`, `winding_number`, `draw_cycle`.
+- **Funciones nuevas:** `grafo_ciclo`, `twisted_state`, `winding_number`, `dibujar_ciclo`.
 - **Chequeos:** los twisted states son equilibrios (‖θ̇‖ ~ 10⁻¹⁵) y el espectro coincide con la fórmula cerrada.
 - **Tabla n = 3…12:** la clasificación coincide con la regla |q| vs n/4 en **45/45** casos. Los twisted states nunca son sillas: los autovalores tienen el signo de cos d.
   - La tabla de 2.4 muestra además λ_min (autovalor no nulo más chico) junto al tipo: los pozos se vuelven más playos al crecer n (~4π²/n²) y al acercarse q a n/4.
@@ -135,11 +135,11 @@ modelo, la energía y la pregunta central.
 
 - **Grafo:** v conectado con v±1, …, v±k; grado 2k, conectividad μ = 2k/(n − 1). k = 1 es C_n; 2k = n − 1 es K_n.
 - **Teoría:** los twisted states son equilibrios para todo k. El Hessiano es circulante, con autovalores λ_m = Σ_j cos(jd)(2 − 2cos(2πjm/n)). Las aristas largas con jd > 90° tienen peso negativo → aparecen sillas y las trampas se desestabilizan.
-- **Funciones nuevas:** `circulant_graph`, `twisted_eigs` (fórmula cerrada), `is_trap`, `k_max`, `k_max_q1`.
+- **Funciones nuevas:** `grafo_circulante`, `autovalores_twisted` (fórmula cerrada), `es_trampa`, `k_max`, `k_max_q1`.
 - **Tabla n = 20:** q = 1 es mínimo hasta k = 6 (μ ≈ 0.63) y silla desde k = 7; los q grandes caen antes.
 - **¿Hasta qué k?** (n = 5…200 con todos los q; hasta n = 5000 con q = 1):
   - los k con trampa forman siempre un intervalo 1…k_max, y el último en sobrevivir es siempre q = 1;
-  - fórmula y `classify` coinciden para n ≤ 30;
+  - fórmula y `clasificar` coinciden para n ≤ 30;
   - k_max/n → 0.340 (n = 5000: k_max = 1701), o sea **μ → ≈ 0.681**: el resultado de Wiley–Strogatz–Girvan (2006), primera evidencia de μ_c ≥ 0.68. Queda por debajo de 11/16 → para mejorar hay que salir de C_{n,k} (dirección A).
 - **Simulaciones (n = 30, k_max = 9, 200 corridas por k):** la fracción que sincroniza sube de 75/200 (k = 1) a 199/200 (k = 8, 9) y 200/200 desde k = 10. Todos los finales son mínimos estrictos y los no sincronizados son twisted states. Cerca de k_max la trampa existe pero su cuenca es diminuta: buscar trampas con μ alto pide análisis del Hessiano, no inicios al azar.
 
@@ -147,6 +147,11 @@ modelo, la energía y la pregunta central.
 
 - **Elegir dirección** (A–E) para las 3 semanas; los calentamientos ya dejan el pipeline: simulador + test de estabilidad por el Hessiano + fórmula cerrada para familias circulantes.
 - **Logística:**
-  - Notebook en `notebooks/Calentamientos.ipynb`. Se ejecuta en Colab o con `.venv` local (~2 min).
+  - Notebook en `notebooks/Calentamientos.ipynb`. Es **autocontenido**: se abre directo en Colab o con
+    `.venv` local (~2 min).
+  - Desde el refactor del 19/10 las funciones tienen nombres en español (`simular`, `clasificar`,
+    `grafo_ciclo`, …) y son copias textuales de `src/grafos.py`, `src/kuramoto.py` y
+    `src/graficos.py`. `tests/test_notebook_sincronizado.py` avisa si una copia y su original
+    dejan de coincidir: si se cambia una función, hay que cambiarla en los dos lugares.
   - Gráficos con nombres de variables en los ejes, sin títulos redundantes.
-  - Para la declaración de uso de IA: estas notas, `text.md` y el historial de la sesión con Claude documentan cómo se usó.
+  - Para la declaración de uso de IA: estas notas, `aclaraciones_presentacion.md` y el historial de la sesión con Claude documentan cómo se usó.
