@@ -149,7 +149,10 @@ def _menor_separacion(caja):
 # ---------------------------------------------------------------- certificado completo
 
 def certificar(xq, Pq, phi_centro, radio="1e-40", dps=100, verbose=True):
-    """Corre todos los pasos del certificado. Devuelve un dict; ok = True solo si todos pasan."""
+    """Corre todos los pasos del certificado. Devuelve un dict; ok = True solo si todos pasan.
+
+    La clave "caja" tiene la caja de fases (intervalos) donde Krawczyk garantiza la solución.
+    """
     iv.dps = dps
     mp.mp.dps = dps
     m = len(xq)
@@ -181,6 +184,7 @@ def certificar(xq, Pq, phi_centro, radio="1e-40", dps=100, verbose=True):
     resultado["distintas"] = resultado["min |sin(Δφ/2)| (cota inf)"] > 0
 
     resultado["mu"] = min(grados(xq, Pq))
+    resultado["caja"] = caja
     resultado["ok"] = (resultado["krawczyk"] and resultado["c>0"]
                        and resultado["cholesky"] and resultado["distintas"])
     if verbose:
@@ -191,7 +195,7 @@ def certificar(xq, Pq, phi_centro, radio="1e-40", dps=100, verbose=True):
 def imprimir_certificado(resultado):
     """Imprime cada paso del certificado y el μ exacto."""
     for clave, valor in resultado.items():
-        if clave == "mu":
+        if clave in ("mu", "caja"):
             continue
         texto = valor if isinstance(valor, bool) else mp.nstr(valor, 6)
         print(f"  {clave:28s} {texto}")

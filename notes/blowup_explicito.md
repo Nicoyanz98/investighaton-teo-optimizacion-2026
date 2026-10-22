@@ -1,0 +1,154 @@
+# Grafo explícito tipo S7: de la plantilla de O'Keeffe a un grafo con n "chico"
+
+**Estado:** Fases 0–3 hechas. Hay un grafo explícito, no pesado y **certificado por intervalos** con
+n = 30 000 004 y μ = 10327019/15000002 ≈ 0.688468 > 11/16. La validación ciega en float64 (Fase 4)
+coincide; solo falta su Lanczos completo en GPU. Faltan también el notebook y las sub-piezas (camino B).
+
+## Motivación
+- O'Keeffe (arXiv 2610.21271) prueba μ_c ≥ 0.6929 con la familia S7, pero el grafo que certifica
+  tiene n > 9·10⁸⁴ y nunca lo escribe. El tamaño viene de dos lados:
+  - D ≈ 3·10⁴²: racionaliza un miembro que está a 6·10⁻¹⁹ de ser neutro;
+  - n = D²ℓ: el blow-up aleatorio de su Lema 2.
+- Canale da un grafo explícito (k-spinning, n = 8k) que con n = 10⁴ llega a 0.6874 < 11/16.
+- **Objetivo:** un grafo no pesado, explícito y certificado, con μ > 11/16 y n lo más chico posible.
+
+## Notación
+- Clusters (Am, Ap, Bm, Bp, Cm, Cp, W): tres sectores de C4 partidos en mitades y W entero.
+- **Plantilla:** (x, φ, P) con fases φ = fase del sector + h·s.
+- **Datos enteros:**
+  - tamaños n_a = k_a·g, con k = (k_A × 6, k_W);
+  - grados d_ab = vecinos que tiene un vértice de a en b, con n_a d_ab = n_b d_ba y d_aa = n_a − 1.
+  - La plantilla del grafo es x_a = n_a/n, P_ab = d_ab/n_b, y μ = (δ + 1)/n = min_a d_a.
+- **Jacobiano** del equilibrio: J = ∂F/∂φ (φ_0 fijo), con valores singulares σ_1 ≥ … ≥ σ_6.
+
+## Fase 0: frontera μ contra margen (`scripts/curva_s7.py` → `data/s7_curva.json`)
+- **Tamaños racionales desde el principio:** x_a = k_a/K. El óptimo pide k_W/k_A ≈ 1 + q* ≈ 1.65:
+  - (3, 5) y (20, 33) andan bien;
+  - (5, 8), con cociente 1.6, pierde mucho (0.6826).
+- **Barrido:** h ∈ {0.005, …, 0.05} y margen del SDP ε ∈ {1e-5, …, 1e-2}, donde ε es el margen de
+  L/h² ⪰ ε.
+- **Resultado:** μ baja al subir ε, y σ_min crece como ~ε·h². La frontera útil con μ > 11/16 es:
+
+  | h | ε | μ plantilla | σ_min | n redondeo ingenuo |
+  |---|---|---|---|---|
+  | 0.01 | 1e-3 | 0.68961 | 2.6e-7 | ~10¹² |
+  | 0.02 | 1e-3 | 0.68918 | 1.0e-6 | ~10¹⁰ |
+  | 0.03 | 1e-3 | 0.68847 | 2.3e-6 | ~10⁹ |
+
+- **El óptimo del SDP no está en equilibrio exacto:** F ≈ 1e-9, y eso solo ya mueve las fases
+  ~1e-5. Por eso `pulir` corrige P con mínima norma (F es lineal en P) para que F(φ) = 0 exacto en
+  alta precisión, y recién después se redondea.
+
+## Por qué el redondeo es caro: el pliegue
+- J tiene **tres** valores singulares chicos, los tres modos neutros heredados de C4. Con h = 0.01 y
+  ε = 1e-3: 8·10⁻⁵, 6·10⁻⁷ y 3·10⁻⁷. Los otros son ≥ 0.13.
+- Cerca de S7, el mínimo estricto está al lado de un pliegue (silla-nodo). En la dirección blanda k, el
+  equilibrio es raíz de algo como σ_k y + (c/2) y² + ρ_k = 0, donde ρ_k es el residuo de esa ecuación.
+  - Existe solo si 2cρ_k ≤ σ_k².
+  - Su estabilidad pasa a ser √(σ_k² − 2cρ_k).
+- **Redondeo ingenuo:** ρ ~ 1/n, así que hace falta n ≳ c/σ². Es lo que se mide en la tabla.
+- **Lo vimos numéricamente:** con n chico, Newton se estanca en |F| ~ 1e-9 porque no hay equilibrio
+  cerca. Los "autovalores negativos" que salían antes eran de puntos que no son equilibrios.
+
+## Fase 1: redondeo por reticulado (`src/enteros.py`, `src/reticulado.py`)
+- **Reducción de Lyapunov–Schmidt.** Con J = U S Vᵀ en la plantilla:
+  - se resuelven exactamente las ecuaciones rígidas U_rᵀ F(φ* + V_r z) = 0 (bien condicionadas);
+  - queda el residuo blando g = U_bᵀ F, de 3 componentes. g está bien definido aunque no haya
+    equilibrio, y es casi lineal en los grados.
+- **Newton entero.** En cada paso se elige u ∈ Z^13 (los 13 pares con densidad intermedia) con
+  dg·u ≈ −g, midiendo cada componente en unidades de su tolerancia σ_k². Se usa LLL + Babai con el
+  encaje de Kannan (`enteros_cercanos`).
+- **Granularidad.** Para que n_a d_ab = n_b d_ba con mitad y W, d_aW tiene que ser múltiplo de
+  k_W/mcd(k_A, k_W), así que P_aW se mueve de a 1/mcd(n_A, n_W). Esto favorece tamaños con k chicos:
+  (3, 5) da pasos de 23/n, y (20, 33) de 153/n.
+- **Límite del método (heurístico).** El residuo blando tiene que quedar ≲ σ², y cada corrección tiene
+  que mover las densidades ≲ σ (si no, los términos cuadráticos del rígido lo arruinan). Con 13 enteros
+  y 3 restricciones da n ≳ C·σ^{−1.23}, contra C·σ^{−2} del ingenuo. Con más enteros libres (partir
+  clusters en sub-piezas de la misma fase) tendería a n ~ C/σ.
+
+### Resultados (evaluación exacta en alta precisión, todavía sin intervalos)
+`scripts/s7_entero.py` → `data/s7_enteros.json`.
+
+| plantilla | n | redondeo ingenuo | reticulado | μ del grafo |
+|---|---|---|---|---|
+| h = 0.03, ε = 1e-3, (3, 5) | 1·10⁷ | no | no | — |
+| h = 0.03, ε = 1e-3, (3, 5) | 3·10⁷ | no | **sí** (λ = 5.3e-6) | **0.688468** |
+| h = 0.02, ε = 1e-3, (3, 5) | 3·10⁷ | no | no | — |
+| h = 0.02, ε = 1e-3, (3, 5) | 1·10⁸ | no | **sí** (λ = 1.1e-6) | **0.689183** |
+| h = 0.01, ε = 1e-3, (3, 5) | 1·10⁹ | no | no (λ = −8e-8, por poco) | — |
+
+Comparación: Canale tiene 0.6874 con n = 10⁴, y O'Keeffe 0.6929 con n > 10⁸⁵, sin escribir el grafo.
+
+## Fase 2: blow-up circulante (`src/blowup.py`)
+- **Vértices:** el cluster a tiene k_a bloques, cada uno una copia de Z_g; el vértice es (a, i, v).
+- **Dentro de un cluster:** clique (cada bloque es Z_g ∖ {0} y los bloques se unen completos).
+- **Entre clusters a < b:** (a, i, v) ~ (b, j, v + s) con s ∈ {0, …, t_ij − 1}, un intervalo como en
+  el k-spinning de Canale.
+- **Tabla t (k_a × k_b), un problema de transporte:** filas d_ab, columnas d_ba, entradas en
+  {base, base + 1}.
+  - Los "+1" de la fila i van en las columnas cíclicas i·e, …, i·e + e − 1, con e = d_ab − k_b·base.
+  - Así cada columna recibe los mismos y no hace falta que g sea múltiplo de nada.
+- **Grados exactos:** cada vértice de a tiene exactamente d_ab vecinos en b, así que las fases de la
+  plantilla entera son un equilibrio exacto del grafo.
+- **Descripción publicada** (`descripcion_compacta`): k, g, d, las tablas y las fases. Son unos pocos
+  KB por grafo.
+
+## Fase 3: certificado del grafo completo (`blowup.certificar_blowup`, `scripts/certificar_grafo_s7.py`)
+- **Descomposición de Fourier.** El Hessiano conmuta con v → v + 1, así que se parte en g bloques
+  H_m de K × K (K = 23).
+  - Lo verifica `tests/test_blowup.py`: el espectro denso es la unión de los espectros de H_m.
+- **Modos de cluster** (los vectores constantes por cluster, dentro de H_0): dan exactamente n²·L(y).
+  Los certifica `certificado.certificar` (Krawczyk + Cholesky por intervalos), que además devuelve la
+  caja de fases.
+- **Todos los demás modos:** cota de Schur + Gershgorin de 7 × 7, con los cos en intervalos sobre la
+  caja. El margen del cluster a es Σ_b d_ab cos_ab + 1 − Σ_{b≠a} |cos_ab| √s_ab.
+  - Para m ≠ 0: |N̂(m)| ≤ min(t, g − t), y entonces s_ab = min(d_ab, n_b − d_ab)·min(d_ba, n_a − d_ba).
+    **No depende de qué conjuntos de desplazamientos se elijan.**
+  - Para H_0 ortogonal a los modos de cluster: solo actúa E = t − base, con filas y columnas ≤ k.
+  - Margen medido: ≥ 0.217·n en todos los casos. Es enorme porque las densidades intermedias están
+    entre clusters casi ortogonales (cos = O(h)) o en pares con densidad casi 0 o casi 1.
+- **Conclusión:** toda la dificultad está en el cociente de 7 × 7; el blow-up no cuesta nada.
+- **Resultados** (`data/grafos_s7.json`, 1.6 s en total):
+  - los 7 grafos del reticulado salen **certificados**;
+  - controles negativos (redondeo ingenuo del mismo n): Krawczyk encuentra el equilibrio, pero el
+    Cholesky de L falla (pivote < 0);
+  - el único ingenuo que pasa es h = 0.03 con n = 10⁹, como en la Fase 1.
+
+  | h | n | μ certificado | pivote mínimo de L | margen del resto |
+  |---|---|---|---|---|
+  | 0.03 | 3.0·10⁷ | 10327019/15000002 ≈ 0.688468 | 1.6e-6 | 0.218 n |
+  | 0.02 | 1.0·10⁸ | ≈ 0.689183 | 2.9e-7 | 0.217 n |
+
+## Fase 4: validación ciega (`src/validacion.py`, `scripts/validar_grafo.py`)
+- **Sin Fourier ni Gershgorin.** Solo usa la regla de adyacencia de la descripción compacta.
+  - W·y implícito: el clique de cada cluster más las ventanas cíclicas con sumas prefijas (cada bloque
+    centrado por su media para no perder precisión). Cuesta O(n·k) y la memoria es O(n).
+  - H·x = h∘x − cosθ∘W(cosθ∘x) − sinθ∘W(sinθ∘x), en float64, con numpy o torch (CPU/CUDA).
+  - Tests contra el grafo denso, incluido un análogo con las densidades reales y g = 60.
+- **Chequeos:** grados con W·1_b; velocidad; Q_ab = 1_aᵀH1_b/√(n_a n_b); Lanczos en el complemento de los
+  modos de cluster; y, con `--completo`, Lanczos en 1^⊥ desde un vector al azar.
+- **Detalle numérico de Lanczos:** el espectro del resto es muy degenerado y β cae a ~1e-10 en pocos
+  pasos. Hay que reproyectar w antes de normalizar; si no, aparece un valor de Ritz espurio ≈ 0.
+- **Resultados en CPU (n = 3·10⁷, 4.5 s por producto H·x):**
+  - grados exactos; max |θ̇| = 1.5e-9 (≈ 5e-17·n);
+  - |Q implícita − fórmula| = 2e-9; autovalores de Q: 0 (rotación), **157.5**, 210.5, 2.25e4 y tres
+    ≈ 7.8e6;
+  - resto: λ_min = 6.5372e6, contra la cota certificada de Gershgorin 6.5283e6. La cota es casi justa.
+  - Por lo tanto λ_min(H en 1^⊥) = 157.5 > 0.
+- **Pendiente:** el Lanczos ciego en 1^⊥ (`--completo`) en la GPU del server. Tiene que dar 157.5.
+
+## Pendiente
+- **Notebook** `notebooks/Grafo_explicito_S7.ipynb`.
+- **Camino B, para bajar n:** partir cada cluster en sub-piezas con la misma fase (por ejemplo, W en
+  dos mitades con densidades distintas hacia los vecinos).
+  - Suma enteros libres sin agregar ecuaciones blandas (las sub-piezas tienen la misma fase, así que
+    el residuo blando sigue siendo de 3 componentes).
+  - Con más enteros libres por restricción, el vector más cercano del reticulado deja un residuo
+    blando menor sin mover mucho las densidades, y eso acerca n a C/σ (hoy C·σ^{−1.23}).
+  - Hay que cuidar que la plantilla siga estricta, porque las sub-piezas agregan modos de cluster
+    nuevos. En el cociente se verifica con el mismo `certificar`, que ya acepta cualquier cantidad de
+    clusters.
+  - El blow-up y las cotas de Gershgorin no cambian.
+- **Otras mejoras:**
+  - optimizar la plantilla pidiendo σ_min ≥ objetivo en lugar de margen del SDP;
+  - mejor Nelder–Mead (la curva es ruidosa: (11, 18) a veces sale peor que (3, 5)).
