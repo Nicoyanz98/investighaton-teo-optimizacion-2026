@@ -9,7 +9,9 @@ Figuras, en data/figuras/:
         pares unidos. Se ven los cliques, los pares vacíos y las bandas circulantes (intervalos).
   grafo_n<n>_sim_<modo>.png, con --simular:
     perturbado  grafo completo desde el estado certificado más ruido gaussiano dentro de cada cluster
-                (se le resta la media por cluster): tiene que volver al estado, no sincronizar.
+                (se le resta la media por cluster). El ruido se apaga rápido, pero mientras tanto empuja a
+                los clusters enteros por los modos lentos, cuya cuenca es diminuta (~1e-4 rad): con ruido
+                grande el estado termina escapando y sincroniza; con ruido chico vuelve.
     azar        grafo completo desde fases uniformes al azar: lo esperable es que sincronice (la trampa
                 tiene una cuenca chica).
     clusters    dinámica exacta de los estados constantes por cluster (una ecuación por cluster, porque
@@ -17,8 +19,9 @@ Figuras, en data/figuras/:
                 que la simulación del grafo completo no llega a ver.
 
 Dinámica (tiempo normalizado): θ̇_u = (1/n) Σ_v W_uv sin(θ_v − θ_u). El grafo completo se integra con
-RK4 y los productos implícitos W·y de src/validacion.py (numpy, o torch en cpu/cuda); los estados por
-cluster, con LSODA (scipy).
+RK4 y los productos implícitos W·y de src/validacion.py (numpy, o torch en cpu/cuda) hasta --tiempo;
+después cada cluster está concentrado (los modos internos decaen a tasa ~0.22) y se sigue, hasta
+--tiempo-clusters, con la dinámica exacta de las fases medias de los clusters (LSODA, scipy).
 
 Comandos:
   .venv/bin/python scripts/visualizar_grafo.py                                     # solo las figuras
@@ -290,7 +293,15 @@ class Simulacion:
                       f"  ({time.time() - inicio:.0f} s)", flush=True)
             if paso < pasos:
                 theta = self.paso_rk4(theta, dt)
-        return serie, instantaneas
+        return serie, instantaneas, theta
+
+    def medias_cluster(self, theta):
+        """Fase media (circular) de cada cluster, como numpy."""
+        coseno, seno = self.arreglos.coseno_seno(theta)
+        medias = []
+        for C, S in zip(self.grafo.por_cluster(coseno), self.grafo.por_cluster(seno)):
+            medias.append(np.arctan2(float(S.mean()), float(C.mean())))
+        return np.array(medias)
 
     def inicial_perturbado(self, ruido, semilla):
         """Estado certificado + ruido gaussiano con media 0 en cada cluster (solo modos dentro de los clusters)."""
@@ -302,21 +313,26 @@ class Simulacion:
         return self.arreglos.desde(np.random.default_rng(semilla).uniform(0, 2 * np.pi, self.grafo.n))
 
 
-def dibujar_simulacion(serie, instantaneas, cluster_muestra, descripcion, titulo, archivo):
-    """r(t), distancia al estado certificado y fotos de las fases de una muestra de vértices."""
+def dibujar_simulacion(serie, continuacion, instantaneas, cluster_muestra, descripcion, titulo, archivo):
+    """r(t) y distancia al estado certificado (grafo completo y continuación por clusters), y fotos de las fases."""
     nombres, colores = nombres_y_colores([float(p) for p in descripcion["fases"]])
-    fig = plt.figure(figsize=(13, 6.4))
+    fig = plt.figure(figsize=(13, 6.6))
     grilla = fig.add_gridspec(2, len(instantaneas), height_ratios=[1, 1.15])
     eje_r = fig.add_subplot(grilla[0, : len(instantaneas) // 2])
     eje_d = fig.add_subplot(grilla[0, len(instantaneas) // 2:])
-    eje_r.plot(serie["t"], serie["r"], color="#2a78d6", lw=2)
-    eje_r.set(xlabel="tiempo (normalizado)", ylabel="r = |⟨e^{iθ}⟩|", ylim=(0, 1.03),
-              title="parámetro de orden (1 = sincronizado)")
-    eje_d.plot(serie["t"], serie["distancia"], color="#eb6834", lw=2)
-    eje_d.set(xlabel="tiempo (normalizado)", ylabel="max |θ − θ*| (rad)", yscale="log",
-              title="distancia al estado certificado θ*")
-    for eje in (eje_r, eje_d):
+    distancias = serie["distancia"] + continuacion["distancia"]
+    for eje, clave, color in ((eje_r, "r", "#2a78d6"), (eje_d, "distancia", "#eb6834")):
+        eje.plot(serie["t"][1:], serie[clave][1:], color=color, lw=2, label="grafo completo (RK4)")
+        eje.plot(continuacion["t"], continuacion[clave], color=color, lw=2, ls="--",
+                 label="continuación: dinámica exacta por clusters")
+        eje.axvline(serie["t"][-1], color=GRIS, lw=1, ls=":")
+        eje.set(xscale="log", xlabel="tiempo (normalizado)")
         eje.grid(alpha=0.25)
+        eje.legend(fontsize=7, loc="best")
+    eje_r.set(ylabel="r = |⟨e^{iθ}⟩|", ylim=(0, 1.03), title="parámetro de orden (1 = sincronizado)")
+    eje_d.set(ylabel="max |θ − θ*| (rad)", title="distancia al estado certificado θ* (sin la rotación)")
+    if min(distancias) < 0.1 * max(distancias):
+        eje_d.set_yscale("log")
     rng = np.random.default_rng(1)
     color_vertices = np.array([colores[c] for c in cluster_muestra])
     for columna, (t, fases) in enumerate(instantaneas):
@@ -352,33 +368,47 @@ def campo_clusters(descripcion):
     return f, jac
 
 
+def envolver(angulo):
+    """Ángulo llevado a [−π, π)."""
+    return (angulo + np.pi) % (2 * np.pi) - np.pi
+
+
+def integrar_clusters(descripcion, y0, tiempo, puntos=120):
+    """Integra la dinámica por clusters desde y0 (LSODA): tiempos, distancia a las fases certificadas y r."""
+    fases = np.array([float(p) for p in descripcion["fases"]])
+    x = np.array(descripcion["k"], dtype=float) / sum(descripcion["k"])
+    f, jac = campo_clusters(descripcion)
+    tiempos = np.concatenate([[0], np.logspace(-1, np.log10(tiempo), puntos)])
+    sol = solve_ivp(f, (0, tiempo), y0, method="LSODA", jac=jac, rtol=1e-10, atol=1e-13, t_eval=tiempos)
+    distancias = []
+    radios = []
+    for y in sol.y.T:
+        diferencia = envolver(y - fases)
+        distancias.append(float(np.abs(envolver(diferencia - np.sum(x * diferencia))).max()))
+        radios.append(float(abs(np.sum(x * np.exp(1j * y)))))
+    return sol.t, distancias, radios
+
+
 def simular_clusters(descripcion, amplitudes, tiempo, semilla):
     """Para cada amplitud δ: perturba las fases de los clusters (al azar y en el modo más lento) e integra."""
     fases = np.array([float(p) for p in descripcion["fases"]])
     x = np.array(descripcion["k"], dtype=float) / sum(descripcion["k"])
-    f, jac = campo_clusters(descripcion)
+    _, jac = campo_clusters(descripcion)
     autovalores, vectores = np.linalg.eig(jac(0, fases))
     orden = np.argsort(-autovalores.real)
     direcciones = {"modo más lento": vectores[:, orden[1]].real,
                    "al azar": np.random.default_rng(semilla).standard_normal(len(fases))}
-    tiempos = np.concatenate([[0], np.logspace(-1, np.log10(tiempo), 120)])
     corridas = []
     for nombre, direccion in direcciones.items():
         direccion = direccion - np.sum(x * direccion)
         direccion = direccion / np.abs(direccion).max()
         for delta in amplitudes:
             inicio = time.time()
-            sol = solve_ivp(f, (0, tiempo), fases + delta * direccion, method="LSODA", jac=jac,
-                            rtol=1e-10, atol=1e-13, t_eval=tiempos)
-            distancias = []
-            for y in sol.y.T:
-                diferencia = y - fases
-                diferencia = diferencia - np.sum(x * diferencia)
-                distancias.append(float(np.abs((diferencia + np.pi) % (2 * np.pi) - np.pi).max()))
-            r_final = float(abs(np.sum(x * np.exp(1j * sol.y[:, -1]))))
+            tiempos, distancias, radios = integrar_clusters(descripcion, fases + delta * direccion, tiempo)
+            r_final = radios[-1]
             print(f"  {nombre:15s} δ = {delta:.0e}: distancia final {distancias[-1]:.1e},  r final = {r_final:.4f}"
                   f"  ({time.time() - inicio:.1f} s)", flush=True)
-            corridas.append({"direccion": nombre, "delta": delta, "t": sol.t.tolist(), "distancia": distancias,
+            corridas.append({"direccion": nombre, "delta": delta, "t": tiempos.tolist(), "distancia": distancias,
                              "r_final": r_final})
     return corridas, -np.sort(autovalores.real)[::-1]
 
@@ -432,7 +462,9 @@ def main():
     print("estructura:", archivo, flush=True)
 
     modos = [m for m in args.simular.split(",") if m]
-    resumen = {"n": n, "origen": origen}
+    # las corridas se acumulan en el mismo JSON (una clave por modo y ruido)
+    archivo_json = CARPETA_DATOS / f"simulacion_n{n}.json"
+    resumen = cargar_json(archivo_json.name) if archivo_json.exists() else {"n": n, "origen": origen}
     if "perturbado" in modos or "azar" in modos:
         arreglos = Arreglos(None if args.dispositivo == "numpy" else args.dispositivo)
         simulacion = Simulacion(descripcion, arreglos, semilla=args.semilla)
@@ -448,12 +480,21 @@ def main():
             else:
                 theta = simulacion.inicial_azar(args.semilla)
                 titulo = f"Desde fases uniformes al azar (n = {n:,})"
-            serie, instantaneas = simulacion.correr(theta, args.tiempo, args.dt, fotos)
-            archivo = carpeta / f"grafo_n{n}_sim_{modo}.png"
-            dibujar_simulacion(serie, instantaneas, simulacion.cluster_muestra, descripcion, titulo, archivo)
-            print(f"  r final = {serie['r'][-1]:.4f}, distancia final = {serie['distancia'][-1]:.2e} → {archivo}",
+            serie, instantaneas, theta = simulacion.correr(theta, args.tiempo, args.dt, fotos)
+            print(f"  fin del grafo completo: r = {serie['r'][-1]:.4f}, distancia = {serie['distancia'][-1]:.2e}",
                   flush=True)
-            resumen[modo] = serie
+            # al final cada cluster está casi concentrado: se sigue con la dinámica exacta de sus fases medias
+            fases = np.array([float(p) for p in descripcion["fases"]])
+            y0 = fases + envolver(simulacion.medias_cluster(theta) - fases)
+            tiempos, distancias, radios = integrar_clusters(descripcion, y0, args.tiempo_clusters)
+            continuacion = {"t": (args.tiempo + tiempos[1:]).tolist(), "distancia": distancias[1:], "r": radios[1:]}
+            sufijo = f"perturbado_ruido{args.ruido:g}" if modo == "perturbado" else modo
+            archivo = carpeta / f"grafo_n{n}_sim_{sufijo}.png"
+            dibujar_simulacion(serie, continuacion, instantaneas, simulacion.cluster_muestra, descripcion, titulo,
+                               archivo)
+            print(f"  continuación por clusters hasta t = {continuacion['t'][-1]:.0e}: r = {radios[-1]:.4f},"
+                  f" distancia = {distancias[-1]:.2e} → {archivo}", flush=True)
+            resumen[sufijo] = {"grafo completo": serie, "continuacion": continuacion}
     if "clusters" in modos:
         print("simulación 'clusters' (estados constantes por cluster, LSODA):", flush=True)
         amplitudes = [float(v) for v in args.amplitudes.split(",")]
