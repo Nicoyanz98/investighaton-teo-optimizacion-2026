@@ -37,6 +37,14 @@ def test_productos_implicitos_coinciden_con_los_densos():
         assert np.allclose(grafo.producto_hessiano(y), H @ y, atol=1e-10)
 
 
+def test_velocidad_en_fases_cualesquiera():
+    descripcion, grafo, H, d = _caso(7)
+    W = adyacencia_densa(K, G, d)
+    theta = np.random.default_rng(3).uniform(0, 2 * np.pi, grafo.n)
+    esperada = (W * np.sin(theta[None, :] - theta[:, None])).sum(axis=1)
+    assert np.allclose(grafo.velocidad_en(theta), esperada, atol=1e-10)
+
+
 def test_grados_y_cociente():
     descripcion, grafo, H, d = _caso(5)
     minimos, maximos = grados_medidos(grafo)

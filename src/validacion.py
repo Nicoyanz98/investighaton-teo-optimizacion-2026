@@ -71,6 +71,18 @@ class Arreglos:
         """Norma euclídea."""
         return self.punto(x, x) ** 0.5
 
+    def coseno_seno(self, x):
+        """(cos x, sin x) elemento a elemento."""
+        if self.torch is None:
+            return np.cos(x), np.sin(x)
+        return self.torch.cos(x), self.torch.sin(x)
+
+    def tomar(self, x, indices):
+        """x[indices] como numpy (indices: arreglo numpy de enteros)."""
+        if self.torch is None:
+            return np.asarray(x[indices])
+        return x[self.torch.from_numpy(indices).to(self.dispositivo)].cpu().numpy()
+
 
 # ---------------------------------------------------------------- operador del grafo
 
@@ -145,8 +157,16 @@ class GrafoImplicito:
 
     def velocidad(self):
         """θ̇_u = Σ_v W_uv sin(θ_v − θ_u) en las fases del grafo."""
-        return (self.coseno * self.producto_adyacencia(self.seno)
-                - self.seno * self.producto_adyacencia(self.coseno))
+        return self._velocidad(self.coseno, self.seno)
+
+    def velocidad_en(self, theta):
+        """θ̇_u = Σ_v W_uv sin(θ_v − θ_u) en fases θ cualesquiera (para simular la dinámica)."""
+        coseno, seno = self.arreglos.coseno_seno(theta)
+        return self._velocidad(coseno, seno)
+
+    def _velocidad(self, coseno, seno):
+        """cos θ ∘ W sin θ − sin θ ∘ W cos θ, que es Σ_v W_uv sin(θ_v − θ_u)."""
+        return coseno * self.producto_adyacencia(seno) - seno * self.producto_adyacencia(coseno)
 
     def indicadora(self, b):
         """Vector 1 en los vértices del cluster b."""
