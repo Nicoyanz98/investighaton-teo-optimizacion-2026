@@ -9,7 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.enteros import (  # noqa: E402
-    evaluar_enteros, fases_s7, grados_ingenuos, pulir, tamanos_enteros, tamanos_exactos,
+    evaluar_enteros, fases_s7, grados_ingenuos, pulir, subdividir, tamanos_enteros, tamanos_exactos,
 )
 from src.experimentos import cargar_json  # noqa: E402
 from src.plantillas import fuerzas  # noqa: E402
@@ -71,3 +71,19 @@ def test_grado_entero_guardado_es_estricto():
     evaluacion = evaluar_enteros(k, r["g"], r["grados"], r["fases"], r["h"], phi_referencia=phi_plantilla)
     assert evaluacion["ok"]
     assert r["mu"] > 11 / 16
+
+
+def test_subdividir_mantiene_el_equilibrio():
+    """Partir W en piezas (2, 3): mismas fases, densidades copiadas, piezas completas entre sí, F = 0."""
+    fila = [f for f in cargar_json("s7_curva.json") if f["h"] == 0.03 and f["margen"] == 1e-3 and f["k"] == [3, 5]][0]
+    k = [3] * 6 + [5]
+    x, phi, P = pulir(tamanos_exactos(k), fases_s7(0.03, np.array(fila["s"])), np.array(fila["P"]))
+    x2, phi2, P2, k2 = subdividir(x, phi, P, k, [[3]] * 6 + [[2, 3]])
+    assert k2 == [3] * 6 + [2, 3]
+    assert abs(sum(x2) - 1) < mp.mpf(10) ** -40
+    assert phi2[6] == phi2[7] == phi[6]
+    assert P2[6][7] == P2[7][6] == 1
+    for b in range(6):
+        assert P2[6][b] == P2[7][b] == P[6][b]
+    with mp.workdps(60):
+        assert max(abs(f) for f in fuerzas(x2, phi2, P2, mp)) < mp.mpf(10) ** -40

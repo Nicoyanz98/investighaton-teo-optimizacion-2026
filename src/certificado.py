@@ -7,7 +7,8 @@ Implementación independiente del esquema del Apéndice B de O'Keeffe (arXiv 261
   3. Sobre toda la caja: c_a > 0, y la matriz de L sin la fila/columna 0 (gauge y_0 = 0) admite
      Cholesky por intervalos con pivotes positivos ⇒ L(y) > 0 salvo rotaciones.
   4. Grados d_a y μ = min d_a en aritmética racional exacta.
-  5. Las fases son distintas dos a dos sobre toda la caja (el estado no es sync).
+  5. El estado no es sync: algún par de fases es distinto sobre toda la caja. Se informa además si
+     son distintas dos a dos (las sub-piezas de un cluster pueden compartir fase).
 """
 from fractions import Fraction
 
@@ -135,15 +136,14 @@ def _cholesky_intervalos(A):
     return True, menor_pivote
 
 
-def _menor_separacion(caja):
-    """Cota inferior de min_{a<b} |sin((φ_a − φ_b)/2)| sobre la caja (> 0 ⇒ fases distintas)."""
+def _separaciones(caja):
+    """Cotas inferiores de |sin((φ_a − φ_b)/2)| sobre la caja, para todos los pares a < b."""
     m = len(caja)
-    menor = None
+    cotas = []
     for a in range(m):
         for b in range(a + 1, m):
-            cota = _cota_inferior(abs(iv.sin((caja[a] - caja[b]) / 2)))
-            menor = cota if menor is None else min(menor, cota)
-    return menor
+            cotas.append(_cota_inferior(abs(iv.sin((caja[a] - caja[b]) / 2))))
+    return cotas
 
 
 # ---------------------------------------------------------------- certificado completo
@@ -180,13 +180,15 @@ def certificar(xq, Pq, phi_centro, radio="1e-40", dps=100, verbose=True):
     resultado["cholesky"] = exito
     resultado["min pivote (cota inf)"] = menor_pivote
 
-    resultado["min |sin(Δφ/2)| (cota inf)"] = _menor_separacion(caja)
+    separaciones = _separaciones(caja)
+    resultado["min |sin(Δφ/2)| (cota inf)"] = min(separaciones)
     resultado["distintas"] = resultado["min |sin(Δφ/2)| (cota inf)"] > 0
+    resultado["no sync"] = max(separaciones) > 0
 
     resultado["mu"] = min(grados(xq, Pq))
     resultado["caja"] = caja
     resultado["ok"] = (resultado["krawczyk"] and resultado["c>0"]
-                       and resultado["cholesky"] and resultado["distintas"])
+                       and resultado["cholesky"] and resultado["no sync"])
     if verbose:
         imprimir_certificado(resultado)
     return resultado

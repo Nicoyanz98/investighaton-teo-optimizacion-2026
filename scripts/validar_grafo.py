@@ -9,7 +9,8 @@ ni Gershgorin, calcula con productos implícitos W·y y H·x (src/validacion.py)
   4. Resto de los modos: Lanczos de H en el complemento de los modos de cluster. El certificado
      garantiza λ ≥ (cota de Gershgorin); acá se mide λ_min de verdad.
   5. Con --completo: Lanczos de H en 1^⊥ desde un vector al azar, sin separar los modos de cluster.
-     Tiene que dar el menor autovalor de Q (es el más lento: ~ miles de pasos).
+     Tiene que dar el menor autovalor de Q (con n = 3·10⁷ convergió en 50 pasos: el espectro son
+     pocos autovalores aislados más una banda lejana).
 Como los modos de cluster forman un subespacio invariante (por 1), λ_min(H en 1^⊥) = min(3, 4).
 
 Salida: data/validacion_s7_n<n>.json.
@@ -66,7 +67,7 @@ def main():
     parser.add_argument("--iteraciones", type=int, default=30000)
     parser.add_argument("--cada", type=int, default=50)
     parser.add_argument("--tolerancia", type=float, default=1e-6, help="residuo relativo para cortar Lanczos")
-    parser.add_argument("--completo", action="store_true", help="también Lanczos en 1^⊥ (lento)")
+    parser.add_argument("--completo", action="store_true", help="también Lanczos en 1^⊥ desde un vector al azar")
     parser.add_argument("--semilla", type=int, default=0)
     args = parser.parse_args()
 

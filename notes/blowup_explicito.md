@@ -2,7 +2,9 @@
 
 **Estado:** Fases 0–3 hechas. Hay un grafo explícito, no pesado y **certificado por intervalos** con
 n = 30 000 004 y μ = 10327019/15000002 ≈ 0.688468 > 11/16. La validación ciega en float64 (Fase 4)
-coincide; solo falta su Lanczos completo en GPU. Faltan también el notebook y las sub-piezas (camino B).
+coincide, incluido el Lanczos ciego en GPU. Primera versión del notebook en
+`notebooks/Grafo_explicito_S7.ipynb`. Con el camino B (sub-piezas) hay uno certificado con
+**n = 1 500 014** y μ = 1032699/1500014 ≈ 0.688463.
 
 ## Motivación
 - O'Keeffe (arXiv 2610.21271) prueba μ_c ≥ 0.6929 con la familia S7, pero el grafo que certifica
@@ -135,20 +137,45 @@ Comparación: Canale tiene 0.6874 con n = 10⁴, y O'Keeffe 0.6929 con n > 10⁸
     ≈ 7.8e6;
   - resto: λ_min = 6.5372e6, contra la cota certificada de Gershgorin 6.5283e6. La cota es casi justa.
   - Por lo tanto λ_min(H en 1^⊥) = 157.5 > 0.
-- **Pendiente:** el Lanczos ciego en 1^⊥ (`--completo`) en la GPU del server. Tiene que dar 157.5.
+- **GPU** (server, GTX 1080 Ti; 0.73 s por producto H·x, 83 s en total, `data/validacion_s7_n30000004.json`):
+  - repite los chequeos 1–4;
+  - el Lanczos ciego en 1^⊥ desde un vector al azar da λ_min = 157.51123331 (residuo 7.5e-8), que
+    coincide con Q con diferencia relativa 1e-10.
+  - Convergió en 50 pasos y no en miles como estimé: el espectro son unos pocos autovalores aislados
+    más una banda lejana [6.5e6, 7.95e6].
+  - **Fase 4 completa:** la validación ciega confirma el certificado.
+
+## Camino B: sub-piezas de la misma fase (`enteros.subdividir`, `scripts/s7_subpiezas.py`)
+- **Idea.** Partir un cluster en piezas con la misma fase y las mismas densidades, unidas completas
+  entre sí. Por ejemplo, W (k = 5) en piezas de k = 2 y 3.
+  - Cada pieza ve lo mismo que el cluster original, así que F = 0 sigue exacto.
+  - El modo relativo entre las piezas es rígido: no aparece ningún valor singular chico nuevo en J.
+  - Cada par W–b se duplica, y el reticulado gana enteros libres para las mismas 3 ecuaciones blandas.
+- **Certificado:** `certificar` ahora pide "no sync" (algún par de fases distinto), no fases distintas
+  dos a dos; `distintas` queda como dato informativo. El blow-up y Gershgorin no cambian.
+- **Sonda** (h = 0.03; un solo g por n):
+  - sin partir: hace falta 3·10⁷;
+  - W → (2, 3) o W → (1, 2, 2): funciona desde 2·10⁶;
+  - mitades → (1, 2) (30 enteros libres): 10⁷;
+  - todo partido: 3·10⁶.
+
+  Partir las mitades no ayuda; con más dimensiones, quizás los parámetros del reticulado (radios,
+  peso) quedan mal ajustados.
+- **Barrido** (`data/s7_subpiezas.json`; 8 valores consecutivos de g por cada n, porque el éxito del
+  reticulado no es monótono en n):
+  - h = 0.03, W → (2, 3): el menor certificado es **n = 1 500 014, μ = 1032699/1500014 ≈ 0.688463**.
+    Tasa de éxito: 3/8 con 1.5·10⁶, 7/8 con 2·10⁶, 2/8 con 3·10⁶, y 0/8 con 10⁶ o menos.
+  - h = 0.02: nada hasta 3·10⁶. En la sonda, W → (2, 3) pasa con 3·10⁷ (sin partir hacía falta 10⁸).
+  - Todos los equilibrios que el reticulado declaró estrictos (26) salieron certificados.
+- Es una reducción de 20× sobre la versión sin partir.
+- **Sonda de radios** (W → (2, 3), h = 0.03, 8 valores de g): con radios hasta 3000 en lugar de 100, el
+  éxito con 3·10⁶ sube de 2/8 a 5/8. Con 7·10⁵ y 10⁶ sigue en 0/8. Los radios explican la falta de
+  monotonía, pero no mueven el piso de ~1.5·10⁶.
 
 ## Pendiente
-- **Notebook** `notebooks/Grafo_explicito_S7.ipynb`.
-- **Camino B, para bajar n:** partir cada cluster en sub-piezas con la misma fase (por ejemplo, W en
-  dos mitades con densidades distintas hacia los vecinos).
-  - Suma enteros libres sin agregar ecuaciones blandas (las sub-piezas tienen la misma fase, así que
-    el residuo blando sigue siendo de 3 componentes).
-  - Con más enteros libres por restricción, el vector más cercano del reticulado deja un residuo
-    blando menor sin mover mucho las densidades, y eso acerca n a C/σ (hoy C·σ^{−1.23}).
-  - Hay que cuidar que la plantilla siga estricta, porque las sub-piezas agregan modos de cluster
-    nuevos. En el cociente se verifica con el mismo `certificar`, que ya acepta cualquier cantidad de
-    clusters.
-  - El blow-up y las cotas de Gershgorin no cambian.
+- **Camino B, siguiente:** por qué el éxito no es monótono en n (¿radios del reticulado?), particiones
+  con más piezas, y h = 0.02 (más μ).
+- **Notebook:** agregar el camino B (la Fase 4 completa ya está).
 - **Otras mejoras:**
   - optimizar la plantilla pidiendo σ_min ≥ objetivo en lugar de margen del SDP;
   - mejor Nelder–Mead (la curva es ruidosa: (11, 18) a veces sale peor que (3, 5)).

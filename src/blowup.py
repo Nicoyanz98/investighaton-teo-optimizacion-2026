@@ -189,7 +189,7 @@ def margenes_gershgorin(k, g, d, fases, lib=np):
 def certificar_blowup(k, g, d, fases, dps=100, radio="1e-40"):
     """Certificado riguroso del blow-up de (k, g, d), con fases iniciales `fases`. Devuelve un dict.
 
-    ok = True si: Krawczyk + c > 0 + Cholesky de L + fases distintas en el cociente (`certificar`),
+    ok = True si: Krawczyk + c > 0 + Cholesky de L + estado no sync en el cociente (`certificar`),
     márgenes de Gershgorin > 0 sobre la caja de Krawczyk (resto de los modos) y μ > 11/16 exacto.
     """
     x, P = plantilla_entera(k, g, d)
@@ -210,6 +210,7 @@ def certificar_blowup(k, g, d, fases, dps=100, radio="1e-40"):
         "c>0": bool(cociente["c>0"]),
         "cholesky": bool(cociente["cholesky"]),
         "distintas": bool(cociente["distintas"]),
+        "no sync": bool(cociente["no sync"]),
         "min pivote L (cota inf)": float(cociente["min pivote (cota inf)"]),
         "margen fourier / n (cota inf)": float(menor_fourier / n),
         "margen cero / n (cota inf)": float(menor_cero / n),

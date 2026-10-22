@@ -80,6 +80,33 @@ def _a_mp(valor):
     return mp.mpf(float(valor))
 
 
+def subdividir(x, phi, P, k, particion):
+    """Parte cada cluster a en piezas de la misma fase y las mismas densidades: particion[a] = [k de cada pieza].
+
+    Las piezas de un cluster quedan unidas completas entre sí (P = P_aa = 1). Como cada pieza ve lo mismo
+    que el cluster original, el equilibrio F = 0 se mantiene exacto. Devuelve (x, phi, P, k) nuevos.
+    """
+    origen = []
+    x_nuevo = []
+    phi_nuevo = []
+    k_nuevo = []
+    for a, piezas in enumerate(particion):
+        assert sum(piezas) == k[a], "las piezas tienen que sumar k_a"
+        for k_pieza in piezas:
+            origen.append(a)
+            x_nuevo.append(x[a] * Fraction(k_pieza, int(k[a])) if isinstance(x[a], Fraction)
+                           else x[a] * k_pieza / k[a])
+            phi_nuevo.append(phi[a])
+            k_nuevo.append(k_pieza)
+    P_nuevo = []
+    for i in origen:
+        fila = []
+        for j in origen:
+            fila.append(P[i][j])
+        P_nuevo.append(fila)
+    return x_nuevo, phi_nuevo, P_nuevo, k_nuevo
+
+
 def tamanos_exactos(k):
     """x_a = k_a/K como Fraction."""
     K = sum(int(ka) for ka in k)
