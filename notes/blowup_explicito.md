@@ -173,6 +173,10 @@ Comparación: Canale tiene 0.6874 con n = 10⁴, y O'Keeffe 0.6929 con n > 10⁸
   monotonía, pero no mueven el piso de ~1.5·10⁶.
 
 ## Pendiente
+- **En revisión (23/10/2026):** el grafo actual es exacto y certificado, pero es una variante
+  optimizada de S7 y no la construcción de O'Keeffe con menos nodos. Los objetivos para un grafo con
+  forma reconocible (simetría espejo, densidades puras, familia G_ℓ) están en
+  `notes/objetivos_grafo_elegante.md`, todavía sin decidir. Lo de abajo queda en pausa hasta entonces.
 - **Camino B, siguiente:** por qué el éxito no es monótono en n (¿radios del reticulado?), particiones
   con más piezas, y h = 0.02 (más μ).
 - **Notebook:** agregar el camino B (la Fase 4 completa ya está).
