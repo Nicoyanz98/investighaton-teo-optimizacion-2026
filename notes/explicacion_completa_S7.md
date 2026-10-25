@@ -391,8 +391,7 @@ Un grafo concreto se describe con:
 Restricciones: contar los links entre $a$ y $b$ desde los dos lados da $n_a d_{ab} = n_b d_{ba}$; y cada
 cluster es un clique, $d_{aa} = n_a - 1$. Hay **un entero por par** $a < b$. De los 21 pares, 6 son
 opuestos (vacíos) y los que valen 0 o 1 en la plantilla quedan fijos. En la plantilla $h = 0.03$ quedan
-**9 pares libres**. (`Grafo_explicito_S7.ipynb` dice 13 en el texto de la sección 6; es un error del
-texto, el código usa `pares_libres` y trabaja con los 9.)
+**9 pares libres**; en las plantillas con $h \le 0.02$ el SDP no deja ningún vecino en 1 y son 15.
 
 **Redondeo ingenuo:** cada $d_{ab}$ es el entero permitido más cercano a $P_{ab} n_b$. Cada densidad
 cambia en $\sim 1/n$.
