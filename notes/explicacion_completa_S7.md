@@ -734,7 +734,14 @@ Datos completos en `data/grafo_simetrico_s7.json` y figura en
 
 - **No mejoramos la cota de $\mu_c$:** O'Keeffe ya probó $\mu_c \ge 0.6929$. Nuestro aporte es el grafo
   explícito y chico, no un número mejor.
-- **La cuenca es diminuta:** la trampa existe, pero desde fases al azar el grafo sincroniza.
+- **La cuenca es diminuta, aunque eso no afecta la cota.** La trampa es un mínimo local estricto, así
+  que la atrae todo un **entorno** de condiciones iniciales: un conjunto de medida positiva, no un punto
+  aislado como en un punto silla. Eso alcanza para que el grafo no sincronice globalmente y para la cota
+  $\mu_c \ge \mu$. Lo que sí implica es que la trampa es difícil de ver en la práctica. Ese entorno es
+  muy aplanado: ancho en las direcciones internas de cada cluster (el ruido de 0.5 rad se apaga solo),
+  pero de solo $\sim 10^{-4}$ rad en las direcciones lentas (mover clusters enteros), porque el estado
+  está cerca del pliegue. Desde fases al azar el grafo casi siempre sincroniza, y por eso la trampa se
+  prueba con el certificado y no con simulaciones.
 - **El resultado simétrico depende del óptimo de Nelder–Mead:** con otra opción de Nelder–Mead la plantilla
   salió apenas distinta y el mínimo $n$ certificado fue $10^6$ en lugar de $3\cdot10^5$.
 - **Para el grafo simétrico no repetimos** la validación ciega ni las simulaciones del notebook general.

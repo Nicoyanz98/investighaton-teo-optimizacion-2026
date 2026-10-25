@@ -57,16 +57,25 @@ coincide, incluido el Lanczos ciego en GPU. Primera versión del notebook en
   - se resuelven exactamente las ecuaciones rígidas U_rᵀ F(φ* + V_r z) = 0 (bien condicionadas);
   - queda el residuo blando g = U_bᵀ F, de 3 componentes. g está bien definido aunque no haya
     equilibrio, y es casi lineal en los grados.
-- **Newton entero.** En cada paso se elige u ∈ Z^13 (los 13 pares con densidad intermedia) con
-  dg·u ≈ −g, midiendo cada componente en unidades de su tolerancia σ_k². Se usa LLL + Babai con el
-  encaje de Kannan (`enteros_cercanos`).
+- **Newton entero.** En cada paso se elige u ∈ Z^m (un entero por par con densidad intermedia) con
+  dg·u ≈ −g, midiendo cada componente en unidades de σ_k² (los pesos del código). Se usa LLL + Babai
+  con el encaje de Kannan (`enteros_cercanos`).
+- **Cuántos enteros libres (m).** Hay un entero por par a < b (d_ba queda fijado por n_a d_ab = n_b d_ba).
+  De los 21 pares, 6 son opuestos (A–C, B–W) y los que el SDP deja en 0 o 1 quedan fijos (`pares_libres`,
+  tolerancia 1e-7). Depende de la plantilla:
+  - h = 0.03 (y 0.05): **m = 9**. Los 4 cruzados (Am–Bp, Ap–Bm, Bm–Cp, Bp–Cm) y 5 vecinos que bajan un
+    poco de 1 (Ap–Bp, Bm–Cm, Am–W, Ap–W, Cm–W); los otros 6 vecinos quedan en 1.
+  - h ≤ 0.02: **m = 15**. El SDP no deja ningún vecino en 1.
+  (Una versión anterior de esta nota decía 13 para todas las plantillas.)
 - **Granularidad.** Para que n_a d_ab = n_b d_ba con mitad y W, d_aW tiene que ser múltiplo de
   k_W/mcd(k_A, k_W), así que P_aW se mueve de a 1/mcd(n_A, n_W). Esto favorece tamaños con k chicos:
   (3, 5) da pasos de 23/n, y (20, 33) de 153/n.
-- **Límite del método (heurístico).** El residuo blando tiene que quedar ≲ σ², y cada corrección tiene
-  que mover las densidades ≲ σ (si no, los términos cuadráticos del rígido lo arruinan). Con 13 enteros
-  y 3 restricciones da n ≳ C·σ^{−1.23}, contra C·σ^{−2} del ingenuo. Con más enteros libres (partir
-  clusters en sub-piezas de la misma fase) tendería a n ~ C/σ.
+- **Límite del método (heurístico).** El residuo blando tiene que quedar ≲ σ²/(2|c|) (el umbral del
+  pliegue de la sección anterior), y cada corrección tiene que mover las densidades ≲ σ (si no, los
+  términos cuadráticos del rígido lo arruinan). Con m enteros y 3 restricciones da n ≳ C·σ^{−(1+3/m)}:
+  σ^{−1.33} con m = 9 (h = 0.03) y σ^{−1.2} con m = 15 (h ≤ 0.02), contra C·σ^{−2} del ingenuo. El
+  factor 1/(2|c|) solo cambia la constante C, no el exponente. Con más enteros libres (partir clusters en
+  sub-piezas de la misma fase) tendería a n ~ C/σ.
 
 ### Resultados (evaluación exacta en alta precisión, todavía sin intervalos)
 `scripts/s7_entero.py` → `data/s7_enteros.json`.
