@@ -2751,3 +2751,331 @@ def dibujar_simulacion(serie, continuacion, instantaneas, cluster_muestra, descr
     fig.tight_layout(rect=(0, 0.05, 1, 0.95))
     fig.savefig(archivo, dpi=130)
     plt.close(fig)
+
+
+# biblioteca
+REFLEJO = [5, 4, 3, 2, 1, 0, 6]          # Am↔Cp, Ap↔Cm, Bm↔Bp, W fijo
+H = 0.03
+MARGEN = 1e-3
+
+
+def s_simetrico(p):
+    """Desplazamientos (s_Am, s_Ap, s_Bm) → los seis, con s_Cp = −s_Am, s_Cm = −s_Ap, s_Bp = −s_Bm."""
+    am, ap, bm = p
+    return np.array([am, ap, bm, -bm, -ap, -am])
+
+
+# biblioteca
+CRUZADOS = [(0, 3), (1, 2), (2, 5), (3, 4)]                                 # Am–Bp, Ap–Bm, Bm–Cp, Bp–Cm
+VECINOS_EN_1 = [(0, 2), (1, 3), (2, 4), (3, 5), (0, 6), (1, 6), (4, 6), (5, 6)]
+
+
+def sdp_s7(x, phi, h, margen, restricciones=()):
+    """Mayor μ sobre las densidades P con x y φ fijos. Devuelve (μ, P) o (None, None) si es infactible."""
+    m = len(x)
+    diferencias = phi[:, None] - phi[None, :]
+    senos = np.sin(diferencias)
+    cosenos = np.cos(diferencias)
+    pesos_L = np.outer(x, x) * cosenos
+    np.fill_diagonal(pesos_L, 0)
+
+    P = cp.Variable((m, m), symmetric=True)
+    t = cp.Variable()
+    K = cp.multiply(P, pesos_L)
+    L = cp.diag(cp.sum(K, axis=1)) - K
+    Q = base_perpendicular(m)
+    lista = [
+        P >= 0,
+        P <= 1,
+        cp.diag(P) == 1,
+        P @ x >= t,
+        cp.multiply(P, senos) @ x == 0,
+        cp.multiply(P, cosenos) @ x >= 1e-3,
+        (Q.T @ L @ Q) / h**2 >> margen * np.eye(m - 1),
+        cp.multiply(P, prohibidos_s7().astype(float)) == 0,
+    ]
+    if "reflejo" in restricciones:
+        R = np.eye(m)[REFLEJO]
+        lista.append(P == R @ P @ R.T)
+    if "q_unico" in restricciones:
+        a0, b0 = CRUZADOS[0]
+        for a, b in CRUZADOS[1:]:
+            lista.append(P[a, b] == P[a0, b0])
+    if "vecinos_en_1" in restricciones:
+        for a, b in VECINOS_EN_1:
+            lista.append(P[a, b] == 1)
+    problema = cp.Problem(cp.Maximize(t), lista)
+    try:
+        problema.solve(solver="CLARABEL")
+    except cp.error.SolverError:
+        return None, None
+    if problema.status not in ("optimal", "optimal_inaccurate"):
+        return None, None
+    return float(t.value), np.array(P.value)
+
+
+def optimizar_s7_restringido(x, h, margen, restricciones=(), reinicios=1):
+    """Nelder–Mead en los desplazamientos (3 con reflejo, 6 sin), reiniciado desde su resultado. Devuelve (μ, s, P)."""
+    _, w, _ = esquina(30)
+    w = float(w)
+    simetrico = "reflejo" in restricciones
+    p0 = np.array([-1.0, 1.0, -w]) if simetrico else np.array([-1.0, 1.0, -w, w, -1.0, 1.0])
+
+    def desplazamientos(p):
+        return s_simetrico(p) if simetrico else p
+
+    def objetivo(p):
+        mu, _ = sdp_s7(x, fases_s7(h, desplazamientos(p)), h, margen, restricciones)
+        return 1.0 if mu is None else -mu
+
+    opciones = {"maxiter": 600, "xatol": 1e-5, "fatol": 1e-9}
+    resultado = minimize(objetivo, p0, method="Nelder-Mead", options=opciones)
+    for _ in range(reinicios):
+        resultado = minimize(objetivo, resultado.x, method="Nelder-Mead", options=opciones)
+    s = desplazamientos(resultado.x)
+    mu, P = sdp_s7(x, fases_s7(h, s), h, margen, restricciones)
+    return mu, s, P
+
+
+# biblioteca
+def mostrar_matriz(P, colores_celda, titulo):
+    """Matriz de densidades 7 × 7 con nombres de clusters; las celdas con color son las intermedias."""
+    textos = []
+    for fila in P:
+        textos.append(["1" if v > 1 - 1e-4 else "0" if v < 1e-4 else f"{v:.4f}" for v in fila])
+    fig, eje = plt.subplots(figsize=(1, 0.22 * (len(P) + 1)))
+    eje.axis("off")
+    tabla = eje.table(cellText=textos, rowLabels=NOMBRES, colLabels=NOMBRES, loc="center", cellLoc="center")
+    tabla.auto_set_font_size(False)
+    tabla.set_fontsize(9)
+    tabla.auto_set_column_width(list(range(-1, len(P))))
+    tabla.scale(1, 1.3)
+    for (i, j), celda in tabla.get_celld().items():
+        celda.set_edgecolor(BORDE)
+        celda.set_linewidth(0.6)
+        celda.PAD = 0.15
+        celda.get_text().set_color(TINTA)
+        if i == 0 or j == -1:
+            celda.set_facecolor(FONDO_ENCABEZADO)
+            celda.get_text().set_fontweight("bold")
+        elif colores_celda[i - 1][j] is not None:
+            celda.set_facecolor(colores_celda[i - 1][j])
+            celda.get_text().set_fontweight("bold")
+    fig.canvas.draw()
+    caja = tabla.get_window_extent(fig.canvas.get_renderer())
+    x0, y1 = eje.transAxes.inverted().transform((caja.x0, caja.y1))
+    eje.annotate(titulo, xy=(x0, y1), xycoords="axes fraction", xytext=(0, 5), textcoords="offset points",
+                 fontsize=10, color=TINTA)
+    plt.show()
+
+
+# biblioteca
+def jacobiano_completo(x, phi, P):
+    """∂F_a/∂φ_b para las 7 fases (incluye la rotación global, que tiene valor singular 0)."""
+    J = np.zeros((7, 7))
+    for a in range(7):
+        for b in range(7):
+            if a != b:
+                J[a, b] = -P[a, b] * x[b] * np.cos(phi[a] - phi[b])
+        J[a, a] = -J[a].sum()
+    return J
+
+
+def matriz_reflejo():
+    """δφ ↦ R δφ con (R δφ)_{R(a)} = −δφ_a."""
+    R = np.zeros((7, 7))
+    for a in range(7):
+        R[REFLEJO[a], a] = -1
+    return R
+
+
+# biblioteca
+def simetrizar(P, tolerancia=1e-4):
+    """Promedio exacto con el reflejo, y los extremos que el SDP dejó a menos de tolerancia, a 0 o 1."""
+    R = np.eye(7)[REFLEJO]
+    P = (P + R @ P @ R.T) / 2
+    P = (P + P.T) / 2
+    P[P < tolerancia] = 0
+    P[P > 1 - tolerancia] = 1
+    return P
+
+
+def parejas_libres(P):
+    """Pares intermedios agrupados por el reflejo: [[par, espejo], ...], con a < b en cada par."""
+    parejas = []
+    vistos = set()
+    for a in range(7):
+        for b in range(a + 1, 7):
+            if 0 < P[a][b] < 1 and (a, b) not in vistos:
+                espejo = tuple(sorted((REFLEJO[a], REFLEJO[b])))
+                parejas.append([(a, b), espejo])
+                vistos |= {(a, b), espejo}
+    return parejas
+
+
+def fases_reducidas(psi):
+    """Estado simétrico a partir de ψ = (φ_Am, φ_Ap, φ_Bm): φ_R(a) = π − φ_a y W en 3π/2."""
+    return [psi[0], psi[1], psi[2], mp.pi - psi[2], mp.pi - psi[1], mp.pi - psi[0], 3 * mp.pi / 2]
+
+
+def ecuaciones_reducidas(x, psi, P):
+    """(F_Am, F_Ap, F_Bm): en un estado simétrico las demás son sus opuestas y F_W = 0."""
+    F = fuerzas(x, fases_reducidas(psi), P, mp)
+    return mp.matrix([F[0], F[1], F[2]])
+
+
+def jacobiano_reducido(x, psi, P):
+    """∂(F_Am, F_Ap, F_Bm)/∂ψ por la regla de la cadena: dφ/dψ vale +1 en Am, Ap, Bm y −1 en sus espejos."""
+    phi = fases_reducidas(psi)
+    dphi = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, -1], [0, -1, 0], [-1, 0, 0], [0, 0, 0]]
+    J = mp.matrix(3, 3)
+    for i, a in enumerate([0, 1, 2]):
+        fila = [mp.mpf(0)] * 7                       # ∂F_a/∂φ_b
+        for b in range(7):
+            if b != a:
+                termino = P[a][b] * x[b] * mp.cos(phi[a] - phi[b])
+                fila[a] += termino
+                fila[b] -= termino
+        for j in range(3):
+            J[i, j] = sum(fila[b] * dphi[b][j] for b in range(7))
+    return J
+
+
+def pulir_simetrico(x, psi, P, parejas):
+    """Cambio de mínima norma en P, una variable por pareja espejo, con F(φ(ψ)) = 0 exacto."""
+    P = [[mp.mpf(float(v)) for v in fila] for fila in P]
+    F = ecuaciones_reducidas(x, psi, P)
+    phi = fases_reducidas(psi)
+    A = mp.matrix(3, len(parejas))
+    for c, pareja in enumerate(parejas):
+        E = [[mp.mpf(0)] * 7 for _ in range(7)]       # F es lineal en P: la columna c es F(E_c)
+        for a, b in pareja:
+            E[a][b] = E[b][a] = mp.mpf(1)
+        columna = fuerzas(x, phi, E, mp)
+        for i in range(3):
+            A[i, c] = columna[i]
+    delta = A.T * mp.lu_solve(A * A.T, -F)
+    for c, pareja in enumerate(parejas):
+        for a, b in pareja:
+            P[a][b] += delta[c]
+            P[b][a] = P[a][b]
+    return P
+
+
+# biblioteca
+def grados_simetricos(P, parejas, j, g):
+    """d a partir de un entero por pareja (d_ab = j_c · paso, igual en el par y en su espejo)."""
+    n_a = tamanos_enteros(K_S7, g)
+    d = [[0] * 7 for _ in range(7)]
+    for a in range(7):
+        d[a][a] = n_a[a] - 1
+        for b in range(7):
+            if b != a and P[a][b] == 1:
+                d[a][b] = n_a[b]
+    for c, pareja in enumerate(parejas):
+        for a, b in pareja:
+            d[a][b] = j[c] * paso_grado(K_S7, a, b)
+            d[b][a] = d[a][b] * n_a[a] // n_a[b]
+    return d
+
+
+def enteros_ingenuos(P, parejas, g):
+    """El múltiplo permitido más cercano a P_ab·n_b, para el primer par de cada pareja."""
+    n_a = tamanos_enteros(K_S7, g)
+    j = []
+    for pareja in parejas:
+        a, b = pareja[0]
+        j.append(int(mp.nint(P[a][b] * n_a[b] / paso_grado(K_S7, a, b))))
+    return j
+
+
+def densidades(d, g):
+    """P_ab = d_ab/n_b en mpmath."""
+    n_a = tamanos_enteros(K_S7, g)
+    return [[mp.mpf(d[a][b]) / n_a[b] for b in range(7)] for a in range(7)]
+
+
+def base_blanda_reducida(x, psi, P):
+    """SVD del Jacobiano reducido: (U_rígido, U_blando, V_rígido) y los valores singulares."""
+    J = np.array(jacobiano_reducido(x, psi, P).tolist(), dtype=float)
+    U, singulares, Vt = np.linalg.svd(J)
+    return (mp.matrix(U[:, :2].tolist()), mp.matrix(U[:, 2:].tolist()), mp.matrix(Vt[:2].T.tolist())), singulares
+
+
+def residuo_blando_reducido(x, P, psi_referencia, base, iteraciones=30):
+    """Newton en las 2 direcciones rígidas; devuelve el residuo de la blanda (un número) y ψ."""
+    U_r, U_b, V_r = base
+    z = mp.matrix(2, 1)
+    for _ in range(iteraciones):
+        psi = [psi_referencia[i] + V_r[i, 0] * z[0] + V_r[i, 1] * z[1] for i in range(3)]
+        rigidas = U_r.T * ecuaciones_reducidas(x, psi, P)
+        if mp.norm(rigidas) < mp.mpf(10) ** (-mp.mp.dps + 10):
+            break
+        z = z - mp.lu_solve(U_r.T * jacobiano_reducido(x, psi, P) * V_r, rigidas)
+    psi = [psi_referencia[i] + V_r[i, 0] * z[0] + V_r[i, 1] * z[1] for i in range(3)]
+    return (U_b.T * ecuaciones_reducidas(x, psi, P))[0], psi
+
+
+def forma_normal(x, psi, P):
+    """(σ, c) de la ecuación blanda σ y + (c/2) y² a lo largo de la dirección blanda (diferencias finitas)."""
+    U, _, Vt = np.linalg.svd(np.array(jacobiano_reducido(x, psi, P).tolist(), dtype=float))
+    u_b = mp.matrix(U[:, 2].tolist())
+    v_b = Vt[2]
+
+    def blanda(y):
+        return (u_b.T * ecuaciones_reducidas(x, [psi[i] + y * v_b[i] for i in range(3)], P))[0]
+
+    e = mp.mpf("1e-8")
+    sigma = (blanda(e) - blanda(-e)) / (2 * e)
+    c = (blanda(e) - 2 * blanda(0) + blanda(-e)) / e**2
+    return abs(float(sigma)), float(c)
+
+
+# biblioteca
+def newton_entero(x, P, parejas, psi_referencia, base, g, radios=(20, 3)):
+    """Newton entero exhaustivo desde el redondeo ingenuo: en cada paso, el u con |u_c| ≤ radio que minimiza |g + G·u|.
+
+    Devuelve los enteros, los grados, ψ y |g| en cada paso.
+    """
+    j = enteros_ingenuos(P, parejas, g)
+    historia = []
+    for radio in radios:
+        g_actual, _ = residuo_blando_reducido(x, densidades(grados_simetricos(P, parejas, j, g), g), psi_referencia, base)
+        G = []
+        for c in range(len(parejas)):
+            j_mas = list(j)
+            j_mas[c] += 1
+            g_mas, _ = residuo_blando_reducido(x, densidades(grados_simetricos(P, parejas, j_mas, g), g),
+                                               psi_referencia, base)
+            G.append(float(g_mas - g_actual))
+        historia.append(abs(float(g_actual)))
+        candidatos = np.array(list(itertools.product(range(-radio, radio + 1), repeat=len(parejas))))
+        u = candidatos[np.argmin(np.abs(float(g_actual) + candidatos @ np.array(G)))]
+        j = [int(jc + uc) for jc, uc in zip(j, u)]
+    d = grados_simetricos(P, parejas, j, g)
+    g_final, psi = residuo_blando_reducido(x, densidades(d, g), psi_referencia, base)
+    historia.append(abs(float(g_final)))
+    return j, d, psi, historia
+
+
+def barrido_simetrico(x, P_sdp, s, h, ns):
+    """Fase 1 simétrica completa para la plantilla (x, s, P_sdp): pulido, base blanda y, para cada n, ingenuo y Newton."""
+    parejas = parejas_libres(simetrizar(P_sdp))
+    x_exacto = [mp.mpf(v.numerator) / v.denominator for v in tamanos_exactos(K_S7)]
+    psi_plantilla = [mp.mpf(h) * mp.mpf(float(s[0])), mp.mpf(h) * mp.mpf(float(s[1])),
+                     mp.pi / 2 + mp.mpf(h) * mp.mpf(float(s[2]))]
+    P_pulida = pulir_simetrico(x_exacto, psi_plantilla, simetrizar(P_sdp), parejas)
+    base, _ = base_blanda_reducida(x_exacto, psi_plantilla, P_pulida)
+    phi_referencia = [float(v) for v in fases_reducidas(psi_plantilla)]
+    barrido = []
+    for n_objetivo in ns:
+        g = int(round(n_objetivo / sum(K_S7)))
+        j_ingenuo = enteros_ingenuos(P_pulida, parejas, g)
+        d_ingenuo = grados_simetricos(P_pulida, parejas, j_ingenuo, g)
+        ingenuo = evaluar_enteros(K_S7, g, d_ingenuo, phi_referencia, h)
+        j, d, psi, historia = newton_entero(x_exacto, P_pulida, parejas, psi_plantilla, base, g)
+        phi = [float(v) for v in fases_reducidas(psi)]
+        newton = evaluar_enteros(K_S7, g, d, phi, h, phi_referencia=phi_referencia)
+        barrido.append({"g": g, "n": sum(K_S7) * g, "j": j, "j_ingenuo": j_ingenuo, "d": d, "historia": historia,
+                        "ingenuo": ingenuo, "newton": newton})
+    return barrido, parejas
