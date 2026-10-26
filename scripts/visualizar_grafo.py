@@ -1,4 +1,5 @@
-"""Dibuja un grafo certificado (data/grafos_s7.json o data/s7_subpiezas.json) y simula Kuramoto sobre él.
+"""Dibuja un grafo certificado (data/grafos_s7.json, data/s7_subpiezas.json o, con --archivo, otro JSON como
+data/grafo_simetrico_s7.json) y simula Kuramoto sobre él.
 
 Figuras, en data/figuras/:
   grafo_n<n>_estructura.png
@@ -21,12 +22,20 @@ Figuras, en data/figuras/:
 Dinámica (tiempo normalizado): θ̇_u = (1/n) Σ_v W_uv sin(θ_v − θ_u). El grafo completo se integra con
 RK4 y los productos implícitos W·y de src/validacion.py (numpy, o torch en cpu/cuda) hasta --tiempo;
 después cada cluster está concentrado (los modos internos decaen a tasa ~0.22) y se sigue, hasta
---tiempo-clusters, con la dinámica exacta de las fases medias de los clusters (LSODA, scipy).
+--tiempo-clusters, con la reducción a las fases medias de los clusters (LSODA, scipy), que es exacta
+si cada cluster está sincronizado.
+Con --continuar-desde T (< --tiempo), la reducción arranca en T y el grafo completo sigue hasta --tiempo:
+la reducción queda como comparación y todo lo que pasa hasta --tiempo sale de la simulación completa.
 
 Comandos:
   .venv/bin/python scripts/visualizar_grafo.py                                     # solo las figuras
   .venv/bin/python scripts/visualizar_grafo.py --simular perturbado,azar,clusters  # grafo B, CPU, ~minutos
   python scripts/visualizar_grafo.py --n 30000004 --simular perturbado,azar --dispositivo cuda   # server
+  python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json --simular perturbado \
+      --tiempo 4000 --continuar-desde 60 --fotos 0,15,60,1000,4000            # simétrico, CPU, ~15 min
+  python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json --simular perturbado --ruido 0.05 \
+      --tiempo 1000000 --continuar-desde 60 --dt-largo 5 --medir-cada 20 --fotos 0,60,10000,1000000 \
+      --dispositivo cuda                                                     # vuelta completa, server
 """
 import argparse
 import colorsys
@@ -64,9 +73,21 @@ def grafos_certificados():
     return filas
 
 
-def elegir_grafo(n):
+def grafos_de_archivo(archivo):
+    """Las descripciones certificadas de un JSON de data/ (una lista de filas o un solo grafo): [(origen, fila)]."""
+    contenido = cargar_json(archivo)
+    if isinstance(contenido, dict):
+        contenido = [contenido]
+    filas = []
+    for fila in contenido:
+        if fila.get("certificado") and fila["certificado"]["ok"]:
+            filas.append((archivo, fila))
+    return filas
+
+
+def elegir_grafo(n, archivo=None):
     """Descripción compacta del grafo con ese n (o del más chico si n es None) y su μ exacto."""
-    candidatos = grafos_certificados()
+    candidatos = grafos_de_archivo(archivo) if archivo else grafos_certificados()
     if n is not None:
         candidatos = [c for c in candidatos if c[1]["grafo"]["n"] == n]
         if not candidatos:
@@ -272,24 +293,30 @@ class Simulacion:
         envuelta = (diferencia - giro + np.pi) % (2 * np.pi) - np.pi
         return r, float(abs(envuelta).max())
 
-    def correr(self, theta, tiempo, dt, fotos):
-        """Integra hasta `tiempo`; guarda r y la distancia en cada paso y las fases de la muestra en `fotos`."""
-        pasos = int(round(tiempo / dt))
+    def correr(self, theta, tiempo, dt, fotos, t0=0.0, medir_cada=1):
+        """Integra de t0 a `tiempo`; guarda r y la distancia cada `medir_cada` pasos y las fases de la muestra en `fotos`.
+
+        Medir obliga a traer números a la CPU (en GPU, una espera por medición): con pasos chicos y tiempos
+        largos conviene medir cada tanto.
+        """
+        pasos = int(round((tiempo - t0) / dt))
         tiempos_foto = set()
         for t in fotos:
-            tiempos_foto.add(int(round(t / dt)))
+            tiempos_foto.add(int(round((t - t0) / dt)))
+        aviso = max(1, pasos // 10)
         serie = {"t": [], "r": [], "distancia": []}
         instantaneas = []
         inicio = time.time()
         for paso in range(pasos + 1):
-            r, distancia = self.medir(theta)
-            serie["t"].append(paso * dt)
-            serie["r"].append(r)
-            serie["distancia"].append(distancia)
+            if paso % medir_cada == 0 or paso % aviso == 0 or paso == pasos:
+                r, distancia = self.medir(theta)
+                serie["t"].append(t0 + paso * dt)
+                serie["r"].append(r)
+                serie["distancia"].append(distancia)
             if paso in tiempos_foto:
-                instantaneas.append((paso * dt, self.arreglos.tomar(theta, self.muestra)))
-            if paso % max(1, pasos // 10) == 0:
-                print(f"  t = {paso * dt:7.1f}  r = {r:.4f}  distancia al estado = {distancia:.2e}"
+                instantaneas.append((t0 + paso * dt, self.arreglos.tomar(theta, self.muestra)))
+            if paso % aviso == 0:
+                print(f"  t = {t0 + paso * dt:9.1f}  r = {r:.4f}  distancia al estado = {distancia:.2e}"
                       f"  ({time.time() - inicio:.0f} s)", flush=True)
             if paso < pasos:
                 theta = self.paso_rk4(theta, dt)
@@ -324,8 +351,8 @@ def dibujar_simulacion(serie, continuacion, instantaneas, cluster_muestra, descr
     for eje, clave, color in ((eje_r, "r", "#2a78d6"), (eje_d, "distancia", "#eb6834")):
         eje.plot(serie["t"][1:], serie[clave][1:], color=color, lw=2, label="grafo completo (RK4)")
         eje.plot(continuacion["t"], continuacion[clave], color=color, lw=2, ls="--",
-                 label="continuación: dinámica exacta por clusters")
-        eje.axvline(serie["t"][-1], color=GRIS, lw=1, ls=":")
+                 label=f"reducción a clusters desde t = {continuacion['desde']:g}")
+        eje.axvline(continuacion["desde"], color=GRIS, lw=1, ls=":")
         eje.set(xscale="log", xlabel="tiempo (normalizado)")
         eje.grid(alpha=0.25)
         eje.legend(fontsize=7, loc="best")
@@ -442,17 +469,26 @@ def main():
     """Figuras de la estructura y, si se pide, las simulaciones."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--n", type=int, default=None, help="n del grafo (por defecto el certificado más chico)")
+    parser.add_argument("--archivo", default=None,
+                        help="JSON de data/ con el grafo (por defecto grafos_s7.json y s7_subpiezas.json)")
     parser.add_argument("--simular", default="", help="perturbado, azar y/o clusters, separados por comas")
     parser.add_argument("--dispositivo", default="numpy", help="numpy, cpu o cuda")
     parser.add_argument("--tiempo", type=float, default=60.0, help="tiempo de las simulaciones del grafo completo")
+    parser.add_argument("--continuar-desde", type=float, default=None,
+                        help="tiempo en el que arranca la reducción a clusters (por defecto --tiempo)")
+    parser.add_argument("--fotos", default=None, help="tiempos de las fotos de fases (por defecto 0, T/20, T/4, T)")
     parser.add_argument("--dt", type=float, default=0.5)
+    parser.add_argument("--dt-largo", type=float, default=None,
+                        help="paso del grafo completo después de --continuar-desde (por defecto --dt); los modos "
+                             "rápidos tienen tasa ~0.26, así que RK4 es estable con dt·0.26 < 2.8")
+    parser.add_argument("--medir-cada", type=int, default=1, help="pasos entre mediciones de r y la distancia")
     parser.add_argument("--ruido", type=float, default=0.5, help="desvío del ruido de 'perturbado' (rad)")
     parser.add_argument("--amplitudes", default="1e-4,3e-4,1e-3,1e-2,1e-1", help="δ de 'clusters'")
     parser.add_argument("--tiempo-clusters", type=float, default=1e7)
     parser.add_argument("--semilla", type=int, default=0)
     args = parser.parse_args()
 
-    descripcion, mu, origen = elegir_grafo(args.n)
+    descripcion, mu, origen = elegir_grafo(args.n, args.archivo)
     n = descripcion["n"]
     carpeta = CARPETA_DATOS / "figuras"
     carpeta.mkdir(exist_ok=True)
@@ -469,6 +505,9 @@ def main():
         arreglos = Arreglos(None if args.dispositivo == "numpy" else args.dispositivo)
         simulacion = Simulacion(descripcion, arreglos, semilla=args.semilla)
         fotos = [0, args.tiempo / 20, args.tiempo / 4, args.tiempo]
+        if args.fotos:
+            fotos = [float(t) for t in args.fotos.split(",")]
+        desde = args.tiempo if args.continuar_desde is None else args.continuar_desde
         for modo in ["perturbado", "azar"]:
             if modo not in modos:
                 continue
@@ -480,14 +519,22 @@ def main():
             else:
                 theta = simulacion.inicial_azar(args.semilla)
                 titulo = f"Desde fases uniformes al azar (n = {n:,})"
-            serie, instantaneas, theta = simulacion.correr(theta, args.tiempo, args.dt, fotos)
-            print(f"  fin del grafo completo: r = {serie['r'][-1]:.4f}, distancia = {serie['distancia'][-1]:.2e}",
-                  flush=True)
-            # al final cada cluster está casi concentrado: se sigue con la dinámica exacta de sus fases medias
+            serie, instantaneas, theta = simulacion.correr(theta, desde, args.dt, fotos, medir_cada=args.medir_cada)
+            # en `desde` cada cluster está casi concentrado: la reducción a sus fases medias sigue desde ahí
             fases = np.array([float(p) for p in descripcion["fases"]])
             y0 = fases + envolver(simulacion.medias_cluster(theta) - fases)
             tiempos, distancias, radios = integrar_clusters(descripcion, y0, args.tiempo_clusters)
-            continuacion = {"t": (args.tiempo + tiempos[1:]).tolist(), "distancia": distancias[1:], "r": radios[1:]}
+            continuacion = {"desde": desde, "t": (desde + tiempos[1:]).tolist(), "distancia": distancias[1:],
+                            "r": radios[1:]}
+            if args.tiempo > desde:
+                dt_largo = args.dt if args.dt_largo is None else args.dt_largo
+                resto, fotos_resto, theta = simulacion.correr(theta, args.tiempo, dt_largo, fotos, t0=desde,
+                                                              medir_cada=args.medir_cada)
+                for clave in serie:
+                    serie[clave].extend(resto[clave][1:])
+                instantaneas.extend(fotos_resto[1:] if fotos_resto and fotos_resto[0][0] == desde else fotos_resto)
+            print(f"  fin del grafo completo: r = {serie['r'][-1]:.4f}, distancia = {serie['distancia'][-1]:.2e}",
+                  flush=True)
             sufijo = f"perturbado_ruido{args.ruido:g}" if modo == "perturbado" else modo
             archivo = carpeta / f"grafo_n{n}_sim_{sufijo}.png"
             dibujar_simulacion(serie, continuacion, instantaneas, simulacion.cluster_muestra, descripcion, titulo,
