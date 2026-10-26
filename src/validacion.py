@@ -284,3 +284,21 @@ def lanczos(aplicar, proyectar, inicial, arreglos, iteraciones, cada=25, toleran
             "mayor": historial[-1]["mayor"], "pasos": historial[-1]["paso"],
             "convergio": historial[-1]["residuo"] <= tolerancia * abs(historial[-1]["menor"]),
             "historial": historial}
+
+
+# ---------------------------------------------------------------- carga de los grafos certificados
+
+def elegir_grafo(filas, n=None):
+    """Fila certificada con ese n (o la de n más chico si n es None).
+
+    `filas` es el contenido de data/grafos_s7.json (lista; se toman solo los redondeos por reticulado)
+    o de data/grafo_simetrico_s7.json (un solo grafo).
+    """
+    if isinstance(filas, dict):
+        filas = [filas]
+    filas = [f for f in filas if f.get("redondeo", "reticulado") == "reticulado" and f["certificado"]["ok"]]
+    if n is not None:
+        filas = [f for f in filas if f["grafo"]["n"] == n]
+    if not filas:
+        raise ValueError(f"no hay un grafo certificado con n = {n}")
+    return min(filas, key=lambda f: (f["grafo"]["n"], -f["h"]))

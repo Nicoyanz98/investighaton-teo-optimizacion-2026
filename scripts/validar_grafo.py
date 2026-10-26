@@ -1,4 +1,5 @@
-"""Fase 4 del grafo explícito: validación ciega, en float64, de un grafo certificado de data/grafos_s7.json.
+"""Fase 4 del grafo explícito: validación ciega, en float64, de un grafo certificado de data/grafos_s7.json
+(o de data/grafo_simetrico_s7.json con --archivo).
 
 Reconstruye el grafo a partir de su descripción compacta (k, g, tablas t, fases) y, sin usar Fourier
 ni Gershgorin, calcula con productos implícitos W·y y H·x (src/validacion.py):
@@ -7,7 +8,8 @@ ni Gershgorin, calcula con productos implícitos W·y y H·x (src/validacion.py)
   3. Modos de cluster: Q_ab = 1_aᵀ H 1_b / √(n_a n_b) con H implícito, contra la fórmula de los grados.
      Sus autovalores son los de H en los modos de cluster (uno es la rotación, ≈ 0).
   4. Resto de los modos: Lanczos de H en el complemento de los modos de cluster. El certificado
-     garantiza λ ≥ (cota de Gershgorin); acá se mide λ_min de verdad.
+     garantiza λ ≥ (cota de Gershgorin). El valor de Ritz es siempre ≥ el λ_min verdadero, así que
+     "≥ cota" es consistente pero no lo prueba; el espectro completo está en scripts/espectro_fourier.py.
   5. Con --completo: Lanczos de H en 1^⊥ desde un vector al azar, sin separar los modos de cluster.
      Tiene que dar el menor autovalor de Q (con n = 3·10⁷ convergió en 50 pasos: el espectro son
      pocos autovalores aislados más una banda lejana).
@@ -17,6 +19,8 @@ Salida: data/validacion_s7_n<n>.json.
 
 Comandos (en el server: GTX 1080 Ti, torch + CUDA):
   .venv/bin/python scripts/validar_grafo.py --dispositivo cuda --completo
+Grafo simétrico (n = 299 989; CPU local, ~1 min):
+  python scripts/validar_grafo.py --archivo grafo_simetrico_s7.json --dispositivo numpy --completo
   (CPU sin torch: --dispositivo numpy; el grafo de 3·10⁷ nodos tarda varios segundos por producto)
 """
 import argparse
@@ -29,16 +33,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.experimentos import cargar_json, guardar_json  # noqa: E402
 from src.validacion import (  # noqa: E402
-    Arreglos, GrafoImplicito, cociente_formula, cociente_implicito, grados_medidos, lanczos,
+    Arreglos, GrafoImplicito, cociente_formula, cociente_implicito, elegir_grafo, grados_medidos, lanczos,
 )
-
-
-def elegir_grafo(n):
-    """Fila de grafos_s7.json: el reticulado certificado con ese n (o el más chico si n es None)."""
-    filas = [f for f in cargar_json("grafos_s7.json") if f["redondeo"] == "reticulado" and f["certificado"]["ok"]]
-    if n is not None:
-        filas = [f for f in filas if f["grafo"]["n"] == n]
-    return min(filas, key=lambda f: (f["grafo"]["n"], -f["h"]))
 
 
 def informar(etiqueta, inicio):
@@ -62,6 +58,8 @@ def correr_lanczos(grafo, proyectar, etiqueta, args, semilla):
 def main():
     """Corre los chequeos y guarda el resultado."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--archivo", default="grafos_s7.json",
+                        help="JSON de data/ con el grafo (grafos_s7.json o grafo_simetrico_s7.json)")
     parser.add_argument("--n", type=int, default=None, help="n del grafo (por defecto el certificado más chico)")
     parser.add_argument("--dispositivo", default="cuda", help="numpy, cpu o cuda")
     parser.add_argument("--iteraciones", type=int, default=30000)
@@ -71,7 +69,7 @@ def main():
     parser.add_argument("--semilla", type=int, default=0)
     args = parser.parse_args()
 
-    fila = elegir_grafo(args.n)
+    fila = elegir_grafo(cargar_json(args.archivo), args.n)
     descripcion = fila["grafo"]
     certificado = fila["certificado"]
     arreglos = Arreglos(None if args.dispositivo == "numpy" else args.dispositivo)

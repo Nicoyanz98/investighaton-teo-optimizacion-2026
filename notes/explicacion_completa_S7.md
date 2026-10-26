@@ -534,7 +534,8 @@ $g$ bloques chicos, uno por frecuencia de Fourier. Con eso:
 | camino B (sub-piezas, `notes/blowup_explicito.md`) | 1 500 014 | 1032699/1500014 ≈ 0.688463 |
 
 Además, una validación "ciega" (el Hessiano del grafo completo en float64, sin usar la teoría del
-certificado) y simulaciones de Kuramoto lo confirman. Las simulaciones muestran también que la cuenca de
+certificado), el espectro completo por bloques de Fourier (sección 11.7) y simulaciones de Kuramoto lo
+confirman. Las simulaciones muestran también que la cuenca de
 la trampa es diminuta (del orden de $10^{-4}$ rad en las direcciones lentas): desde fases al azar el grafo
 sincroniza.
 
@@ -711,6 +712,51 @@ $n = 299\,989$.
 Datos completos en `data/grafo_simetrico_s7.json` y figura en
 `data/figuras/grafo_simetrico_n299989_estructura.png`.
 
+### 11.7 Validación y espectro completo
+
+El certificado trabaja con los **datos** del grafo (grados, plantilla de $7\times7$, bloques de Fourier). Si
+hubiera un error entre los datos y el grafo, por ejemplo al pasar de los 4 enteros a las tablas, el
+certificado no lo vería. Por eso lo chequeamos de dos maneras (sección 8 del notebook simétrico).
+
+**Validación ciega** (`scripts/validar_grafo.py --archivo grafo_simetrico_s7.json`, 4 s en CPU). A partir
+de la regla de adyacencia y nada más (productos $Wy$ y $Hx$ implícitos con sumas prefijas, sin armar la
+matriz):
+- grados exactos, $\delta = 206\,564$;
+- velocidad en las fases certificadas $7\cdot10^{-12}$: son un equilibrio del grafo real;
+- los modos de cluster ($Q_{ab} = \mathbf 1_a^\top H\mathbf 1_b/\sqrt{n_a n_b}$) coinciden con la fórmula de los
+  grados; sus autovalores son 0 (la rotación), **1.2506**, 1.6457, 233.4 y tres $\approx 7.8\cdot10^4$;
+- Lanczos ciego en $\mathbf 1^\perp$ desde un vector al azar llega a 1.2506252671, el menor autovalor de $Q$
+  (diferencia relativa $6\cdot10^{-11}$).
+
+**Por qué no alcanza con Lanczos.** Cada valor de Ritz es **mayor o igual** que el verdadero menor
+autovalor. El residuo garantiza que hay un autovalor cerca, pero no descarta uno más chico que el vector
+inicial no vio. Así, "Lanczos ≥ cota de Gershgorin" es consistente con el certificado pero no lo prueba.
+La precisión de float64 no es el problema (error $\sim10^{-16}\|H\|$); el problema es que la cota es de un
+solo lado.
+
+**Espectro completo** (`scripts/espectro_fourier.py`, `src/espectro.py`). Correr $v \to v+1$ en todos los
+bloques conmuta con $H$, así que $H$ se parte en $g$ matrices hermíticas $H_m$ de $23\times23$ y su
+espectro es la unión de los de ellas. Como $H_{g-m} = \overline{H_m}$, alcanza con $m \le g/2$. Se calculan
+**todos** los autovalores; antes, el producto por bloques (FFT) se compara con el implícito ciego.
+
+| | simétrico | general |
+|---|---|---|
+| $n$ | 299 989 | 30 000 004 |
+| $H x$ Fourier contra implícito | $7\cdot10^{-16}$ | $9\cdot10^{-16}$ |
+| menor modo de cluster | 1.2506 | 157.51 |
+| $m \ne 0$: $\lambda_{\min}$ / cota de Gershgorin | 65 366.47 / 65 278.03 | 6 537 169 / 6 528 340 |
+| $m = 0$ (resto): $\lambda_{\min}$ / cota | 65 366.79 / 65 366.79 | 6 537 200 / 6 537 200 |
+| tiempo (CPU) | 1 s | 126 s |
+
+- **Lanczos daba bien:** su valor para el resto de los modos queda a $10^{-8}$ relativo del exacto.
+- **Gershgorin es casi exacta:** en $m \ne 0$ el verdadero mínimo la supera en 0.14% (y está en $m = 1$).
+- **En $m = 0$ la cota es exacta:** la pone W, cuyas tablas con los demás clusters son constantes, así que
+  en las diferencias entre sus bloques no actúa ningún acople y el autovalor es justo
+  $\sum_b d_{Wb}\cos_{Wb} + 1$, que es lo que calcula la cota.
+
+Ningún autovalor queda debajo de su cota: el certificado es consistente con el espectro completo, en los
+dos grafos. No hizo falta GPU.
+
 ---
 
 ## 12. Comparación final y qué queda abierto
@@ -744,7 +790,9 @@ Datos completos en `data/grafo_simetrico_s7.json` y figura en
   prueba con el certificado y no con simulaciones.
 - **El resultado simétrico depende del óptimo de Nelder–Mead:** con otra opción de Nelder–Mead la plantilla
   salió apenas distinta y el mínimo $n$ certificado fue $10^6$ en lugar de $3\cdot10^5$.
-- **Para el grafo simétrico no repetimos** la validación ciega ni las simulaciones del notebook general.
+- **Para el grafo simétrico no repetimos las simulaciones** de la dinámica del notebook general (la
+  validación ciega y el espectro completo sí, sección 11.7). Con $\lambda_{\min}/n \approx 4\cdot10^{-6}$, la
+  cuenca en las direcciones lentas debería ser tan chica como allá (sin medir).
 
 ### Abierto (de `notes/objetivos_grafo_elegante.md`)
 
@@ -772,6 +820,11 @@ Datos completos en `data/grafo_simetrico_s7.json` y figura en
   reticulado", juntándolas como bloques de un mismo vector.
 - **Krawczyk:** test de intervalos que prueba que un sistema de ecuaciones tiene una única solución dentro
   de una caja.
+- **Espectro por bloques de Fourier:** como el blow-up circulante conmuta con el corrimiento
+  $v \to v+1$, su Hessiano se parte en $g$ matrices chicas $H_m$; diagonalizarlas da todos los
+  autovalores.
+- **Lanczos:** método que aproxima los autovalores extremos de una matriz usando solo productos
+  matriz-vector; sus valores de Ritz son cotas superiores del menor autovalor.
 - **LLL:** algoritmo que da una base corta y casi ortogonal de un reticulado.
 - **Lyapunov–Schmidt:** resolver las ecuaciones bien condicionadas y quedarse con el residuo de las mal
   condicionadas.
