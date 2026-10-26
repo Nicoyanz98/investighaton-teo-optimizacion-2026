@@ -534,8 +534,8 @@ $g$ bloques chicos, uno por frecuencia de Fourier. Con eso:
 | camino B (sub-piezas, `notes/blowup_explicito.md`) | 1 500 014 | 1032699/1500014 ≈ 0.688463 |
 
 Además, una validación "ciega" (el Hessiano del grafo completo en float64, sin usar la teoría del
-certificado), el espectro completo por bloques de Fourier (sección 11.7) y simulaciones de Kuramoto lo
-confirman. Las simulaciones muestran también que la cuenca de
+certificado), el espectro completo por bloques de Fourier (sección 11.7) y simulaciones de Kuramoto (para
+el grafo simétrico, sección 11.8) lo confirman. Las simulaciones muestran también que la cuenca de
 la trampa es diminuta (del orden de $10^{-4}$ rad en las direcciones lentas): desde fases al azar el grafo
 sincroniza.
 
@@ -757,6 +757,39 @@ espectro es la unión de los de ellas. Como $H_{g-m} = \overline{H_m}$, alcanza 
 Ningún autovalor queda debajo de su cota: el certificado es consistente con el espectro completo, en los
 dos grafos. No hizo falta GPU.
 
+### 11.8 La dinámica sobre el grafo completo
+
+El certificado dice que el estado es estable, pero eso es lineal: no dice cuánto se lo puede empujar y
+que vuelva. Simulamos Kuramoto (tiempo normalizado, $\dot\theta_u = \frac1n\sum_v W_{uv}\sin(\theta_v -
+\theta_u)$) sobre los $299\,989$ vértices, con RK4 y los productos $Wy$ implícitos, desde el estado
+certificado más ruido gaussiano **dentro** de cada cluster (con media 0 por cluster).
+
+**Dos escalas de tiempo.** Cerca del estado, $\dot\delta = -\frac1n H\delta$: los modos internos de los
+clusters decaen a tasa $\approx 0.22$ y se apagan en $t \sim 30$. Los modos de cluster (clusters
+rígidos) decaen a $\lambda_{\min}/n = 1.2506/299\,989 \approx 4.17\cdot10^{-6}$: hace falta $t \sim 10^6$.
+Mientras el ruido se apaga, las no linealidades le pasan una parte a los modos de cluster, y esa parte
+es la que decide si el estado vuelve o escapa.
+
+**Corridas** (`scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json --simular perturbado`):
+$dt = 0.5$ hasta $t = 60$; después el grafo completo sigue solo. Como comparación, desde $t = 60$ se
+integra también la **reducción a clusters** ($\dot y_a = \sum_b \frac{d_{ab}}{n}\sin(y_b - y_a)$, exacta si
+cada cluster está sincronizado), pero las conclusiones salen del grafo completo.
+
+| ruido | distancia en $t = 60$ | grafo completo | resultado |
+|---|---|---|---|
+| 0.5 rad | $1.1\cdot10^{-2}$ | hasta $t = 4000$ ($dt = 0.5$, CPU, 15 min) | escapa: $r$ cruza 0.5 en $t = 786$ y sincroniza |
+| 0.05 rad | $9.9\cdot10^{-5}$ | hasta $t = 10^6$ ($dt = 5$, GPU, 2.6 h) | vuelve: distancia $1.5\cdot10^{-6}$ en $t = 10^6$, $r = 0.043$ fijo |
+
+- **La reducción coincide con el grafo completo** a menos de 1% en todo $[60, 10^6]$ con ruido 0.05, y
+  escapa casi al mismo tiempo con ruido 0.5.
+- **La dinámica mide el autovalor del certificado:** con ruido 0.05, la pendiente de
+  $\log(\text{distancia})$ en $t \ge 10^5$ es $4.18\cdot10^{-6}$, a 0.2% de $\lambda_{\min}/n$.
+- **La cuenca en los modos de cluster es chica:** entre $\sim10^{-4}$ rad (vuelve) y $\sim10^{-2}$ rad
+  (escapa) de desplazamiento de los clusters, como en el grafo general.
+
+RK4 es estable con $dt\,\lambda_{\max}/n < 2.79$; acá $\lambda_{\max}/n \approx 0.265$, así que $dt = 5$
+sobra. Una corrida corta en la GPU del server dio la misma distancia que la CPU local a 12 dígitos.
+
 ---
 
 ## 12. Comparación final y qué queda abierto
@@ -786,13 +819,11 @@ dos grafos. No hizo falta GPU.
   $\mu_c \ge \mu$. Lo que sí implica es que la trampa es difícil de ver en la práctica. Ese entorno es
   muy aplanado: ancho en las direcciones internas de cada cluster (el ruido de 0.5 rad se apaga solo),
   pero de solo $\sim 10^{-4}$ rad en las direcciones lentas (mover clusters enteros), porque el estado
-  está cerca del pliegue. Desde fases al azar el grafo casi siempre sincroniza, y por eso la trampa se
+  está cerca del pliegue. En el grafo simétrico lo medimos sobre el grafo completo (sección 11.8): con
+  $10^{-4}$ vuelve y con $10^{-2}$ escapa. Desde fases al azar el grafo casi siempre sincroniza, y por eso la trampa se
   prueba con el certificado y no con simulaciones.
 - **El resultado simétrico depende del óptimo de Nelder–Mead:** con otra opción de Nelder–Mead la plantilla
   salió apenas distinta y el mínimo $n$ certificado fue $10^6$ en lugar de $3\cdot10^5$.
-- **Para el grafo simétrico no repetimos las simulaciones** de la dinámica del notebook general (la
-  validación ciega y el espectro completo sí, sección 11.7). Con $\lambda_{\min}/n \approx 4\cdot10^{-6}$, la
-  cuenca en las direcciones lentas debería ser tan chica como allá (sin medir).
 
 ### Abierto (de `notes/objetivos_grafo_elegante.md`)
 
