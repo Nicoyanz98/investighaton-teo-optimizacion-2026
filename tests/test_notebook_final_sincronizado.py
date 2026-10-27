@@ -23,6 +23,8 @@ ADAPTADAS = {
     "cargar_json": "lee de resultados/ y no de data/",
     "explorar_patron": "acepta arranques puramente al azar y guarda el tipo de arranque",
     "control_ingenuo": "recibe la curva en lugar de leer data/s7_curva.json",
+    "plantilla_de_la_curva": "el docstring nombra resultados/ y no data/",
+    "elegir_grafo": "el docstring nombra resultados/ y no data/",
 }
 
 
