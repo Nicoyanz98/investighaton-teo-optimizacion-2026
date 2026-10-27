@@ -1,8 +1,10 @@
 numpy
 matplotlib
+jupyter
 ipykernel
 scipy
 networkx
 mpmath
 cvxpy
 pytest
+torch
