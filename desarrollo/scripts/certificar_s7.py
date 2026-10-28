@@ -14,9 +14,9 @@ from pathlib import Path
 import mpmath as mp
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.certificado import certificar, fases_newton, racionalizar  # noqa: E402
-from src.experimentos import guardar_json  # noqa: E402
-from src.s7 import NOMBRES, construir  # noqa: E402
+from desarrollo.src.certificado import certificar, fases_newton, racionalizar  # noqa: E402
+from desarrollo.src.experimentos import guardar_json  # noqa: E402
+from desarrollo.src.s7 import NOMBRES, construir  # noqa: E402
 
 
 def a_numeradores(fracciones, D):

@@ -13,8 +13,8 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.busqueda import dos_redes, semilla, una_red  # noqa: E402
-from src.experimentos import guardar_json, silenciar_avisos  # noqa: E402
+from desarrollo.src.busqueda import dos_redes, semilla, una_red  # noqa: E402
+from desarrollo.src.experimentos import guardar_json, silenciar_avisos  # noqa: E402
 
 
 def barrer_una_red(ls):

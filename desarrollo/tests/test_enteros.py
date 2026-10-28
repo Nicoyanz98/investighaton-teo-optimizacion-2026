@@ -8,12 +8,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.enteros import (  # noqa: E402
+from desarrollo.src.enteros import (  # noqa: E402
     evaluar_enteros, fases_s7, grados_ingenuos, pulir, subdividir, tamanos_enteros, tamanos_exactos,
 )
-from src.experimentos import cargar_json  # noqa: E402
-from src.plantillas import fuerzas  # noqa: E402
-from src.reticulado import enteros_cercanos, lll  # noqa: E402
+from desarrollo.src.experimentos import cargar_json  # noqa: E402
+from desarrollo.src.plantillas import fuerzas  # noqa: E402
+from desarrollo.src.reticulado import enteros_cercanos, lll  # noqa: E402
 
 
 def test_lll_conserva_el_reticulado():

@@ -18,10 +18,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.enteros import (  # noqa: E402
+from desarrollo.src.enteros import (  # noqa: E402
     evaluar_enteros, fases_s7, grados_ingenuos, mu_entero, pulir, redondeo_reticulado, tamanos_exactos,
 )
-from src.experimentos import cargar_json, correr_en_paralelo, guardar_json  # noqa: E402
+from desarrollo.src.experimentos import cargar_json, correr_en_paralelo, guardar_json  # noqa: E402
 
 CANDIDATOS = "0.03:1e-3:3:5,0.02:1e-3:3:5,0.01:1e-3:3:5"
 

@@ -20,10 +20,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.busqueda import (  # noqa: E402
+from desarrollo.src.busqueda import (  # noqa: E402
     FamiliaParticiones, arranque_aleatorio, arranque_estructurado, base_c4, base_canale, optimizar_familia,
 )
-from src.experimentos import correr_en_paralelo, guardar_json  # noqa: E402
+from desarrollo.src.experimentos import correr_en_paralelo, guardar_json  # noqa: E402
 
 BASES = {"c4": base_c4, "canale": base_canale}
 

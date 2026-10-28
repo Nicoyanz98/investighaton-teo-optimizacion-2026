@@ -20,9 +20,9 @@ import numpy as np
 from scipy.optimize import linprog, minimize
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.experimentos import correr_en_paralelo, guardar_json  # noqa: E402
-from src.grafos import grafos_nauty  # noqa: E402
-from src.plantillas import base_perpendicular, fuerzas, matriz_clusters, splitting  # noqa: E402
+from desarrollo.src.experimentos import correr_en_paralelo, guardar_json  # noqa: E402
+from desarrollo.src.grafos import grafos_nauty  # noqa: E402
+from desarrollo.src.plantillas import base_perpendicular, fuerzas, matriz_clusters, splitting  # noqa: E402
 
 
 def mu_sin_estabilidad(M):

@@ -23,9 +23,9 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.blowup import certificar_blowup, descripcion_compacta  # noqa: E402
-from src.enteros import fases_s7, mu_entero, pulir, redondeo_reticulado, subdividir, tamanos_exactos  # noqa: E402
-from src.experimentos import cargar_json, correr_en_paralelo, guardar_json  # noqa: E402
+from desarrollo.src.blowup import certificar_blowup, descripcion_compacta  # noqa: E402
+from desarrollo.src.enteros import fases_s7, mu_entero, pulir, redondeo_reticulado, subdividir, tamanos_exactos  # noqa: E402
+from desarrollo.src.experimentos import cargar_json, correr_en_paralelo, guardar_json  # noqa: E402
 
 PARTICIONES = {
     "nada": [[3]] * 6 + [[5]],

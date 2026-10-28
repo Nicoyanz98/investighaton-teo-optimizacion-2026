@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.aurea import (  # noqa: E402
+from desarrollo.src.aurea import (  # noqa: E402
     distancias_fibonacci,
     estado_aureo,
     fibonacci,
@@ -17,9 +17,9 @@ from src.aurea import (  # noqa: E402
     simetrizar,
     trampa_geometrica,
 )
-from src.busqueda import red_aurea  # noqa: E402
-from src.grafos import grafo_circulante, grafo_circulante_conjunto, grafo_geometrico_circular  # noqa: E402
-from src.kuramoto import (  # noqa: E402
+from desarrollo.src.busqueda import red_aurea  # noqa: E402
+from desarrollo.src.grafos import grafo_circulante, grafo_circulante_conjunto, grafo_geometrico_circular  # noqa: E402
+from desarrollo.src.kuramoto import (  # noqa: E402
     autovalores_twisted,
     autovalores_twisted_conjunto,
     hessiano,

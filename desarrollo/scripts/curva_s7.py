@@ -19,10 +19,10 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.enteros import (  # noqa: E402
+from desarrollo.src.enteros import (  # noqa: E402
     espectro_s7, fases_s7, n_minimo_ingenuo, optimizar_s7, pulir, tamanos_exactos, tamanos_racionales,
 )
-from src.experimentos import correr_en_paralelo, guardar_json  # noqa: E402
+from desarrollo.src.experimentos import correr_en_paralelo, guardar_json  # noqa: E402
 
 TAMANOS = [(3, 5), (11, 18), (20, 33)]
 

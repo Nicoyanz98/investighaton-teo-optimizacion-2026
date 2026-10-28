@@ -6,12 +6,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.blowup import adyacencia_densa, descripcion_compacta, fases_vertices, hessiano_denso  # noqa: E402
-from src.enteros import paso_grado, tamanos_enteros  # noqa: E402
-from src.validacion import (  # noqa: E402
+from desarrollo.src.blowup import adyacencia_densa, descripcion_compacta, fases_vertices, hessiano_denso  # noqa: E402
+from desarrollo.src.enteros import paso_grado, tamanos_enteros  # noqa: E402
+from desarrollo.src.validacion import (  # noqa: E402
     Arreglos, GrafoImplicito, cociente_formula, cociente_implicito, grados_medidos, lanczos,
 )
-from tests.test_blowup import _grafo_mas_chico, grados_al_azar  # noqa: E402
+from desarrollo.tests.test_blowup import _grafo_mas_chico, grados_al_azar  # noqa: E402
 
 K = [2, 3, 1]
 G = 7

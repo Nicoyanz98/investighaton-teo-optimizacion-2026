@@ -22,9 +22,9 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.espectro import curva_minimos, espectro_fourier, producto_fourier  # noqa: E402
-from src.experimentos import cargar_json, guardar_json  # noqa: E402
-from src.validacion import Arreglos, GrafoImplicito, cociente_formula, elegir_grafo  # noqa: E402
+from desarrollo.src.espectro import curva_minimos, espectro_fourier, producto_fourier  # noqa: E402
+from desarrollo.src.experimentos import cargar_json, guardar_json  # noqa: E402
+from desarrollo.src.validacion import Arreglos, GrafoImplicito, cociente_formula, elegir_grafo  # noqa: E402
 
 
 def chequear_producto(descripcion, grafo, semillas, lote):

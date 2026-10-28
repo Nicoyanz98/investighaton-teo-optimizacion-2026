@@ -31,8 +31,8 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.experimentos import cargar_json, guardar_json  # noqa: E402
-from src.validacion import (  # noqa: E402
+from desarrollo.src.experimentos import cargar_json, guardar_json  # noqa: E402
+from desarrollo.src.validacion import (  # noqa: E402
     Arreglos, GrafoImplicito, cociente_formula, cociente_implicito, elegir_grafo, grados_medidos, lanczos,
 )
 

@@ -7,12 +7,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.blowup import (  # noqa: E402
+from desarrollo.src.blowup import (  # noqa: E402
     adyacencia_densa, certificar_blowup, desplazamientos_cluster, fases_vertices, hessiano_denso,
     hessiano_fourier, margenes_gershgorin, tabla_transporte, tablas_bloques,
 )
-from src.enteros import paso_grado, tamanos_enteros  # noqa: E402
-from src.experimentos import cargar_json  # noqa: E402
+from desarrollo.src.enteros import paso_grado, tamanos_enteros  # noqa: E402
+from desarrollo.src.experimentos import cargar_json  # noqa: E402
 
 K_CHICO = [1, 2, 3]
 G_CHICO = 5

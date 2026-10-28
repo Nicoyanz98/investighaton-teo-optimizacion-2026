@@ -8,13 +8,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src import s7
-from src.busqueda import FamiliaParticiones, base_c4, base_canale, dos_redes, semilla, una_red
-from src.certificado import certificar, fases_newton, racionalizar
-from src.grafos import blowup_cartesiano, blowup_lexicografico, conectividad, grafo_circulante
-from src.kuramoto import clasificar, twisted_state
-from src.plantillas import analizar, plantilla_c4, plantilla_canale, realizar
-from src.twisted_lp import mejor_twisted
+from desarrollo.src import s7
+from desarrollo.src.busqueda import FamiliaParticiones, base_c4, base_canale, dos_redes, semilla, una_red
+from desarrollo.src.certificado import certificar, fases_newton, racionalizar
+from desarrollo.src.grafos import blowup_cartesiano, blowup_lexicografico, conectividad, grafo_circulante
+from desarrollo.src.kuramoto import clasificar, twisted_state
+from desarrollo.src.plantillas import analizar, plantilla_c4, plantilla_canale, realizar
+from desarrollo.src.twisted_lp import mejor_twisted
 
 
 def test_blowup_lexicografico_preserva_mu_y_cartesiano_la_baja():
@@ -99,7 +99,7 @@ def test_familia_canale_sin_partir_da_canale():
 
 
 def test_familia_c4_arranque_s7():
-    from src.busqueda import arranque_estructurado
+    from desarrollo.src.busqueda import arranque_estructurado
 
     familia = FamiliaParticiones(base_c4(), [2, 2, 2, 1], h=0.01)
     assert familia.mu(arranque_estructurado(familia)) == pytest.approx(0.6851, abs=5e-4)

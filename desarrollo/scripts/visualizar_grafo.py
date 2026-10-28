@@ -50,8 +50,8 @@ import numpy as np  # noqa: E402
 from scipy.integrate import solve_ivp  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.experimentos import CARPETA_DATOS, cargar_json, guardar_json  # noqa: E402
-from src.validacion import Arreglos, GrafoImplicito  # noqa: E402
+from desarrollo.src.experimentos import CARPETA_DATOS, cargar_json, guardar_json  # noqa: E402
+from desarrollo.src.validacion import Arreglos, GrafoImplicito  # noqa: E402
 
 LETRAS = ["A", "B", "C", "W"]
 TONOS = [0.58, 0.07, 0.40, 0.80]     # azul, naranja, verde, violeta (uno por sector)

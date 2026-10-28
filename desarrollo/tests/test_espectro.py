@@ -6,13 +6,13 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.blowup import (  # noqa: E402
+from desarrollo.src.blowup import (  # noqa: E402
     adyacencia_densa, descripcion_compacta, fases_vertices, hessiano_denso, hessiano_fourier,
     transformada_intervalo,
 )
-from src.espectro import bloques_fourier, espectro_fourier, producto_fourier, transformada_intervalos  # noqa: E402
-from src.validacion import cociente_formula  # noqa: E402
-from tests.test_blowup import grados_al_azar  # noqa: E402
+from desarrollo.src.espectro import bloques_fourier, espectro_fourier, producto_fourier, transformada_intervalos  # noqa: E402
+from desarrollo.src.validacion import cociente_formula  # noqa: E402
+from desarrollo.tests.test_blowup import grados_al_azar  # noqa: E402
 
 K = [2, 3, 1]
 G = 7

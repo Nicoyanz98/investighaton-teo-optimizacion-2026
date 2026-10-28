@@ -15,11 +15,11 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.aurea import es_fibonacci, fibonacci, mejor_circulante_fibonacci, mejor_radio  # noqa: E402
-from src.busqueda import red_aurea, sdp_interno  # noqa: E402
-from src.experimentos import correr_en_paralelo, guardar_json, silenciar_avisos  # noqa: E402
-from src.kuramoto import k_max  # noqa: E402
-from src.twisted_lp import mejor_twisted  # noqa: E402
+from desarrollo.src.aurea import es_fibonacci, fibonacci, mejor_circulante_fibonacci, mejor_radio  # noqa: E402
+from desarrollo.src.busqueda import red_aurea, sdp_interno  # noqa: E402
+from desarrollo.src.experimentos import correr_en_paralelo, guardar_json, silenciar_avisos  # noqa: E402
+from desarrollo.src.kuramoto import k_max  # noqa: E402
+from desarrollo.src.twisted_lp import mejor_twisted  # noqa: E402
 
 PESOS = ["iguales", "arcos", "geometricos"]
 
