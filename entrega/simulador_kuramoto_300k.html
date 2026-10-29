@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador Kuramoto: el grafo S7 de 299 989 vértices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --fondo:#0B1424; --panel:#111E33; --borde:#1E2E4A; --texto:#E6ECF7; --suave:#93A3C2; --azul:#2A78D6; --naranja:#EB6834; --claro:#5BA8FF; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--fondo); color:var(--texto); font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:15px; line-height:1.5; }
+  .envoltura { max-width:1320px; margin:0 auto; padding:24px 20px 48px; }
+  h1 { font-size:26px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; }
+  .sub { color:var(--suave); margin:0 0 20px; max-width:980px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .rejilla { display:grid; grid-template-columns:300px 1fr; gap:18px; align-items:start; }
+  @media (max-width:980px) { .rejilla { grid-template-columns:1fr; } }
+  .tarjeta { background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:16px; }
+  .tarjeta h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--suave); margin:0 0 10px; font-weight:600; }
+  label { display:block; font-weight:500; margin:12px 0 4px; }
+  .valor { float:right; font-family:"IBM Plex Mono",monospace; color:var(--claro); }
+  .ayuda { color:var(--suave); font-size:13px; margin:2px 0 0; }
+  input[type=range] { width:100%; accent-color:var(--azul); }
+  input[type=number] { width:100%; background:#0B1424; color:var(--texto); border:1px solid var(--borde); border-radius:6px; padding:6px 8px; font-family:"IBM Plex Mono",monospace; }
+  button { font-family:inherit; font-size:14px; border-radius:8px; border:1px solid var(--borde); background:#16263F; color:var(--texto); padding:8px 10px; cursor:pointer; }
+  button:hover { border-color:var(--azul); }
+  button.principal { background:var(--azul); border-color:var(--azul); font-weight:600; width:100%; margin-top:14px; padding:10px; }
+  button.principal:disabled { opacity:.5; cursor:default; }
+  .preajustes { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .preajustes button { text-align:left; font-size:12.5px; line-height:1.3; padding:7px 8px; }
+  .preajustes b { display:block; font-weight:600; font-size:13px; }
+  .lienzos { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:700px) { .lienzos { grid-template-columns:1fr; } }
+  canvas { width:100%; height:auto; display:block; border-radius:10px; background:#08101E; }
+  .titulo-lienzo { display:flex; justify-content:space-between; align-items:baseline; margin:0 0 6px; }
+  .titulo-lienzo span:first-child { font-weight:600; }
+  .titulo-lienzo span:last-child { color:var(--suave); font-size:13px; }
+  .estado { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+  @media (max-width:700px) { .estado { grid-template-columns:1fr 1fr; } }
+  .dato { background:#0B1424; border:1px solid var(--borde); border-radius:10px; padding:10px 12px; }
+  .dato small { display:block; color:var(--suave); font-size:12px; }
+  .dato div { font-family:"IBM Plex Mono",monospace; font-size:19px; font-weight:500; }
+  #eEstado.fuera { color:var(--naranja); }
+  .reproductor { display:flex; gap:10px; align-items:center; margin:10px 0 4px; }
+  .reproductor input[type=range] { flex:1; }
+  .reproductor select { background:#0B1424; color:var(--texto); border:1px solid var(--borde); border-radius:6px; padding:6px; font-family:inherit; }
+  #fase { font-size:13px; color:var(--suave); min-height:20px; }
+  #fase b { color:var(--texto); font-weight:600; }
+  .barra { height:4px; background:#0B1424; border-radius:2px; overflow:hidden; margin-top:8px; }
+  .barra div { height:100%; width:0; background:var(--azul); transition:width .15s; }
+  .explica { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:18px; }
+  @media (max-width:980px) { .explica { grid-template-columns:1fr; } }
+  .explica h3 { font-size:15px; margin:0 0 6px; }
+  .explica p { margin:0 0 8px; color:#C3CEE3; font-size:14px; }
+  .leyenda { display:flex; flex-wrap:wrap; gap:10px 14px; margin-top:8px; font-size:13px; color:var(--suave); }
+  .leyenda i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px; }
+</style>
+</head>
+<body>
+<div class="envoltura">
+  <h1>Kuramoto sobre el grafo explícito S7: 299 989 osciladores</h1>
+  <p class="sub">Cada vértice del grafo es un oscilador con fase θ, y θ̇<sub>u</sub> = (1/n) Σ<sub>v∼u</sub> sin(θ<sub>v</sub> − θ<sub>u</sub>). Partimos del equilibrio certificado θ*, que no es sincronizado, y lo perturbamos. Si la perturbación es chica, el sistema vuelve a θ*, porque es un mínimo local estricto. Si es más grande, sale de su cuenca, que es angosta, y termina sincronizado (r = 1).</p>
+
+  <div class="rejilla">
+    <div class="tarjeta">
+      <h2>Perturbación inicial</h2>
+      <label>Ruido interno σ <span class="valor" id="vSigma"></span></label>
+      <input type="range" id="sigma" min="0" max="12" step="1" value="6">
+      <p class="ayuda">Ruido gaussiano en cada oscilador, con media cero dentro de cada cluster: las fases medias de los clusters arrancan exactamente en θ*.</p>
+
+      <label>Empujón δ a lo largo del modo más lento <span class="valor" id="vDelta"></span></label>
+      <input type="range" id="delta" min="0" max="18" step="1" value="9">
+      <p class="ayuda">Mueve clusters enteros (A y C en sentidos opuestos). El borde de la cuenca en esa dirección está en δ ≈ −5.4·10⁻⁴ y δ ≈ +7.7·10⁻⁴.</p>
+
+      <label>Semilla del ruido</label>
+      <input type="number" id="semilla" value="1" min="1" step="1">
+
+      <button class="principal" id="simular">Simular</button>
+      <div class="barra"><div id="progreso"></div></div>
+
+      <h2 style="margin-top:20px">Casos para comparar</h2>
+      <div class="preajustes">
+        <button data-s="6" data-d="9"><b>σ = 0.05</b>vuelve a θ*</button>
+        <button data-s="10" data-d="9"><b>σ = 0.5</b>sale y sincroniza</button>
+        <button data-s="0" data-d="12"><b>δ = +7·10⁻⁴</b>justo adentro</button>
+        <button data-s="0" data-d="15"><b>δ = +9·10⁻⁴</b>justo afuera</button>
+        <button data-s="0" data-d="5"><b>δ = −5·10⁻⁴</b>justo adentro</button>
+        <button data-s="0" data-d="3"><b>δ = −6·10⁻⁴</b>justo afuera</button>
+      </div>
+      <p class="ayuda" style="margin-top:10px">Cada corrida nueva queda dibujada en el gráfico de abajo, en gris, para comparar.</p>
+    </div>
+
+    <div>
+      <div class="lienzos">
+        <div>
+          <div class="titulo-lienzo"><span>Fases en el círculo</span><span>un punto por oscilador</span></div>
+          <canvas id="circulo" width="720" height="720"></canvas>
+        </div>
+        <div>
+          <div class="titulo-lienzo"><span>Lupa: desvío respecto de θ*</span><span id="escala" class="mono"></span></div>
+          <canvas id="lupa" width="720" height="720"></canvas>
+        </div>
+      </div>
+      <div class="leyenda" id="leyenda"></div>
+
+      <div class="estado">
+        <div class="dato"><small>tiempo</small><div id="eT">t = 0</div></div>
+        <div class="dato"><small>distancia de los clusters a θ* (rad)</small><div id="eD">—</div></div>
+        <div class="dato"><small>parámetro de orden r (r = 1: sincronía)</small><div id="eR">—</div></div>
+        <div class="dato"><small>estado</small><div id="eEstado" style="font-size:15px;font-family:'IBM Plex Sans'">—</div></div>
+      </div>
+
+      <div class="reproductor">
+        <button id="play">⏸</button>
+        <input type="range" id="linea" min="0" max="0" value="0" disabled>
+        <select id="vel"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+      </div>
+      <div id="fase"></div>
+
+      <canvas id="grafico" width="1400" height="350" style="margin-top:10px"></canvas>
+    </div>
+  </div>
+
+  <div class="explica">
+    <div class="tarjeta"><h3>Qué se ve</h3>
+      <p><b>Círculo:</b> cada punto es un oscilador ubicado en su fase. El radio no tiene significado: solo separa los puntos para que se vean. Los siete clusters de S7 están a pocos grados unos de otros (A, B y C partidos en dos mitades, W entero), así que en el círculo aparecen como cuatro manchas.</p>
+      <p><b>Lupa:</b> una fila por cluster, con el desvío θ<sub>u</sub> − θ*<sub>a</sub> de cada oscilador. La escala se ajusta sola. El triángulo marca la fase media del cluster.</p>
+    </div>
+    <div class="tarjeta"><h3>Dos escalas de tiempo</h3>
+      <p>El ruido dentro de cada cluster se apaga rápido, con tasa ≥ 0.218: para t ≈ 60 ya es menor que 10⁻⁵ (línea gris punteada).</p>
+      <p>Pero el ruido no es lineal: por ⟨sin(φ + ξ)⟩ ≈ sin φ (1 − σ²/2), las fases medias de los clusters se corren un poco, ∝ σ². Ese corrimiento a nivel cluster se relaja lentísimo (tasas ≈ 4·10⁻⁶), y por eso hay que mirar hasta t = 10⁷.</p>
+    </div>
+    <div class="tarjeta"><h3>Cómo se calcula</h3>
+      <p>Hasta t = 60 se integra el <b>grafo completo</b>: los 299 989 osciladores, con RK4 y dt = 0.5. El producto por la matriz de adyacencia se hace sin armarla, con sumas prefijas sobre los 23 anillos ℤ<sub>13043</sub>. Esta parte tarda unos 15 s.</p>
+      <p>Desde t = 60, cada cluster ya es rígido, y se usa la ecuación por clusters ẏ<sub>a</sub> = Σ<sub>b</sub> (d<sub>ab</sub>/n) sin(y<sub>b</sub> − y<sub>a</sub>), con un integrador rígido (Rosenbrock), hasta t = 10⁷. En esta parte la dispersión interna ya no se integra: se dibuja decayendo con su tasa mínima, 0.218. Se dibuja un oscilador de cada cinco.</p>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="datos">{"K": [3, 3, 3, 3, 3, 3, 5], "G": 13043, "N": 299989, "inicios": [0, 39129, 78258, 117387, 156516, 195645, 234774], "d": [[39128, 39129, 39129, 23984, 0, 0, 65215], [39129, 39128, 26540, 38697, 0, 0, 63070], [39129, 26540, 39128, 39129, 38697, 23984, 0], [23984, 38697, 39129, 39128, 26540, 39129, 0], [0, 0, 38697, 26540, 39128, 39129, 63070], [0, 0, 23984, 39129, 39129, 39128, 65215], [39129, 37842, 0, 0, 37842, 39129, 65214]], "T": {"0,1": [[13043, 13043, 13043], [13043, 13043, 13043], [13043, 13043, 13043]], "0,2": [[13043, 13043, 13043], [13043, 13043, 13043], [13043, 13043, 13043]], "0,3": [[7995, 7995, 7994], [7995, 7994, 7995], [7994, 7995, 7995]], "0,4": [[0, 0, 0], [0, 0, 0], [0, 0, 0]], "0,5": [[0, 0, 0], [0, 0, 0], [0, 0, 0]], "0,6": [[13043, 13043, 13043, 13043, 13043], [13043, 13043, 13043, 13043, 13043], [13043, 13043, 13043, 13043, 13043]], "1,2": [[8847, 8847, 8846], [8847, 8846, 8847], [8846, 8847, 8847]], "1,3": [[12899, 12899, 12899], [12899, 12899, 12899], [12899, 12899, 12899]], "1,4": [[0, 0, 0], [0, 0, 0], [0, 0, 0]], "1,5": [[0, 0, 0], [0, 0, 0], [0, 0, 0]], "1,6": [[12614, 12614, 12614, 12614, 12614], [12614, 12614, 12614, 12614, 12614], [12614, 12614, 12614, 12614, 12614]], "2,3": [[13043, 13043, 13043], [13043, 13043, 13043], [13043, 13043, 13043]], "2,4": [[12899, 12899, 12899], [12899, 12899, 12899], [12899, 12899, 12899]], "2,5": [[7995, 7995, 7994], [7995, 7994, 7995], [7994, 7995, 7995]], "2,6": [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], "3,4": [[8847, 8847, 8846], [8847, 8846, 8847], [8846, 8847, 8847]], "3,5": [[13043, 13043, 13043], [13043, 13043, 13043], [13043, 13043, 13043]], "3,6": [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], "4,5": [[13043, 13043, 13043], [13043, 13043, 13043], [13043, 13043, 13043]], "4,6": [[12614, 12614, 12614, 12614, 12614], [12614, 12614, 12614, 12614, 12614], [12614, 12614, 12614, 12614, 12614]], "5,6": [[13043, 13043, 13043, 13043, 13043], [13043, 13043, 13043, 13043, 13043], [13043, 13043, 13043, 13043, 13043]]}, "phi": [-0.027775978942375636, 0.026714526453691226, 1.5326198800168855, 1.6089727735729078, 3.114878127136102, 3.169368632532169, 4.71238898038469], "modo": [-0.986620205455324, -1.0, -0.05280190736676594, 0.05280190726898382, 0.9999999999964173, 0.9866202054599811, 5.802465750425127e-11], "borde": [0.0005395648939857256, 0.0007689273498818613], "tasa": 4.168903750391111e-06, "nombres": ["Am", "Ap", "Bm", "Bp", "Cm", "Cp", "W"]}</script>
+<script type="text/plain" id="motor">// Motor de simulación: Kuramoto sobre el grafo explícito de 299 989 vértices (S7 simétrico).
+// Fase 1: grafo completo con RK4 (productos W·y implícitos con sumas prefijas, sin armar W).
+// Fase 2: clusters rígidos, ẏ_a = Σ_b (d_ab/n) sin(y_b − y_a), con Rosenbrock ROS2 adaptativo (rígido).
+function crearMotor(D) {
+  const K = D.K, G = D.G, N = D.N, INI = D.inicios, d = D.d, phi = D.phi;
+  const R = K.reduce((s, k) => s + k, 0);                     // 23 anillos
+  const anilloIni = [], anilloCl = [];
+  for (let a = 0; a < 7; a++) for (let i = 0; i < K[a]; i++) { anilloIni.push(INI[a] + i * G); anilloCl.push(a); }
+  const primerAnillo = []; { let s = 0; for (let a = 0; a < 7; a++) { primerAnillo.push(s); s += K[a]; } }
+  // lista de (anillo r de a, anillo s de b, t) con a < b
+  const pares = [];
+  for (const clave in D.T) {
+    const [a, b] = clave.split(",").map(Number), t = D.T[clave];
+    for (let i = 0; i < K[a]; i++) for (let j = 0; j < K[b]; j++)
+      if (t[i][j] > 0) pares.push([primerAnillo[a] + i, primerAnillo[b] + j, t[i][j]]);
+  }
+  const L = 2 * G + 1;
+  const prefS = new Float64Array(R * L), prefC = new Float64Array(R * L);
+  const medS = new Float64Array(R), medC = new Float64Array(R);
+  const sn = new Float64Array(N), cs = new Float64Array(N), WS = new Float64Array(N), WC = new Float64Array(N);
+
+  function velocidad(th, out) {
+    for (let u = 0; u < N; u++) { sn[u] = Math.sin(th[u]); cs[u] = Math.cos(th[u]); }
+    const sumS = new Float64Array(7), sumC = new Float64Array(7);
+    for (let r = 0; r < R; r++) {
+      const o = anilloIni[r]; let ms = 0, mc = 0;
+      for (let v = 0; v < G; v++) { ms += sn[o + v]; mc += cs[o + v]; }
+      sumS[anilloCl[r]] += ms; sumC[anilloCl[r]] += mc;
+      ms /= G; mc /= G; medS[r] = ms; medC[r] = mc;
+      const p = r * L; let as = 0, ac = 0; prefS[p] = 0; prefC[p] = 0;
+      for (let q = 0; q < 2 * G; q++) {
+        const v = q < G ? q : q - G;
+        as += sn[o + v] - ms; ac += cs[o + v] - mc; prefS[p + q + 1] = as; prefC[p + q + 1] = ac;
+      }
+    }
+    for (let a = 0; a < 7; a++) for (let u = INI[a]; u < INI[a] + K[a] * G; u++) { WS[u] = sumS[a] - sn[u]; WC[u] = sumC[a] - cs[u]; }
+    for (const [r, s, t] of pares) {
+      const oa = anilloIni[r], ob = anilloIni[s], pa = r * L, pb = s * L;
+      const tms = t * medS[s], tmc = t * medC[s];
+      for (let v = 0; v < G; v++) {             // (a,i,v) recibe Σ_{q<t} y(b,j,v+q)
+        WS[oa + v] += prefS[pb + v + t] - prefS[pb + v] + tms;
+        WC[oa + v] += prefC[pb + v + t] - prefC[pb + v] + tmc;
+      }
+      const ums = t * medS[r], umc = t * medC[r], base = pa + G + 1;
+      for (let w = 0; w < G; w++) {             // (b,j,w) recibe Σ_{q<t} y(a,i,w−q)
+        WS[ob + w] += prefS[base + w] - prefS[base + w - t] + ums;
+        WC[ob + w] += prefC[base + w] - prefC[base + w - t] + umc;
+      }
+    }
+    for (let u = 0; u < N; u++) out[u] = (cs[u] * WS[u] - sn[u] * WC[u]) / N;
+  }
+
+  // ---------- fase 1: grafo completo ----------
+  function estadoInicial(sigma, delta, semilla) {
+    let x = semilla >>> 0 || 1;
+    const azar = () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return (x + 0.5) / 4294967296; };
+    const th = new Float64Array(N);
+    for (let a = 0; a < 7; a++) {
+      const o = INI[a], n = K[a] * G; let m = 0;
+      for (let u = o; u < o + n; u += 2) {
+        const r = Math.sqrt(-2 * Math.log(azar())), ang = 2 * Math.PI * azar();
+        th[u] = sigma * r * Math.cos(ang); if (u + 1 < o + n) th[u + 1] = sigma * r * Math.sin(ang);
+      }
+      for (let u = o; u < o + n; u++) m += th[u];
+      m /= n;
+      const c = phi[a] + delta * D.modo[a] - m;
+      for (let u = o; u < o + n; u++) th[u] += c;
+    }
+    return th;
+  }
+  const k1 = new Float64Array(N), k2 = new Float64Array(N), k3 = new Float64Array(N), k4 = new Float64Array(N), tmp = new Float64Array(N);
+  function pasoRK4(th, dt) {
+    velocidad(th, k1); for (let u = 0; u < N; u++) tmp[u] = th[u] + 0.5 * dt * k1[u];
+    velocidad(tmp, k2); for (let u = 0; u < N; u++) tmp[u] = th[u] + 0.5 * dt * k2[u];
+    velocidad(tmp, k3); for (let u = 0; u < N; u++) tmp[u] = th[u] + dt * k3[u];
+    velocidad(tmp, k4);
+    for (let u = 0; u < N; u++) th[u] += dt / 6 * (k1[u] + 2 * k2[u] + 2 * k3[u] + k4[u]);
+  }
+  function fasesCluster(th) {
+    const y = new Array(7);
+    for (let a = 0; a < 7; a++) {
+      let c = 0, s = 0; for (let u = INI[a]; u < INI[a] + K[a] * G; u++) { c += Math.cos(th[u]); s += Math.sin(th[u]); }
+      y[a] = Math.atan2(s, c);
+    }
+    return y;
+  }
+  function orden(th) { let c = 0, s = 0; for (let u = 0; u < N; u++) { c += Math.cos(th[u]); s += Math.sin(th[u]); } return Math.hypot(c, s) / N; }
+
+  // ---------- fase 2: clusters rígidos (en desvíos e = y − φ*) ----------
+  const A = d.map(f => f.map(v => v / N)), x = K.map(k => k * G / N);
+  function fc(e) {
+    const o = new Array(7).fill(0);
+    for (let a = 0; a < 7; a++) for (let b = 0; b < 7; b++) if (b !== a && A[a][b] > 0)
+      o[a] += A[a][b] * Math.sin(phi[b] - phi[a] + e[b] - e[a]);
+    return o;
+  }
+  function jac(e) {
+    const J = []; for (let a = 0; a < 7; a++) J.push(new Array(7).fill(0));
+    for (let a = 0; a < 7; a++) for (let b = 0; b < 7; b++) if (b !== a && A[a][b] > 0) {
+      const c = A[a][b] * Math.cos(phi[b] - phi[a] + e[b] - e[a]); J[a][b] += c; J[a][a] -= c;
+    }
+    return J;
+  }
+  function resolver(M, v) {                     // Gauss con pivoteo, 7×7
+    const n = 7, a = M.map((f, i) => f.concat([v[i]]));
+    for (let c = 0; c < n; c++) {
+      let p = c; for (let i = c + 1; i < n; i++) if (Math.abs(a[i][c]) > Math.abs(a[p][c])) p = i;
+      [a[c], a[p]] = [a[p], a[c]];
+      for (let i = c + 1; i < n; i++) { const f = a[i][c] / a[c][c]; for (let j = c; j <= n; j++) a[i][j] -= f * a[c][j]; }
+    }
+    const s = new Array(n);
+    for (let i = n - 1; i >= 0; i--) { let z = a[i][n]; for (let j = i + 1; j < n; j++) z -= a[i][j] * s[j]; s[i] = z / a[i][i]; }
+    return s;
+  }
+  const gam = 1 + 1 / Math.SQRT2;
+  function clusters(e0, t0, tFin, rtol = 1e-7, atol = 1e-15) {
+    let e = e0.slice(), t = t0, h = 0.1;
+    const ts = [t], es = [e.slice()];
+    while (t < tFin) {
+      if (t + h > tFin) h = tFin - t;
+      const J = jac(e), M = J.map((f, i) => f.map((v, j) => (i === j ? 1 : 0) - gam * h * v));
+      const f0 = fc(e), q1 = resolver(M, f0);
+      const e1 = e.map((v, i) => v + h * q1[i]), f1 = fc(e1);
+      const q2 = resolver(M, f1.map((v, i) => v - 2 * q1[i]));
+      const en = e.map((v, i) => v + 1.5 * h * q1[i] + 0.5 * h * q2[i]);
+      const esc = Math.max(...e.map(Math.abs)) * rtol + atol;
+      let err = 0; for (let i = 0; i < 7; i++) err = Math.max(err, Math.abs(0.5 * h * (q1[i] + q2[i])) / esc);
+      if (err <= 1) { t += h; e = en; ts.push(t); es.push(e.slice()); }
+      h *= Math.min(4, Math.max(0.2, 0.9 / Math.sqrt(Math.max(err, 1e-12))));
+    }
+    return { ts, es };
+  }
+  const envolver = z => z - 2 * Math.PI * Math.round(z / (2 * Math.PI));
+  function distancia(e) {                       // max |desvío| sin la rotación global
+    const dd = e.map(envolver); let m = 0; for (let a = 0; a < 7; a++) m += x[a] * dd[a];
+    return Math.max(...dd.map(z => Math.abs(envolver(z - m))));
+  }
+  function ordenClusters(e) { let c = 0, s = 0; for (let a = 0; a < 7; a++) { c += x[a] * Math.cos(phi[a] + e[a]); s += x[a] * Math.sin(phi[a] + e[a]); } return Math.hypot(c, s); }
+
+  return { K, G, N, INI, phi, x, velocidad, estadoInicial, pasoRK4, fasesCluster, orden, clusters, distancia, ordenClusters, envolver };
+}
+if (typeof module !== "undefined") module.exports = { crearMotor };
+
+// Corrida completa: emite cuadros de la fase 1 y, al final, la fase 2 ya muestreada.
+function correr(M, p, emitir) {
+  const { N, phi, K, G, INI } = M;
+  const S = p.S, idx = p.idx, clDe = p.clDe;
+  const th = M.estadoInicial(p.sigma, p.delta, p.semilla);
+  const pasos = p.pasos, dt = p.dt;
+  const medida = () => {
+    const y = M.fasesCluster(th), e = y.map((v, a) => M.envolver(v - phi[a]));
+    let disp = 0;
+    for (let a = 0; a < 7; a++) for (let u = INI[a]; u < INI[a] + K[a] * G; u++) disp = Math.max(disp, Math.abs(M.envolver(th[u] - y[a])));
+    const pos = new Float32Array(S); for (let s = 0; s < S; s++) pos[s] = M.envolver(th[idx[s]] - phi[clDe[s]]);
+    return { y, e, disp, pos, dist: M.distancia(e), r: M.orden(th) };
+  };
+  for (let k = 0; k <= pasos; k++) {
+    if (k > 0) M.pasoRK4(th, dt);
+    const m = medida();
+    emitir({ tipo: "f1", k, t: k * dt, pos: m.pos, dist: m.dist, disp: m.disp, r: m.r });
+    if (k === pasos) {
+      const t0 = k * dt, resid = new Float32Array(S);
+      for (let s = 0; s < S; s++) resid[s] = M.envolver(th[idx[s]] - m.y[clDe[s]]);
+      const sol = M.clusters(m.e, t0, p.tFin, 1e-8);
+      // muestreo fino en tiempo log e interpolación lineal entre pasos
+      const F = 8000, lt0 = Math.log10(t0), lt1 = Math.log10(p.tFin);
+      const tf = [], ef = []; let j = 0;
+      for (let i = 0; i < F; i++) {
+        const t = Math.min(p.tFin, Math.pow(10, lt0 + (lt1 - lt0) * i / (F - 1)));
+        while (j < sol.ts.length - 2 && sol.ts[j + 1] < t) j++;
+        const ta = sol.ts[j], tb = sol.ts[j + 1], w = tb > ta ? Math.min(1, Math.max(0, (t - ta) / (tb - ta))) : 0;
+        tf.push(t); ef.push(sol.es[j].map((v, a) => v + w * (sol.es[j + 1][a] - v)));
+      }
+      const df = ef.map(M.distancia);
+      // cámara lenta automática: más cuadros donde las fases o la distancia cambian rápido
+      const acum = [0];
+      for (let i = 1; i < F; i++) {
+        let dm = 0; for (let a = 0; a < 7; a++) dm = Math.max(dm, Math.abs(ef[i][a] - ef[i - 1][a]));
+        const dl = Math.abs(Math.log10(Math.max(df[i], 1e-14)) - Math.log10(Math.max(df[i - 1], 1e-14)));
+        acum.push(acum[i - 1] + 1 / (F - 1) + 1.2 * Math.min(dm, 0.5) / 3 + 0.6 * dl / 10);
+      }
+      const C = p.cuadros2, ts = new Float64Array(C), es = new Float64Array(C * 7), ds = new Float64Array(C), rs = new Float64Array(C);
+      let i = 0;
+      for (let c = 0; c < C; c++) {
+        const obj = acum[F - 1] * c / (C - 1);
+        while (i < F - 2 && acum[i + 1] < obj) i++;
+        ts[c] = tf[i]; for (let a = 0; a < 7; a++) es[c * 7 + a] = ef[i][a]; ds[c] = df[i]; rs[c] = M.ordenClusters(ef[i]);
+      }
+      const paso = 10, ct = [], cd = [];
+      for (let q = 0; q < F; q += paso) { ct.push(tf[q]); cd.push(df[q]); }
+      emitir({ tipo: "f2", ts, es, ds, rs, resid, curvaT: ct, curvaD: cd });
+    }
+  }
+}
+if (typeof module !== "undefined") module.exports.correr = correr;
+</script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById("datos").textContent);
+  const N = D.N, G = D.G, K = D.K, INI = D.inicios, phi = D.phi, BORDE = D.borde;
+  const NOM = ["A−", "A+", "B−", "B+", "C−", "C+", "W"];
+  const COL = [[110,175,255],[42,120,214],[255,186,110],[235,104,52],[125,220,165],[40,170,110],[200,165,255]];
+  const SIGMAS = [0, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0];
+  const DELTAS = [-2e-3, -1e-3, -7e-4, -6e-4, -5.5e-4, -5e-4, -3e-4, -1e-4, -3e-5, 0, 3e-5, 1e-4, 7e-4, 7.5e-4, 8e-4, 9e-4, 1e-3, 1.5e-3, 2e-3];
+  const PASOS = 120, DT = 0.5, TFIN = 1e7, T0 = PASOS * DT, C2 = 900;
+  const $ = id => document.getElementById(id);
+
+  // ---------- formato ----------
+  const SUP = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+  const sup = s => String(s).split("").map(c => SUP[c] || c).join("");
+  function sci(x, dig = 1) {
+    if (x === 0) return "0";
+    const s = x < 0 ? "−" : ""; x = Math.abs(x);
+    if (x >= 0.01 && x < 1000) return s + (x >= 10 ? x.toFixed(0) : x.toPrecision(2 + (dig > 1 ? 1 : 0)));
+    let e = Math.floor(Math.log10(x)), ms = (x / Math.pow(10, e)).toFixed(dig);
+    if (parseFloat(ms) >= 10) { e += 1; ms = (x / Math.pow(10, e)).toFixed(dig); }
+    return s + (ms === "1.0" || ms === "1" ? "" : ms + "·") + "10" + sup(e);
+  }
+  const fmtT = t => t < 100 ? "t = " + t.toFixed(1) : t < 1e4 ? "t = " + String(Math.round(t)).replace(/\B(?=(\d{3})+(?!\d))/g, "\u2009") : "t = " + sci(t, 1);
+
+  // ---------- controles ----------
+  const actualizarEtiquetas = () => {
+    $("vSigma").textContent = "σ = " + (SIGMAS[+$("sigma").value] === 0 ? "0" : sci(SIGMAS[+$("sigma").value]));
+    const dd = DELTAS[+$("delta").value];
+    $("vDelta").textContent = "δ = " + (dd > 0 ? "+" : "") + sci(dd);
+  };
+  $("sigma").oninput = $("delta").oninput = actualizarEtiquetas;
+  actualizarEtiquetas();
+  document.querySelectorAll(".preajustes button").forEach(b => b.onclick = () => {
+    $("sigma").value = b.dataset.s; $("delta").value = b.dataset.d; actualizarEtiquetas(); simular();
+  });
+  $("leyenda").innerHTML = NOM.map((n, a) => `<span><i style="background:rgb(${COL[a]})"></i>${n}</span>`).join("");
+
+  // ---------- muestra de osciladores que se dibujan ----------
+  const S = 60000, idx = new Int32Array(S), clDe = new Int8Array(S), radio = new Float32Array(S), fila = new Float32Array(S);
+  { let x = 12345; const az = () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; };
+    for (let s = 0; s < S; s++) { idx[s] = Math.floor((s + 0.5) * N / S); let a = 0; while (a < 6 && INI[a + 1] <= idx[s]) a++; clDe[s] = a;
+      radio[s] = 0.42 + 0.55 * az(); fila[s] = (az() + az() + az()) / 3 - 0.5; } }
+
+  // ---------- estado de la corrida ----------
+  let worker = null, cuadros1 = [], fase2 = null, cursor = 0, reproduciendo = true, ultimo = 0, acumulado = 0, calculando = false;
+  const historial = [];   // corridas anteriores: {etiqueta, t, d}
+  let curvaActual = null;
+
+  function totalCuadros() { return cuadros1.length + (fase2 ? fase2.ts.length : 0); }
+  function cuadro(i) {        // devuelve {t, pos(Float32Array desvíos), medias[7], dist, r, fase}
+    if (i < cuadros1.length) { const c = cuadros1[i]; return { t: c.t, pos: c.pos, dist: c.dist, r: c.r, disp: c.disp, fase: 1 }; }
+    const j = i - cuadros1.length, e = fase2.es.subarray(j * 7, j * 7 + 7);
+    // la dispersión interna sigue decayendo (tasa ≥ 0.218): se dibuja con esa cota lineal
+    const f = Math.exp(-0.218 * (fase2.ts[j] - T0));
+    const pos = posTmp; for (let s = 0; s < S; s++) pos[s] = e[clDe[s]] + f * fase2.resid[s];
+    return { t: fase2.ts[j], pos, dist: fase2.ds[j], r: fase2.rs[j], fase: 2, medias: e };
+  }
+  const posTmp = new Float32Array(S);
+
+  function simular() {
+    if (worker) worker.terminate();
+    if (curvaActual && fase2) { historial.push(curvaActual); if (historial.length > 5) historial.shift(); }
+    const sigma = SIGMAS[+$("sigma").value], delta = DELTAS[+$("delta").value], semilla = Math.max(1, +$("semilla").value | 0);
+    curvaActual = { etiqueta: `σ=${sigma === 0 ? "0" : sci(sigma)}, δ=${delta === 0 ? "0" : sci(delta)}`, t: [], d: [], tD: [], dD: [] };
+    cuadros1 = []; fase2 = null; cursor = 0; reproduciendo = true; calculando = true; escalaLupa = null;
+    $("simular").disabled = true; $("play").textContent = "⏸"; $("linea").disabled = true;
+    $("fase").innerHTML = "<b>Grafo completo</b>: integrando los 299 989 osciladores (RK4)…";
+    const src = document.getElementById("motor").textContent + `
+      const M = crearMotor(${JSON.stringify(D)});
+      onmessage = ev => { const p = ev.data; correr(M, p, m => {
+        if (m.tipo === "f1") postMessage(m, [m.pos.buffer]);
+        else postMessage(m, [m.ts.buffer, m.es.buffer, m.ds.buffer, m.rs.buffer, m.resid.buffer]);
+      }); };`;
+    worker = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    worker.onmessage = ev => {
+      const m = ev.data;
+      if (m.tipo === "f1") {
+        cuadros1.push(m); curvaActual.t.push(m.t); curvaActual.d.push(m.dist); curvaActual.tD.push(m.t); curvaActual.dD.push(m.disp);
+        $("progreso").style.width = (100 * (m.k + 1) / (PASOS + 1)).toFixed(1) + "%";
+        if (m.k === PASOS) $("fase").innerHTML = "<b>Clusters rígidos</b>: integrando hasta t = 10⁷…";
+      } else {
+        fase2 = m; calculando = false;
+        for (let q = 0; q < m.curvaT.length; q++) { curvaActual.t.push(m.curvaT[q]); curvaActual.d.push(m.curvaD[q]); }
+        $("simular").disabled = false; $("linea").disabled = false; $("linea").max = totalCuadros() - 1;
+      }
+    };
+    worker.onerror = e => { $("fase").textContent = "Error en el cálculo: " + e.message; $("simular").disabled = false; };
+    worker.postMessage({ S, idx, clDe, sigma, delta, semilla, pasos: PASOS, dt: DT, tFin: TFIN, cuadros2: C2 });
+  }
+  $("simular").onclick = simular;
+  $("play").onclick = () => { reproduciendo = !reproduciendo; $("play").textContent = reproduciendo ? "⏸" : "▶";
+    if (reproduciendo && cursor >= totalCuadros() - 1 && fase2) cursor = 0; };
+  $("linea").oninput = () => { cursor = +$("linea").value; reproduciendo = false; $("play").textContent = "▶"; };
+
+  // ---------- dibujo: círculo ----------
+  const cv1 = $("circulo"), x1 = cv1.getContext("2d"), W1 = cv1.width, img1 = x1.createImageData(W1, W1);
+  const acc = new Float32Array(W1 * W1 * 3);
+  const FONDO = [8, 16, 30];
+  function volcar(ctx, img, W, H, gan) {
+    const d = img.data;
+    for (let p = 0, q = 0; p < W * H; p++, q += 3) {
+      d[p * 4] = FONDO[0] + (255 - FONDO[0]) * (1 - Math.exp(-acc[q] * gan));
+      d[p * 4 + 1] = FONDO[1] + (255 - FONDO[1]) * (1 - Math.exp(-acc[q + 1] * gan));
+      d[p * 4 + 2] = FONDO[2] + (255 - FONDO[2]) * (1 - Math.exp(-acc[q + 2] * gan));
+      d[p * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  function sumar(W, H, x, y, c, w) {
+    x |= 0; y |= 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
+      const k = (dx === 0 && dy === 0) ? w : w * 0.35, q = (Y * W + X) * 3;
+      acc[q] += c[0] * k; acc[q + 1] += c[1] * k; acc[q + 2] += c[2] * k;
+    }
+  }
+  function dibujarCirculo(c) {
+    acc.fill(0);
+    const cx = W1 / 2, R = W1 * 0.40;
+    for (let s = 0; s < S; s++) {
+      const a = clDe[s], th = phi[a] + c.pos[s], r = R * radio[s];
+      sumar(W1, W1, cx + r * Math.cos(th), cx - r * Math.sin(th), COL[a], 1 / 255);
+    }
+    volcar(x1, img1, W1, W1, 0.06);
+    x1.strokeStyle = "rgba(120,140,180,0.35)"; x1.lineWidth = 1.5;
+    x1.beginPath(); x1.arc(cx, cx, R * 1.04, 0, 2 * Math.PI); x1.stroke();
+    x1.fillStyle = "#93A3C2"; x1.font = "500 20px 'IBM Plex Sans'"; x1.textAlign = "center"; x1.textBaseline = "middle";
+    ["0", "π/2", "π", "3π/2"].forEach((t, k) => x1.fillText(t, cx + R * 1.14 * Math.cos(k * Math.PI / 2), cx - R * 1.14 * Math.sin(k * Math.PI / 2)));
+    // parámetro de orden como flecha
+    x1.strokeStyle = "#EB6834"; x1.lineWidth = 3;
+    const rr = c.r * R, ang = c.fase === 2 ? angOrden(c.medias) : null;
+    if (ang !== null || c.fase === 1) {
+      const A0 = ang !== null ? ang : angOrdenMuestra(c.pos);
+      x1.beginPath(); x1.moveTo(cx, cx); x1.lineTo(cx + rr * Math.cos(A0), cx - rr * Math.sin(A0)); x1.stroke();
+      x1.beginPath(); x1.arc(cx, cx, 4, 0, 2 * Math.PI); x1.fillStyle = "#EB6834"; x1.fill();
+    }
+  }
+  const pesos = K.map(k => k * G / N);
+  function angOrden(e) { let x = 0, y = 0; for (let a = 0; a < 7; a++) { x += pesos[a] * Math.cos(phi[a] + e[a]); y += pesos[a] * Math.sin(phi[a] + e[a]); } return Math.atan2(y, x); }
+  function angOrdenMuestra(pos) { let x = 0, y = 0; for (let s = 0; s < S; s += 7) { const t = phi[clDe[s]] + pos[s]; x += Math.cos(t); y += Math.sin(t); } return Math.atan2(y, x); }
+
+  // ---------- dibujo: lupa ----------
+  const cv2 = $("lupa"), x2 = cv2.getContext("2d"), W2 = cv2.width, img2 = x2.createImageData(W2, W2);
+  let escalaLupa = null;
+  function escalaLinda(v) { const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e); return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * Math.pow(10, e); }
+  function dibujarLupa(c) {
+    const m = new Float64Array(7), cnt = new Float64Array(7); let mx = 0;
+    for (let s = 0; s < S; s++) { const v = c.pos[s]; m[clDe[s]] += v; cnt[clDe[s]]++; const av = Math.abs(v); if (av > mx) mx = av; }
+    for (let a = 0; a < 7; a++) m[a] /= cnt[a];
+    const objetivo = Math.min(Math.PI, escalaLinda(Math.max(mx * 1.1, 1e-13)));
+    escalaLupa = escalaLupa === null ? objetivo : Math.exp(Math.log(escalaLupa) + 0.35 * (Math.log(objetivo) - Math.log(escalaLupa)));
+    const X = escalaLinda(escalaLupa * 0.999);
+    $("escala").textContent = "ancho: ±" + sci(X) + " rad";
+    acc.fill(0, 0, W2 * W2 * 3);
+    const izq = 70, der = W2 - 24, arriba = 40, alto = (W2 - 80) / 7, cx = (izq + der) / 2, semi = (der - izq) / 2;
+    for (let s = 0; s < S; s++) {
+      const a = clDe[s], u = c.pos[s] / X; if (Math.abs(u) > 1.02) continue;
+      sumar(W2, W2, cx + u * semi, arriba + alto * (a + 0.5) + fila[s] * alto * 0.7, COL[a], 1 / 255);
+    }
+    volcar(x2, img2, W2, W2, 0.12);
+    x2.strokeStyle = "rgba(147,163,194,0.45)"; x2.lineWidth = 1; x2.setLineDash([4, 5]);
+    x2.beginPath(); x2.moveTo(cx, arriba - 10); x2.lineTo(cx, arriba + 7 * alto); x2.stroke(); x2.setLineDash([]);
+    x2.font = "600 18px 'IBM Plex Sans'"; x2.textBaseline = "middle"; x2.textAlign = "right";
+    for (let a = 0; a < 7; a++) {
+      const y = arriba + alto * (a + 0.5);
+      x2.fillStyle = `rgb(${COL[a]})`; x2.fillText(NOM[a], izq - 14, y);
+      const u = Math.max(-1.05, Math.min(1.05, m[a] / X)), xm = cx + u * semi;
+      x2.beginPath(); x2.moveTo(xm, y - alto * 0.42); x2.lineTo(xm - 7, y - alto * 0.42 - 11); x2.lineTo(xm + 7, y - alto * 0.42 - 11); x2.closePath(); x2.fill();
+    }
+    x2.fillStyle = "#93A3C2"; x2.font = "15px 'IBM Plex Mono'"; x2.textAlign = "center";
+    x2.fillText("θ*", cx, arriba - 22); x2.fillText("−" + sci(X), izq + 22, W2 - 22); x2.fillText("+" + sci(X), der - 22, W2 - 22);
+  }
+
+  // ---------- dibujo: gráfico de distancia ----------
+  const cv3 = $("grafico"), x3 = cv3.getContext("2d"), W3 = cv3.width, H3 = cv3.height;
+  const g = { x0: 90, x1: W3 - 30, y0: 24, y1: H3 - 60, lo: -12, hi: 1 };
+  const gx = t => g.x0 + (g.x1 - g.x0) * (t <= T0 ? 0.22 * t / T0 : 0.22 + 0.78 * Math.log(t / T0) / Math.log(TFIN / T0));
+  const gy = v => { const l = Math.max(g.lo, Math.min(g.hi, Math.log10(Math.max(v, 1e-30)))); return g.y1 - (l - g.lo) / (g.hi - g.lo) * (g.y1 - g.y0); };
+  function curva(t, d, color, ancho, hasta, punteada) {
+    x3.strokeStyle = color; x3.lineWidth = ancho; x3.setLineDash(punteada ? [5, 5] : []); x3.beginPath(); let ok = false;
+    for (let i = 0; i < t.length && t[i] <= hasta; i++) { const X = gx(t[i]), Y = gy(d[i]); ok ? x3.lineTo(X, Y) : x3.moveTo(X, Y); ok = true; }
+    x3.stroke(); x3.setLineDash([]);
+  }
+  function dibujarGrafico(c) {
+    x3.clearRect(0, 0, W3, H3); x3.fillStyle = "#08101E"; x3.fillRect(0, 0, W3, H3);
+    x3.font = "15px 'IBM Plex Mono'"; x3.fillStyle = "#93A3C2"; x3.textAlign = "right"; x3.textBaseline = "middle";
+    for (let e = -12; e <= 0; e += 3) { const y = gy(Math.pow(10, e)); x3.strokeStyle = "#16233A"; x3.lineWidth = 1;
+      x3.beginPath(); x3.moveTo(g.x0, y); x3.lineTo(g.x1, y); x3.stroke(); x3.fillText("10" + sup(e), g.x0 - 10, y); }
+    x3.textAlign = "center"; x3.textBaseline = "top";
+    [[0, "0"], [30, "30"], [60, "60"], [1e3, "10³"], [1e4, "10⁴"], [1e5, "10⁵"], [1e6, "10⁶"], [1e7, "10⁷"]].forEach(([t, s]) => {
+      const X = gx(t); x3.strokeStyle = "#2A3A58"; x3.beginPath(); x3.moveTo(X, g.y1); x3.lineTo(X, g.y1 + 5); x3.stroke(); x3.fillText(s, X, g.y1 + 8); });
+    x3.textAlign = "left"; x3.fillText("t  (lineal hasta 60, después logarítmico)", g.x0 + 4, g.y1 + 28);
+    // borde de la cuenca
+    const ya = gy(BORDE[1]), yb = gy(BORDE[0]);
+    x3.fillStyle = "rgba(235,104,52,0.22)"; x3.fillRect(g.x0, ya - 2, g.x1 - g.x0, Math.max(4, yb - ya + 2));
+    x3.fillStyle = "#F0A57F"; x3.textAlign = "right"; x3.textBaseline = "bottom"; x3.font = "500 14px 'IBM Plex Sans'";
+    x3.fillText("borde de la cuenca (modo más lento)", g.x1 - 6, ya - 4);
+    x3.fillStyle = "rgba(42,120,214,0.12)"; x3.fillRect(g.x0, g.y0, gx(T0) - g.x0, g.y1 - g.y0);
+    x3.fillStyle = "#93A3C2"; x3.textAlign = "left"; x3.textBaseline = "top"; x3.fillText("grafo completo", g.x0 + 6, g.y0 + 4);
+    x3.fillText("clusters rígidos", gx(T0) + 6, g.y0 + 4);
+    // historial
+    historial.forEach((h, k) => { curva(h.t, h.d, "rgba(160,175,205,0.45)", 2, Infinity);
+      const i = h.t.length - 1; x3.fillStyle = "rgba(180,192,215,0.8)"; x3.font = "13px 'IBM Plex Mono'"; x3.textAlign = "right"; x3.textBaseline = "middle";
+      x3.fillText(h.etiqueta, g.x1 - 4, Math.max(g.y0 + 30, Math.min(g.y1 - 10, gy(h.d[i]) - 10))); });
+    if (curvaActual) {
+      curva(curvaActual.tD, curvaActual.dD, "rgba(170,180,200,0.8)", 2, c.t + 1e-9, true);
+      curva(curvaActual.t, curvaActual.d, "#5BA8FF", 3.5, c.t * 1.000001 + 1e-9);
+      const X = gx(c.t), Y = gy(c.dist); x3.fillStyle = c.dist > BORDE[0] ? "#EB6834" : "#5BA8FF";
+      x3.beginPath(); x3.arc(X, Y, 7, 0, 2 * Math.PI); x3.fill();
+    }
+    x3.font = "14px 'IBM Plex Sans'"; x3.textAlign = "left"; x3.textBaseline = "middle";
+    const yl = g.y1 + 30, xl = g.x1 - 560;
+    x3.fillStyle = "#5BA8FF"; x3.fillRect(xl, yl - 1, 22, 3); x3.fillStyle = "#C3CEE3"; x3.fillText("clusters: distancia a θ*", xl + 28, yl);
+    x3.strokeStyle = "#AAB4C8"; x3.setLineDash([5, 5]); x3.lineWidth = 2; x3.beginPath(); x3.moveTo(xl + 200, yl); x3.lineTo(xl + 222, yl); x3.stroke(); x3.setLineDash([]);
+    x3.fillText("dispersión interna (dentro de cada cluster)", xl + 228, yl);
+  }
+
+  function estadoTexto(c) {
+    if (c.dist > 0.3) return ["salió de la cuenca: sincroniza", true];
+    if (c.dist > BORDE[0]) return ["más allá del borde de la cuenca", true];
+    if (c.fase === 2 && c.dist < 1e-9) return ["volvió a θ*", false];
+    return ["dentro de la cuenca", false];
+  }
+
+  // ---------- bucle ----------
+  function frame(ahora) {
+    const dt = Math.min(0.1, (ahora - ultimo) / 1000); ultimo = ahora;
+    const total = totalCuadros();
+    if (total > 0) {
+      if (reproduciendo) {
+        const fps = (cursor < cuadros1.length ? 10 : 30) * +$("vel").value;
+        acumulado += dt * fps;
+        while (acumulado >= 1) { acumulado -= 1; if (cursor < total - 1) cursor++; }
+        if (calculando && cursor > cuadros1.length - 1) cursor = cuadros1.length - 1;
+        if (!calculando && cursor >= total - 1) { reproduciendo = false; $("play").textContent = "▶"; }
+      }
+      cursor = Math.min(cursor, total - 1);
+      const c = cuadro(cursor);
+      dibujarCirculo(c); dibujarLupa(c); dibujarGrafico(c);
+      $("eT").textContent = fmtT(c.t); $("eD").textContent = sci(c.dist, 2); $("eR").textContent = c.r.toFixed(4);
+      const [txt, fuera] = estadoTexto(c); $("eEstado").textContent = txt; $("eEstado").className = fuera ? "fuera" : "";
+      if (!$("linea").disabled) $("linea").value = cursor;
+      if (!calculando) $("fase").innerHTML = c.fase === 1
+        ? "<b>Grafo completo</b>: los 299 989 osciladores, RK4 con dt = 0.5"
+        : "<b>Clusters rígidos</b>: ecuación exacta por clusters; más cuadros donde las fases cambian rápido (cámara lenta automática)";
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(t => { ultimo = t; frame(t); });
+  simular();
+})();
+</script>
+</body>
+</html>
