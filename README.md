@@ -20,7 +20,6 @@ Repositorio oficial del trabajo de investigación y desarrollo presentado en el 
 | **🖼️ Póster Científico** | PDF | Póster en alta resolución para divulgación y exposición oral | [Ver Póster PDF](<entrega/POSTER INVESTIGATHON T07.pdf>) |
 | **📓 Notebook de Entrega** | Jupyter Notebook | Pipeline interactivo completo (Fases 0 a 3, simulaciones y validación) | [Abrir Notebook](<entrega/Optimización_O'Keeffe.ipynb>) |
 | **🌐 Simulador Dinámico Web** | HTML / JS Canvas | Simulador en tiempo real de Kuramoto sobre el grafo de $299\,989$ nodos | [Abrir Simulador](entrega/simulador_kuramoto_300k.html) |
-| **📝 Código Fuente Typst** | Typst / BibTeX | Código fuente reproducible del paper y su bibliografía completa | [Paper `main.typ`](main.typ) · [BibTeX `refs.bib`](refs.bib) |
 
 ---
 
@@ -60,32 +59,49 @@ Ambos grafos han sido validados además sobre el grafo explícito completo media
 ## ⚙️ Metodología en Cuatro Fases
 
 ```mermaid
-flowchart TD
-    subgraph Fase0["Fase 0: Optimización de Plantilla"]
-        A["Fijar h=0.03 finito"] --> B["Bucle Exterior: Nelder-Mead (fases s)"]
-        B --> C["Bucle Interior: SDP con Clarabel\nMárgen Qᵀ L(P) Q / h² ⪰ ε I (ε=10⁻³)"]
+flowchart LR
+    subgraph Fase0["Fase 0: Plantilla"]
+        direction TB
+        A["Fijar h = 0.03"]
+        B["Nelder-Mead (fases s)"]
+        C["SDP con Clarabel<br/>Qᵀ L(P) Q / h² ⪰ ε I"]
+        A --> B --> C
     end
 
-    subgraph Fase1["Fase 1: Redondeo por Reticulado"]
-        D["Direcciones casi neutras (σ ≈ 10⁻⁶)"] --> E["Reducción de Lyapunov-Schmidt\n(Separa rígidas de blandas)"]
-        E --> F["Encaje de Kannan (CVP)"]
-        F --> G["Reducción LLL + Babai Nearest Plane"]
+    subgraph Fase1["Fase 1: Reticulados"]
+        direction TB
+        D["Modos casi neutros<br/>(σ ≈ 10⁻⁶)"]
+        E["Lyapunov-Schmidt<br/>(Residuo blando)"]
+        F["Encaje de Kannan (CVP)"]
+        G["Reducción LLL + Babai"]
+        D --> E --> F --> G
     end
 
-    subgraph Fase2["Fase 2: Blow-up Circulante"]
-        H["Partición en bloques Z_g (n = 23 g)"] --> I["Problema de Transporte Entero Cíclico"]
-        I --> J["Grafo no dirigido simple determinista"]
+    subgraph Fase2["Fase 2: Blow-up"]
+        direction TB
+        H["Partición en ℤ_g<br/>(n = 23 g)"]
+        I["Transporte Entero Cíclico"]
+        J["Grafo simple determinista"]
+        H --> I --> J
     end
 
-    subgraph Fase3["Fase 3: Certificado Riguroso"]
-        K["Operador de Krawczyk (100 dígitos, caja radio 10⁻⁴⁰)"] --> L["Cholesky por intervalos (L ≻ 0)"]
-        L --> M["Modos Fourier 23x23: Cota de Schur + Gershgorin por Bloques"]
+    subgraph Fase3["Fase 3: Certificado"]
+        direction TB
+        K["Krawczyk (100 dígitos)<br/>Caja radio 10⁻⁴⁰"]
+        L["Cholesky por Intervalos<br/>(L ≻ 0)"]
+        M["Fourier 23×23<br/>Schur + Gershgorin"]
+        K --> L --> M
     end
 
-    Fase0 --> Fase1
-    Fase1 --> Fase2
-    Fase2 --> Fase3
-    Fase3 --> Val["Validación Independiente\n• Lanczos O(n) con sumas prefijas\n• Espectro completo 23x23\n• Dinámica ODE RK4 en Simulador Web"]
+    subgraph Val["Validación"]
+        direction TB
+        N["Lanczos O(n)<br/>(Sumas prefijas)"]
+        O["Espectro Completo<br/>(Fourier 23×23)"]
+        P["Dinámica ODE RK4<br/>(Simulador Web)"]
+        N --> O --> P
+    end
+
+    Fase0 --> Fase1 --> Fase2 --> Fase3 --> Val
 ```
 
 * **Fase 0 (Optimización Continua):** Se maximiza la conectividad bajo un margen de estabilidad finito exigiendo que el Hessiano reducido de la plantilla cumpla una restricción semidefinida positiva.
@@ -95,80 +111,11 @@ flowchart TD
 
 ---
 
-## 🗂️ Estructura Completa del Repositorio
-
-```text
-investighaton-teo-optimizacion-2026/
-│
-├── README.md                                # Documentación general del repositorio
-├── main.typ                                 # Paper en Typst (plantilla IEEE, español)
-├── main (1).typ                             # Versión extendida con referencias integradas
-├── refs.bib                                 # Bibliografía BibTeX (21 entradas completas)
-│
-├── entrega/                                 # 📦 CARPETA DE ENTREGA FINAL
-│   ├── Informe T07 Investighaton.pdf        # Paper / Informe compilado en PDF
-│   ├── POSTER INVESTIGATHON T07.pdf         # Póster oficial en PDF para presentación
-│   ├── Optimización_O'Keeffe.ipynb          # Notebook Jupyter interactivo integral
-│   ├── simulador_kuramoto_300k.html         # Simulador en vivo de Kuramoto (navegador)
-│   └── resultados/                          # Datos procesados, figuras y certificados
-│       ├── figuras/                         # Renders vectoriales y mapas de fases
-│       ├── espectro_s7_n299989.json         # Espectro del grafo de 300k nodos
-│       ├── espectro_s7_n30000004.json       # Espectro del grafo de 30M nodos
-│       ├── validacion_s7_n299989.json       # Validación con Lanczos del grafo de 300k
-│       ├── simulacion_n299989.json          # Trayectorias temporales (ruido 0.05 y 0.5)
-│       └── s7_enteros.json                  # Grados y tablas de transporte calculadas
-│
-├── desarrollo/                              # 🔬 CÓDIGO FUENTE, SCRIPTS Y EXPERIMENTOS
-│   ├── src/                                 # Librería interna en Python
-│   │   ├── plantillas.py                    # Formalización de plantillas de clústeres
-│   │   ├── s7.py                            # Matriz P, corrección de orden h y matriz Q
-│   │   ├── enteros.py                       # Reducción de Lyapunov-Schmidt y redondeo
-│   │   ├── reticulado.py                    # Implementación de Kannan, LLL y Babai
-│   │   ├── blowup.py                        # Construcción determinista en bloques circulantes
-│   │   ├── certificado.py                   # Aritmética de intervalos, Krawczyk y Gershgorin
-│   │   ├── espectro.py                      # Diagonalización de Fourier por bloques
-│   │   ├── validacion.py                    # Producto matriz-vector O(n) y Lanczos
-│   │   └── kuramoto.py                      # Simulador numérico de osciladores (RK4)
-│   │
-│   ├── scripts/                             # Scripts ejecutables desde terminal
-│   │   ├── certificar_grafo_s7.py           # Ejecuta la certificación estricta por intervalos
-│   │   ├── validar_grafo.py                 # Validación independiente ciega con Lanczos
-│   │   ├── espectro_fourier.py              # Cálculo del espectro completo de Fourier
-│   │   ├── optimizar_svg_s7.py              # Generación de figuras vectoriales optimizadas
-│   │   └── visualizar_s7_300k_nodos.py      # Render multipanel de los 299 989 nodos
-│   │
-│   ├── notebooks/                           # Notebooks de experimentación y desarrollo
-│   │   ├── Grafo_simetrico_S7.ipynb         # Construcción del contraejemplo simétrico
-│   │   ├── Grafo_explicito_S7.ipynb         # Construcción del contraejemplo general
-│   │   ├── Calentamientos.ipynb             # Pruebas preliminares sobre Canale
-│   │   └── requirements.txt                 # Lista de dependencias del entorno
-│   │
-│   ├── papers/                              # Papers de referencia del estado del arte
-│   │   ├── 2610.21271v1.pdf                 # Paper original de O'Keeffe (2026)
-│   │   ├── 2209.06362v3.pdf                 # Paper de Canale (2022)
-│   │   └── 2104.14516v1.pdf                 # Paper de Kassabov, Strogatz & Townsend (2021)
-│   │
-│   ├── presentacion/                        # Diapositivas de exposiciones previas
-│   │   ├── charla_kuramoto_mc.pdf
-│   │   └── charla_corta_kuramoto.pdf
-│   │
-│   └── tests/                               # Suite de pruebas automatizadas (pytest)
-│       ├── test_blowup.py
-│       ├── test_enteros.py
-│       ├── test_espectro.py
-│       └── test_validacion.py
-│
-└── notes/                                   # Derivaciones matemáticas y notas conceptuales
-    └── beyond_11_16_explicacion_completa.md
-```
-
----
-
 ## 💻 Instrucciones de Instalación y Uso
 
 ### 1. Requisitos Previos
 * Python 3.10 o superior.
-* Navegador web moderno (Chrome, Firefox, Safari o Edge) para el simulador HTML.
+* Navegador web (Chrome, Firefox, Safari o Edge) para los HTML.
 
 ### 2. Configuración del Entorno Virtual
 
