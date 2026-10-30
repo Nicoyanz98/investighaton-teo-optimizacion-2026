@@ -1,0 +1,1528 @@
+ ▐▛███▛█   Claude Code v2.1.310
+▝▜██████▀  Opus 5.5 · Claude Pro
+ ▝▝   ▝▝   F:\investighaton\notebooks
+
+
+❯ Quisiera que me expliques un poco mas detallado que se esta haciendo en la    
+  Fase 0 y la Fase 1 de @notebooks/Grafo_explicito_S7.ipynb . No entiendo que   
+  es SDP, el redondeo ingenuo, el redondeo por reticulado, la reduccion de      
+  Lyapunov-Schmidt, Netwon entero, el encaje de Kanan, la base con LLL y el     
+  plano de Babai. No estoy entendiendo como llegamos al grafo que se plantea.   
+
+  Searched for 1 pattern, read 1 file, ran 2 shell commands (ctrl+o to expand)
+
+● Te lo explico de punta a punta, empezando por el mapa general, porque cada
+  término técnico resuelve un problema puntual dentro de esa cadena.
+
+  ---
+
+  El mapa: de una idea a un grafo concreto
+
+  Buscamos un grafo con una trampa (un mínimo local estricto que no es la
+  sincronización) y con $\mu > 11/16$. Escribir directamente un grafo de
+  millones de vértices es imposible, así que se avanza en tres pasos:
+
+  Plantilla (números reales)     →  Datos enteros (grados d_ab)  →  Grafo (lista
+  de aristas)
+  x, φ, P  con 7 clusters           cuántos vecinos tiene cada       blow-up 
+  circulante
+                                    vértice de a en b
+       FASE 0                            FASE 1                         FASE 2
+    "¿qué P elegir?"              "¿cómo redondear P sin           "¿cómo armar 
+  un grafo
+     (SDP)                          romper el equilibrio?"           con esos 
+  grados exactos?"
+                                    (reticulado)
+
+  La plantilla describe el grafo "en promedio": 7 clusters ($A_m, A_p, B_m, B_p,
+  C_m, C_p, W$), cada uno es un clique donde todos sus vértices tienen la misma
+  fase $\varphi_a$. El cluster $a$ ocupa una fracción $x_a$ de los vértices, y
+  $P_{ab}$ es la fracción del cluster $b$ a la que está conectado cada vértice
+  de $a$. Si $P_{AmBp}=0.614$, cada vértice de $A_m$ está unido al 61.4% de
+  $B_p$.
+
+  Lo útil es que, si cada vértice de $a$ tiene exactamente $P_{ab},n_b$ vecinos
+  en $b$, todo lo que importa del grafo (si es equilibrio, si es estable, su
+  $\mu$) se calcula con esos 7 números $x$, 7 fases y la matriz $P$ de 7×7. El
+  grafo de 30 millones de vértices queda resumido en un problema de 7×7.
+
+  ---
+
+  Fase 0: elegir $P$ (el SDP)
+
+  Qué se quiere
+
+  Con los tamaños $x$ y las fases $\varphi$ fijos, se busca la matriz $P$ que
+  haga $\mu = \min_a d_a$ lo más grande posible y que a la vez cumpla:
+  1. Equilibrio: $F_a = \sum_b P_{ab} x_b \sin(\varphi_a-\varphi_b) = 0$.
+  2. Estabilidad de un vértice suelto: $c_a > 0$.
+  3. Estabilidad de los modos de cluster: $L(y) > 0$ para todo movimiento $y$
+     que no sea una rotación global, y con un margen: $\lambda_{\min}(L)/h^2 \ge
+     \varepsilon$.
+  4. Que $P$ sea una densidad válida: $0 \le P \le 1$, simétrica, ceros en los
+     pares opuestos (A–C, B–W).
+
+  Por qué es un SDP
+
+  Como $\varphi$ y $x$ están fijos, los senos y cosenos son números. Entonces:
+  - $F$, $c$ y los grados $d_a$ son lineales en $P$ (sumas de $P_{ab}$ por
+    constantes);
+  - la matriz $L$ también es lineal en $P$.
+
+  La condición 3 dice "la matriz $L$ es semidefinida positiva" (todos sus
+  autovalores son ≥ 0, que equivale a $y^\top L y \ge 0$ para todo $y$). Un
+  problema con:
+  - objetivo lineal,
+  - restricciones lineales,
+  - y una restricción "esta matriz, que depende linealmente de las variables, es
+    semidefinida positiva",
+
+  se llama SDP (programa semidefinido). Lo importante es que es convexo: no
+  tiene mínimos locales falsos, y un solver (CLARABEL, vía cvxpy) encuentra el
+  óptimo global en milisegundos. En sdp_interno, la línea (Q.T @ L @ Q) / escala
+  >> margen * I es esa restricción; el >> de cvxpy significa "semidefinida
+  positiva".
+
+  (La $Q$ proyecta sobre los vectores perpendiculares a $(1,\dots,1)$ para
+  descartar la rotación global, que siempre tiene autovalor 0.)
+
+  El lazo de afuera
+
+  Las fases dependen de los desplazamientos $s$ de las 6 mitades. Con $s$ dentro
+  de las variables el problema deja de ser convexo, así que se separa en dos
+  niveles:
+  - adentro, para cada $s$, el SDP da el mejor $P$ y su $\mu$;
+  - afuera, Nelder–Mead (un optimizador que no usa derivadas) prueba distintos
+    $s$ buscando el mayor $\mu$.
+
+  El resultado de la Fase 0: una curva
+
+  Cuanto más margen $\varepsilon$ se pide, menos $\mu$ queda. Ese costo se mide
+  para varios $h$ y $\varepsilon$, y la plantilla elegida es $h=0.03$,
+  $\varepsilon=10^{-3}$, con $\mu = 0.6885$. ¿Para qué sirve el margen? Es lo
+  que va a permitir redondear a enteros en la Fase 1 sin romper el equilibrio.
+  Sin margen, el redondeo lo destruye.
+
+  ---
+
+  Fase 1: pasar a enteros
+
+  El problema
+
+  Un grafo real necesita enteros: $d_{ab}$ = cuántos vecinos tiene cada vértice
+  de $a$ en $b$. La plantilla da $P_{ab},n_b$, que es un número real, y hay que
+  redondearlo (respetando además $n_a d_{ab} = n_b d_{ba}$, que es contar las
+  mismas aristas desde los dos lados).
+
+  El redondeo ingenuo redondea cada $d_{ab}$ por separado al entero permitido
+  más cercano. Cada densidad cambia en $\sim 1/n$. Parece poco, pero no alcanza.
+
+  Por qué no alcanza: el pliegue
+
+  El Jacobiano $J$ de las ecuaciones de equilibrio tiene tres valores singulares
+  diminutos ($\sigma \approx 6\cdot10^{-4},\ 5\cdot10^{-6},\ 2\cdot10^{-6}$).
+  Son tres direcciones "blandas" en las que el equilibrio casi no está
+  sostenido.
+
+  Una imagen: el equilibrio es una bolita en un pozo muy poco profundo. Si
+  inclinás un poco la mesa (el error del redondeo), el pozo desaparece y la
+  bolita se va. En fórmulas, en cada dirección blanda el equilibrio es raíz de
+
+  $$\sigma, y + \tfrac{c}{2}y^2 + \rho = 0,$$
+
+  donde $\rho$ es el error que mete el redondeo. Esta ecuación cuadrática tiene
+  raíz solo si $\rho \lesssim \sigma^2$. Si $\rho$ es más grande, no hay 
+  equilibrio ("se pasó el pliegue"). Ese es el pliegue de tipo silla-nodo.
+
+  Con el redondeo ingenuo $\rho \sim 1/n$, así que hace falta $1/n \lesssim
+  \sigma^2$, o sea $n \gtrsim 1/\sigma^2$. Con estos $\sigma$ eso da $n\approx
+  10^9$. Con $n = 3\cdot10^7$, el notebook muestra que el ingenuo da un
+  equilibrio inestable.
+
+  La idea clave: redondear todo junto
+
+  Hay 13 grados libres (los pares con $0<P_{ab}<1$) y solo 3 ecuaciones
+  delicadas (las blandas). Cada redondeo comete un error, pero los errores se
+  pueden combinar para que se cancelen en esas 3 direcciones.
+
+  Un ejemplo de juguete: buscás enteros chicos $u_1, u_2$ con $u_1 + \sqrt2,u_2
+  \approx 0$. Redondear cada uno por separado no ayuda, pero $(u_1,u_2)=(-7,5)$
+  da $-7+7.071 = 0.07$, y $(17,-12)$ da $0.03$. Elegidos en conjunto, los
+  enteros anulan una forma lineal mucho mejor que $1/2$. Eso mismo se hace con
+  13 enteros y 3 formas lineales.
+
+  Reducción de Lyapunov–Schmidt
+
+  Hay 6 ecuaciones de equilibrio (7 fases menos la rotación). Lyapunov–Schmidt
+  es separar las fáciles de las difíciles usando la SVD $J = U S V^\top$:
+  - 3 direcciones rígidas (valores singulares grandes): ahí el pozo es profundo
+    y cualquier error chico se absorbe. Se resuelven exactamente con Newton
+    común.
+  - 3 direcciones blandas: después de resolver las rígidas, queda un residuo $g
+    = U_b^\top F$ de 3 números.
+
+  Todo el problema se reduce a esto: elegir los 13 enteros para que esos 3 
+  números sean $\ll \sigma^2$. $g$ es casi lineal en los grados, lo que habilita
+  el paso siguiente.
+
+  Newton entero
+
+  Es Newton común, pero el paso tiene que ser un vector de enteros:
+  - se linealiza: $g(d+u) \approx g + \mathrm{d}g\cdot u$;
+  - se busca $u \in \mathbb{Z}^{13}$ con $\mathrm{d}g\cdot u \approx -g$, con
+    cada componente medida en unidades de $\sigma_k^2$ (la tolerancia de esa
+    dirección);
+  - $u$ tiene que ser chico (radio 3 a 100) para no estropear las direcciones
+    rígidas;
+  - se repite unas pocas veces.
+
+  Encontrar ese $u$ entero es el problema del vector más cercano en un 
+  reticulado, y para eso están las tres herramientas que siguen.
+
+  Encaje de Kannan: armar el reticulado
+
+  Un reticulado es el conjunto de todas las combinaciones con coeficientes
+  enteros de unos vectores base (como $\mathbb{Z}^2$ en el plano, pero
+  posiblemente inclinado y estirado).
+
+  Se quieren dos cosas a la vez: $u$ cerca del objetivo real $u_0$, y
+  $A(u-u_0)\approx 0$. El truco de Kannan es pegar las dos en un solo vector:
+
+  $$u ;\longmapsto; \big(,u/r,;; \text{peso}\cdot A u,\big) \in
+  \mathbb{R}^{13+3}.$$
+
+  Los vectores de este reticulado (uno por cada $u$ entero) son las filas de B =
+  [I/r | peso·Aᵀ]. El vector objetivo es $(u_0/r,\ \text{peso}\cdot A u_0)$. Si
+  un vector del reticulado está cerca del objetivo, entonces:
+  - las primeras 13 coordenadas están cerca, así que $u \approx u_0$ (a escala
+    del radio $r$);
+  - las últimas 3 están cerca, y como el peso es grande, $Au \approx Au_0$ con
+    mucha precisión.
+
+  Así, "dos objetivos" pasa a ser "el punto del reticulado más cercano a este
+  vector".
+
+  LLL: conseguir una buena base
+
+  Un mismo reticulado tiene muchas bases, y con una base mala redondear da
+  cualquier cosa. Por ejemplo, $b_1=(1,0)$ y $b_2=(100,1)$ generan exactamente
+  $\mathbb{Z}^2$. Para el punto $(0.4,,0.4)$:
+  - en esa base, $(0.4,0.4) = -39.6,b_1 + 0.4,b_2$; al redondear los
+    coeficientes queda $-40,b_1 + 0,b_2 = (-40, 0)$, a distancia 40;
+  - con la base buena $(1,0),(0,1)$, el redondeo da $(0,0)$, que es el correcto.
+
+  LLL (Lenstra–Lenstra–Lovász) toma una base mala y devuelve una base del mismo 
+  reticulado con vectores cortos y casi perpendiculares. Lo hace con dos
+  operaciones repetidas: restarle a un vector múltiplos enteros de los
+  anteriores (lo acorta) e intercambiar dos vectores consecutivos cuando el
+  orden es malo (la "condición de Lovász" en el código). En el ejemplo,
+  convertiría $(100,1)$ en $(0,1)$ restándole $100,b_1$.
+
+  Plano más cercano de Babai: redondear bien
+
+  Con la base ya reducida, Babai aproxima el punto más cercano:
+  - ortogonaliza la base (Gram–Schmidt);
+  - del último vector al primero: mira cuánto del objetivo "cae" en esa
+    dirección ortogonal, lo redondea a un entero, resta ese múltiplo del vector
+    y sigue con el anterior.
+
+  Geométricamente, el reticulado se ve como una pila de "planos" paralelos:
+  elige el plano más cercano, baja una dimensión y repite. No garantiza el
+  óptimo exacto, pero con una base LLL queda cerca, y acá alcanza.
+
+  Qué gana todo esto
+
+  - En el juguete de la celda 30, redondear coordenada a coordenada deja
+    $|A(u-u_0)|\sim 1$, y el reticulado lo baja varios órdenes de magnitud.
+  - En el problema real, con $n = 3\cdot10^7$, el ingenuo es inestable y el
+    reticulado da un equilibrio estricto, cambiando solo unos pocos grados en
+    unas pocas unidades (de un total de $\sim10^7$).
+  - El $n$ necesario baja de $10^9$ a $3\cdot10^7$.
+
+  ---
+
+  Y de ahí al grafo (Fase 2)
+
+  Al salir de la Fase 1 hay una tabla de enteros $d_{ab}$ con las propiedades
+  buscadas. Falta un grafo en el que cada vértice de $a$ tenga exactamente
+  $d_{ab}$ vecinos en $b$:
+  - cada cluster $a$ se parte en $k_a$ bloques de $g$ vértices, numerados
+    $0,\dots,g-1$ en ronda;
+  - el vértice $v$ de un bloque se une con $v, v+1, \dots, v+t-1 \pmod g$ del
+    otro bloque (un intervalo, como el k-spinning de Canale);
+  - las longitudes $t$ se reparten entre bloques para que las sumas den $d_{ab}$
+    y $d_{ba}$ (la "tabla de transporte").
+
+  Como todos los vértices de un cluster ven exactamente lo mismo, las fases de
+  la plantilla son un equilibrio exacto del grafo, y la estabilidad se hereda de
+  la de la plantilla de enteros (eso lo certifica la Fase 3).
+
+  En una línea: el SDP elige las densidades ideales con margen de estabilidad
+  (Fase 0); el reticulado las convierte en enteros con errores que se cancelan
+  justo en las 3 direcciones frágiles (Fase 1); y el blow-up circulante
+  convierte esos enteros en aristas (Fase 2).
+
+  Si querés, puedo agregar al notebook una celda con el ejemplo 2D de LLL/Babai
+  y el de $u_1+\sqrt2,u_2$, para ver esas ideas antes del caso de 13
+  dimensiones.
+
+✻ Sautéed for 1m 34s · done 12:10
+
+※ recap: Pediste entender cómo se llega al grafo del notebook Grafo_explicito_S7, y ya te expliqué las Fases 0 y 1 (SDP, redondeo por reticulado, LLL, Babai). Si querés, el próximo paso es agregar al notebook una celda con ejemplos 2D de LLL y Babai. (disable recaps in /config)
+
+❯ Para newton entero solo repetiste los pasos que leiste. No estas explicando   
+  que hace el metodo y sigo sin entender por que esos pasos                     
+  ⎿  2 skills available
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ Para newton entero solo repetiste los pasos que leiste. No estas explicando   
+  que hace el metodo y sigo sin entender por que esos pasos                     
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Tenés razón: en la respuesta anterior te repetí la receta sin explicar de
+  dónde sale. Ahora va desde el principio, con el porqué de cada paso.
+
+  ---
+
+  1. La pregunta que hay que resolver
+
+  Las incógnitas son los grados enteros $d_{ab}$, no las fases. Las fases se
+  acomodan solas: dado un $d$, el grafo tiene sus propias fases de equilibrio
+  (si existen). La pregunta es:
+
+  ▎ ¿Para qué enteros $d$ existe un equilibrio estricto con fases cerca de las 
+  ▎ de S7?
+
+  Hay 13 enteros para mover (los pares con densidad intermedia). La pregunta es
+  cómo elegirlos.
+
+  2. Qué errores absorben las fases y cuáles no
+
+  Al redondear, $P$ cambia un poco y las fuerzas dejan de ser cero: aparece un
+  error $\rho$ de tamaño $\sim 1/n$. Las fases pueden moverse para compensarlo.
+  Ese movimiento cambia $F$ en $J,\delta\varphi$, así que para cancelar el error
+  hace falta $\delta\varphi \approx -J^{-1}\rho$.
+
+  Con la SVD de $J$, ese error se separa en 6 direcciones independientes. En
+  cada una, la ecuación que hay que resolver es (sección 5 del notebook)
+
+  $$\sigma,y + \tfrac{c}{2},y^2 + \rho = 0 .$$
+
+  Tiene solución estable si $\rho \lesssim \sigma^2$. Entonces cada dirección 
+  tolera un error de hasta $\sim\sigma^2$:
+
+  ┌───────────┬─────────────────┬───────────────────┬────────────────────────┐
+  │ dirección │    $\sigma$     │  tolera $\rho$    │ error de redondeo con  │
+  │           │                 │       hasta       │     $n=3\cdot10^7$     │
+  ├───────────┼─────────────────┼───────────────────┼────────────────────────┤
+  │ 3 rígidas │ $\gtrsim 0.1$   │ $\sim 10^{-2}$    │ $\sim 3\cdot10^{-8}$:  │
+  │           │                 │                   │ sobra                  │
+  ├───────────┼─────────────────┼───────────────────┼────────────────────────┤
+  │ blanda 1  │ $6\cdot10^{-4}$ │ $\sim             │ entra                  │
+  │           │                 │ 4\cdot10^{-7}$    │                        │
+  ├───────────┼─────────────────┼───────────────────┼────────────────────────┤
+  │ blanda 2  │ $5\cdot10^{-6}$ │ $\sim             │ mil veces de más       │
+  │           │                 │ 3\cdot10^{-11}$   │                        │
+  ├───────────┼─────────────────┼───────────────────┼────────────────────────┤
+  │ blanda 3  │ $2\cdot10^{-6}$ │ $\sim             │ diez mil veces de más  │
+  │           │                 │ 4\cdot10^{-12}$   │                        │
+  └───────────┴─────────────────┴───────────────────┴────────────────────────┘
+
+  De ahí sale todo el método:
+  - En las direcciones rígidas no hay que hacer nada: las fases absorben
+    cualquier error de redondeo.
+  - En las blandas, las fases no pueden absorber el error. Ahí hay que lograr
+    que el error casi no exista, y la única palanca son los grados $d$.
+
+  3. Lyapunov–Schmidt: medir solamente lo que importa
+
+  Para elegir $d$ hace falta una función que diga "cuánto error queda en las
+  direcciones blandas con estos grados". Eso es $g(d)$, y se calcula así:
+  1. Se deja que las fases se muevan solo en las 3 direcciones rígidas, hasta
+     que las ecuaciones rígidas den exactamente 0 (Newton común, que ahí
+     converge sin problemas porque $\sigma$ es grande).
+  2. Lo que queda de $F$ en las 3 direcciones blandas es $g(d) = U_b^\top F$: 3
+     números.
+
+  Ese es todo el contenido de Lyapunov–Schmidt: resolver lo fácil y quedarse con
+  lo que no se pudo resolver. Las fases no se mueven en las direcciones
+  blandas, porque justamente ahí no pueden absorber nada; $g$ mide el error que
+  falta eliminar.
+
+  El objetivo queda reducido a esto:
+
+  $$\text{elegir } d \in \mathbb{Z}^{13} \text{ tal que } |g_k(d)| \ll
+  \sigma_k^2 \text{ para } k=1,2,3 .$$
+
+  Son 3 ecuaciones y 13 incógnitas enteras.
+
+  4. Por qué Newton, y por qué Newton común no sirve
+
+  $g(d)$ no tiene fórmula cerrada (adentro hay un Newton), pero los cambios que
+  se buscan son de unas pocas unidades sobre grados de $\sim10^7$. En ese rango
+  $g$ es casi lineal:
+
+  $$g(d+u) \approx g(d) + G,u, \qquad G = \frac{\partial g}{\partial d}\ \
+  (3\times 13).$$
+
+  Newton común pediría $G,u = -g$. Con 13 incógnitas y 3 ecuaciones hay
+  infinitas soluciones reales, y la de menor norma es $u_0$ (eso hace lstsq).
+  Pero $u$ tiene que ser entero.
+
+  Lo natural sería redondear $u_0$ coordenada por coordenada, pero eso no sirve:
+  cada coordenada se mueve hasta $\pm\tfrac12$, y el error que queda,
+  $G(\text{round}(u_0) - u_0)$, es del mismo tamaño que el error del redondeo
+  ingenuo. Se vuelve al punto de partida.
+
+  Por eso es "Newton entero": el paso de Newton se reemplaza por el vector 
+  entero $u$ que mejor cumple $G,u \approx -g$. Encontrarlo es el problema de
+  reticulado (Kannan + LLL + Babai), que funciona como una caja negra:
+
+  ▎ entrada: $G$, el objetivo $u_0$ y un radio $r$. Salida: un $u$ entero con 
+  ▎ $|u-u_0| \lesssim r$ y $G(u - u_0)$ mucho más chico que redondear coordenada
+  ▎ por coordenada.
+
+  5. Por qué existen enteros buenos (y qué hace el radio)
+
+  Ejemplo con 1 ecuación y 2 enteros: buscar $u_1 + \sqrt2,u_2 \approx -0.3$.
+  - Con $u_i \in {-1,0,1}$ (radio 1), el mejor es $(1,-1)$: da $-0.414$, error
+    $0.11$.
+  - Con radio ~10 aparece $(11,-8)$: da $11 - 11.314 = -0.314$, error $0.014$.
+
+  Moviendo cada entero más, hay muchas más combinaciones y alguna cae muy cerca.
+  Contando: con radio $r$ hay $\sim(2r)^{13}$ vectores enteros, y sus valores
+  $G,u$ se reparten en una región de 3 dimensiones de tamaño $\sim r$. Muchos
+  puntos en poco espacio significa que alguno cae cerca de $-g$, y cuanto más 
+  grande el radio, mejor.
+
+  La contra: con $u$ grande se rompe la linealización y se perturban las
+  ecuaciones rígidas. Por eso hay un compromiso.
+
+  6. Cada detalle del código, con su porqué
+
+  en el código: arranca de grados_ingenuos
+  por qué: ya está a error $\sim 1/n$; Newton solo corrige lo que falta
+  ────────────────────────────────────────
+  en el código: derivada_residuo por diferencias finitas, 60 dígitos
+  por qué: $g$ no tiene fórmula (adentro hay un Newton) y los cambios son de
+  $10^{-7}$: hacen falta muchos dígitos
+  ────────────────────────────────────────
+  en el código: escalas = paso / n_b
+  por qué: $G$ está calculado respecto de $P$; un paso entero de $d_{ab}$ mueve
+  $P_{ab}$ en paso/n_b
+  ────────────────────────────────────────
+  en el código: pesos = 1/σ²
+  por qué: las tolerancias van de $4\cdot10^{-7}$ a $4\cdot10^{-12}$. Sin pesos,
+
+  el método se conformaría con un error "chico" en valor absoluto que igual
+  pasa el pliegue de la dirección más frágil. Con pesos, el objetivo pasa a ser
+   $\lvert g_k\rvert/\sigma_k^2 \ll 1$ en las tres
+  ────────────────────────────────────────
+  en el código: lstsq → objetivo
+  por qué: el $u_0$ real de Newton, el punto alrededor del cual se buscan
+  enteros
+  ────────────────────────────────────────
+  en el código: enteros_cercanos(..., radio)
+  por qué: el paso de Newton, pero con enteros
+  ────────────────────────────────────────
+  en el código: repetir 4 veces
+  por qué: como en todo Newton, la linealización no es exacta: se recalcula $g$
+  y
+  se corrige de nuevo
+  ────────────────────────────────────────
+  en el código: radios 3, 10, 30, 100
+  por qué: el compromiso de la sección 5: no se sabe de antemano qué radio
+  conviene, así que se prueban todos
+  ────────────────────────────────────────
+  en el código: evaluar_enteros y quedarse con el mejor
+  por qué: todo lo anterior es un modelo aproximado. La decisión final ("es
+  estricto o no") se toma con la cuenta exacta
+
+  En resumen: las fases corrigen gratis el error en las direcciones rígidas,
+  pero no en las 3 blandas. Ahí el error se elimina eligiendo los 13 grados en
+  conjunto, y como esos enteros no se pueden redondear de a uno, cada paso de
+  Newton se resuelve como un problema de reticulado.
+
+  Si te sirve, puedo agregar al notebook una celda chica con el ejemplo de
+  $u_1+\sqrt2,u_2$, mostrando cómo baja el error al subir el radio.
+
+✻ Sautéed for 1m 6s · done 12:49
+
+※ recap: You're trying to understand Phases 0 and 1 of Grafo_explicito_S7, and I just explained why integer Newton works the way it does. Next: if you'd like, I can add a small notebook cell with the u1 + √2·u2 example. (disable recaps in /config)
+
+❯ Similarmente la parte de Kanan sigue sin ser aclarada asi que no entiendo     
+  para que se usa en este caso. De nuevo no sé que es lo de Kanan               
+
+● Te lo explico desde cero, con un ejemplo chico que se puede hacer a mano.
+
+  1. El problema concreto
+
+  Del Newton entero sale esto: hay un vector real $u_0$ (13 números, la solución
+  exacta de Newton) y hay que elegir un vector entero $u$ que cumpla dos cosas 
+  a la vez:
+
+  - (a) que corrija el residuo blando: $A(u - u_0) \approx 0$, donde $A$ es la
+    matriz de $3\times13$ (las "formas" del código);
+  - (b) que no se aleje mucho de $u_0$: $|u - u_0| \lesssim r$, para que la
+    linealización siga valiendo.
+
+  Cada condición sola es fácil, y cada una sola falla:
+  - Si solo importa (b), la respuesta es redondear $u_0$ coordenada por
+    coordenada. Es el redondeo ingenuo, y deja $A(u-u_0)$ grande.
+  - Si solo importa (a), se puede hacer $A(u-u_0)$ casi 0 con un $u$ enorme,
+    como en el ejemplo de $\sqrt2$ con números cada vez más grandes. Pero un $u$
+    enorme rompe todo lo demás.
+
+  La búsqueda exhaustiva tampoco es opción: con radio 10 hay $21^{13} \approx
+  10^{17}$ vectores para probar.
+
+  2. El truco de Kannan: juntar las dos condiciones en una sola distancia
+
+  A cada entero $u$ se le asigna un vector más largo, de 13 + 3 = 16
+  coordenadas:
+
+  $$v(u) = \big(\ \underbrace{u / r}{13\text{ coords}}\ ,\ 
+  \underbrace{\text{peso}\cdot A u}{3\text{ coords}}\ \big).$$
+
+  Y al objetivo le pasa lo mismo: $t = v(u_0)$. La distancia entre los dos es
+
+  $$|v(u) - t|^2 ;=; \underbrace{\frac{|u - u_0|^2}{r^2}}{\text{condición (b)}} 
+  ;+; \underbrace{\text{peso}^2,|A(u - u_0)|^2}{\text{condición (a)}} .$$
+
+  Eso es todo el truco. Las dos condiciones quedan "encajadas" como bloques de
+  coordenadas de un mismo vector, y la distancia las suma. Un $u$ que haga chica
+  esa distancia cumple las dos a la vez. Los factores fijan cuánto pesa cada
+  una:
+  - alejarse $r$ de $u_0$ cuesta 1;
+  - dejar un residuo de $1/\text{peso}$ también cuesta 1. Como el peso es
+    grande, el residuo tiene prioridad, pero el método no puede irse lejos para
+    conseguirlo.
+
+  3. Por qué esto ayuda: ahora es un problema conocido
+
+  El conjunto de todos los $v(u)$ con $u$ entero es un reticulado: combinaciones
+  con coeficientes enteros de 13 vectores fijos, los $v(e_1), \dots,
+  v(e_{13})$, que son exactamente las filas de la matriz B del código:
+
+  B = np.hstack([np.eye(m) / radio, factor * formas.T])   # fila i = v(e_i)
+  vector_objetivo = np.concatenate([objetivo / radio, factor * formas @
+  objetivo])   # t = v(u_0)
+
+  Entonces la pregunta pasa a ser "¿cuál es el punto del reticulado más cercano 
+  a $t$?". Es el problema del vector más cercano, uno de los problemas clásicos
+  sobre reticulados, y tiene algoritmos conocidos:
+  - LLL prepara una buena base;
+  - Babai encuentra un punto cercano usando esa base.
+
+  Kannan no resuelve nada por sí mismo: traduce el problema "dos condiciones
+  sobre enteros" al formato que LLL y Babai saben atacar. Cuando Babai devuelve
+  el punto, $u$ se lee de las primeras 13 coordenadas multiplicadas por $r$ (la
+  última línea de enteros_cercanos).
+
+  4. Ejemplo a mano
+
+  Se quiere $u_1 + \sqrt2,u_2 \approx -0.3$ con enteros. Acá $A = (1, \sqrt2)$,
+  $u_0 = (-0.3,\ 0)$, $r = 10$ y peso $= 100$. Distancia al cuadrado para tres
+  candidatos:
+
+  $u$: $(0, 0)$ (redondeo ingenuo)
+  $\lvert u-u_0\rvert^2/r^2$: 0.001
+  $u_1+\sqrt2 u_2$: 0
+  error: 0.3
+  $100^2\cdot\text{error}^2$: 900
+  total: 900
+  ────────────────────────────────────────
+  $u$: $(1, -1)$
+  $\lvert u-u_0\rvert^2/r^2$: 0.03
+  $u_1+\sqrt2 u_2$: −0.414
+  error: 0.114
+  $100^2\cdot\text{error}^2$: 130
+  total: 130
+  ────────────────────────────────────────
+  $u$: $(11, -8)$
+  $\lvert u-u_0\rvert^2/r^2$: 1.92
+  $u_1+\sqrt2 u_2$: −0.314
+  error: 0.014
+  $100^2\cdot\text{error}^2$: 1.9
+  total: 3.8
+
+  Entre estos tres, el punto más cercano a $t$ es $(11,-8)$: se aleja un poco de
+  $u_0$ (paga 1.9) pero baja el error 20 veces. Ese balance es el que se busca.
+  La celda 30 del notebook hace lo mismo con 13 enteros y 3 formas.
+
+  5. Qué es el "radio" en el código
+
+  En el código el segundo bloque se multiplica por factor = peso * radio, no
+  solo por peso. El efecto: al subir el radio, se permite alejarse más de $u_0$
+  y se exige un residuo más chico, que es lo que se gana teniendo más
+  combinaciones disponibles. Por eso en la celda 30 el radio 30 da menos residuo
+  que el radio 3.
+
+  ---
+
+  Una aclaración de nombre: en la literatura, "encaje de Kannan" (Kannan's 
+  embedding) se refiere estrictamente a otra variante: agregar $t$ como una fila
+  más de la base y buscar el vector más corto en lugar del más cercano. Lo que
+  hace el código es la idea de fondo, construir un reticulado aumentado con
+  pesos para que una sola distancia mida las dos condiciones, y después resolver
+  el vector más cercano con Babai. Si querés que el notebook sea preciso,
+  convendría llamarlo "reticulado aumentado (estilo Kannan)".
+
+✻ Cogitated for 39s · done 13:07
+
+❯ De donde salen los 13 grados de libertad                                      
+
+  Ran 5 shell commands (ctrl+o to expand)
+
+● Encontré algo raro: al contar los pares en los datos me dan 9, no 13. Reviso
+  de qué plantilla salen las otras filas para no confundirte.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● El número sale de contar pares de clusters, pero al verificarlo con los datos
+  encontré que para la plantilla del grafo de $3\cdot10^7$ no son 13: son 9. El
+  13 del notebook está mal (más abajo está el detalle).
+
+  De dónde salen los enteros libres
+
+  1. Un entero por par de clusters. Los datos del grafo son los grados $d_{ab}$.
+  No todos son independientes:
+  - $d_{aa} = n_a - 1$ está fijo, porque cada cluster es un clique;
+  - $d_{ba}$ queda determinado por $d_{ab}$, porque $n_a d_{ab} = n_b d_{ba}$
+    (contar las mismas aristas desde los dos lados).
+
+  Entonces hay un entero por cada par $a<b$. Con 7 clusters son $\binom72 = 21$
+  pares.
+
+  2. Se descartan los pares prohibidos. Los sectores opuestos no tienen aristas
+  por construcción de S7: A–C ($2\times2 = 4$ pares) y B–W (2 pares). Quedan 15.
+
+  3. Se descartan los pares que el SDP dejó en 0 o en 1. Un par con densidad 1
+  (unión completa) se deja fijo: el redondeo no tiene nada que redondear ahí. Lo
+  decide pares_libres en src/enteros.py:116: solo cuentan los pares con
+  $10^{-7} < P_{ab} < 1 - 10^{-7}$.
+
+  En la plantilla $h = 0.03$, la que da el grafo de $3\cdot10^7$, el SDP deja 6 
+  pares en 1: Am–Ap, Am–Bm, Bm–Bp, Bp–Cp, Cm–Cp y Cp–W. Quedan 9 libres:
+
+  ┌───────┬──────────┐
+  │  par  │ $P_{ab}$ │
+  ├───────┼──────────┤
+  │ Am–Bp │ 0.614    │
+  ├───────┼──────────┤
+  │ Ap–Bm │ 0.677    │
+  ├───────┼──────────┤
+  │ Bm–Cp │ 0.612    │
+  ├───────┼──────────┤
+  │ Bp–Cm │ 0.677    │
+  ├───────┼──────────┤
+  │ Ap–Bp │ 0.988    │
+  ├───────┼──────────┤
+  │ Bm–Cm │ 0.991    │
+  ├───────┼──────────┤
+  │ Am–W  │ 0.9986   │
+  ├───────┼──────────┤
+  │ Ap–W  │ 0.968    │
+  ├───────┼──────────┤
+  │ Cm–W  │ 0.967    │
+  └───────┴──────────┘
+
+  Los cuatro primeros son las densidades $q$ cruzadas del patrón límite. Los
+  otros cinco son pares que en el límite valen 1 y que el SDP bajó un poco.
+
+  Lo verifiqué contando, en data/grafos_s7.json, los pares con $0 < d_{ab} <
+  n_b$ de cada grafo guardado:
+  - $h = 0.03$ (incluido el de $n = 30,000,004$): 9 pares libres;
+  - $h = 0.02$: 15, porque ahí el SDP no deja ningún par exactamente en 1.
+
+  Ningún grafo tiene 13.
+
+  Qué está mal en el notebook
+
+  El "13" aparece en la sección 6 (texto, pseudocódigo y el título del ejemplo
+  de juguete) y en la lectura de la Fase 1 ("el reticulado con 13 enteros y 3
+  restricciones $n \sim \sigma^{-1.23}$"). El código no tiene el 13 escrito en
+  ningún lado: usa pares_libres(P), así que siempre trabaja con el número
+  correcto. El error es solo del texto.
+
+  Lo que cambia en la explicación:
+  - El argumento no cambia: con $h = 0.03$ son 9 enteros para 3 ecuaciones
+    blandas, igual hay 6 de sobra para cancelar errores.
+  - La heurística del exponente sí: "$\sigma^{-1.23}$ con 13 enteros" habría que
+    revisarla, porque la razón enteros/restricciones depende de la plantilla
+    (9/3 con $h = 0.03$, 15/3 con $h = 0.02$).
+  - El ejemplo de juguete ("3 formas sobre 13 enteros") funciona igual como
+    ilustración, pero quedaría más honesto con 9.
+
+  ¿Querés que corrija esas partes del texto en el notebook (sin tocar tus celdas
+  de código, salvo el 13 del ejemplo de juguete si te parece)?
+
+✻ Churned for 1m 8s · done 13:27
+
+❯ Revisa si los pares que no quedan en 1 deberian ser distintos de 1. Fijate    
+  que en OKeefe la matriz de densidad solo son 8. A su vez, deberian ser        
+  "simetricos" es decir si tengo el link Am-Bp tambien se elige Cm-Bp. Noto que 
+  Ap por ejemplo tien "libres" segun vos 3 links, pero en OKeefe solo deberia   
+  tener distinto de 1 al link con Bm.                                           
+
+  Made 1 scratchpad edit +72, listed 2 directories, ran 2 shell commands (ctrl+o to expand)
+
+● Estoy reconstruyendo la matriz de O'Keeffe ($p + h,p' + \Delta$, tal como está
+  en src/s7.py) para comparar qué pares quedan en 1 y cuáles no.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Mi reconstrucción da 12 pares intermedios en O'Keeffe, no 4. Antes de
+  afirmarlo lo verifico contra el paper mismo, porque src/s7.py es nuestra
+  copia.
+
+  Ran 4 shell commands (ctrl+o to expand)
+
+● Revisé contra el paper (papers/2610.21271v1.pdf, Apéndice A). En resumen: los
+  pares cerca de 1 sí deberían ser distintos de 1, y eso también pasa en
+  O'Keeffe. La simetría que mencionás existe, pero empareja otros pares, y
+  nuestra plantilla la cumple solo aproximadamente.
+
+  1. Las "8 entradas" de O'Keeffe son el límite $h \to 0$
+
+  La Tabla II de O'Keeffe es el patrón límite, y ahí sí solo hay 4 pares con $q$
+  (8 entradas de la matriz, contando la simetría $P_{ab} = P_{ba}$). La misma
+  tabla aclara: "At finite h the densities are corrected by O(h)". Con $h > 0$,
+  la matriz es $P = p + h,p' + \Delta$, y el Apéndice A dice explícitamente:
+
+  ▎ "The value of κ is a convenient choice: it makes p′ < 0 on every neighbor 
+  ▎ pair with p = 1 […] so that these densities stay below 1 at small h."
+
+  O'Keeffe baja a propósito todos los pares vecinos que valían 1. Reconstruí su
+  matriz con las fórmulas del apéndice:
+
+  ┌─────────┬──────────┬───────┬──────────────┬────────────┬──────────────┐
+  │         │   $p$    │       │  O'Keeffe,   │ O'Keeffe,  │   nuestra    │
+  │   par   │ (límite) │ $p'$  │ $h=10^{-6}$  │  $h=0.03$  │ plantilla,   │
+  │         │          │       │              │            │   $h=0.03$   │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Am–Bp   │ $q$      │ −1.90 │ 0.6506       │ 0.594      │ 0.614        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Ap–Bm   │ $q$      │ −0.82 │ 0.6506       │ 0.626      │ 0.677        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Bm–Cp   │ $q$      │ −1.90 │ 0.6506       │ 0.594      │ 0.612        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Bp–Cm   │ $q$      │ −0.82 │ 0.6506       │ 0.626      │ 0.677        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Ap–Bp   │ 1        │ −1.90 │ 0.9999981    │ 0.944      │ 0.988        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Bm–Cm   │ 1        │ −1.90 │ 0.9999981    │ 0.944      │ 0.991        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Ap–W    │ 1        │ −2.86 │ 0.9999971    │ 0.914      │ 0.968        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Cm–W    │ 1        │ −2.86 │ 0.9999971    │ 0.914      │ 0.967        │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Am–Bm   │ 1        │ −0.18 │ 0.9999998    │ 0.995      │ 1            │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Bp–Cp   │ 1        │ −0.18 │ 0.9999998    │ 0.996      │ 1            │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Am–W    │ 1        │ −0.05 │ 0.99999995   │ 0.9985     │ 0.9986       │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Cp–W    │ 1        │ −0.05 │ 0.99999995   │ 0.9986     │ 1            │
+  ├─────────┼──────────┼───────┼──────────────┼────────────┼──────────────┤
+  │ Am–Ap,  │          │       │              │            │              │
+  │ Bm–Bp,  │ 1        │ 0     │ 1            │ 1          │ 1            │
+  │ Cm–Cp   │          │       │              │            │              │
+  └─────────┴──────────┴───────┴──────────────┴────────────┴──────────────┘
+
+  (La columna $h = 0.03$ de O'Keeffe es solo para comparar escalas: su fórmula
+  está pensada para $h$ infinitesimal.)
+
+  - O'Keeffe tiene 12 pares intermedios, nosotros 9. Con su $h = 10^{-6}$ los
+    pares "casi 1" son 0.99999…, y por eso a simple vista parece que solo quedan
+    los 4 de $q$.
+  - Lo de Ap: en el límite, Ap solo tiene $q$ con Bm. Pero en la construcción
+    real de O'Keeffe, Ap también baja con Bp ($-1.9h$) y con W ($-2.86h$).
+    Nuestra plantilla hace lo mismo.
+
+  Por qué hace falta bajarlos. Al abrir los pares ($h > 0$), el equilibrio
+  necesita corregir esas densidades a primer orden (los términos $A_1, A_2$). Un
+  par en 1 no puede subir, así que si la corrección pide cambiarlo, tiene que
+  bajar. El $\kappa$ de O'Keeffe es un adelgazamiento uniforme de todos los
+  pares vecinos, que no altera el equilibrio a primer orden (es una "dirección
+  nula"), y lo elige lo bastante grande para que todo quede ≤ 1.
+
+  La coincidencia con el SDP. Los pares que el SDP deja en 1 o casi (Am–Bm,
+  Bp–Cp, Cp–W, Am–W con 0.9986) son exactamente los cuatro que O'Keeffe adelgaza
+  menos ($p' = -0.18$ y $-0.05$). Los que O'Keeffe baja mucho ($-1.9$, $-2.86$)
+  son los que el SDP también baja. Tiene sentido: adelgazar cuesta $\mu$, y el
+  $\kappa = 1.9$ de O'Keeffe es una elección "cómoda", no óptima. El SDP
+  adelgaza solo lo necesario y deja en 1 lo que puede.
+
+  2. La simetría: Am se refleja en Cp, no en Cm
+
+  La simetría de S7 es la reflexión $\varphi \to \pi - \varphi$ alrededor de B.
+  Como Am está en $-h$, va a $\pi + h$, que es la posición de Cp. Los pares
+  quedan:
+
+  $$\text{Am} \leftrightarrow \text{Cp}, \qquad \text{Ap} \leftrightarrow
+  \text{Cm}, \qquad \text{Bm} \leftrightarrow \text{Bp}, \qquad \text{W}
+  \leftrightarrow \text{W}.$$
+
+  Entonces el compañero de Am–Bp es Cp–Bm, no Cm–Bp. Cm–Bp es el compañero de
+  Ap–Bm. Los cuatro son pares $q$, y en la tabla de O'Keeffe las parejas
+  coinciden exactamente (Am–Bp = Bm–Cp = 0.6505572669).
+
+  En nuestra plantilla la simetría se cumple solo aproximadamente:
+
+  ┌───────────────┬───────────────────┐
+  │    pareja     │ nuestra plantilla │
+  ├───────────────┼───────────────────┤
+  │ Ap–Bm / Cm–Bp │ 0.677 / 0.677     │
+  ├───────────────┼───────────────────┤
+  │ Am–Bp / Cp–Bm │ 0.614 / 0.612     │
+  ├───────────────┼───────────────────┤
+  │ Ap–Bp / Cm–Bm │ 0.988 / 0.991     │
+  ├───────────────┼───────────────────┤
+  │ Ap–W / Cm–W   │ 0.968 / 0.967     │
+  ├───────────────┼───────────────────┤
+  │ Am–W / Cp–W   │ 0.9986 / 1        │
+  ├───────────────┼───────────────────┤
+  │ Am–Bm / Cp–Bp │ 1 / 1             │
+  └───────────────┴───────────────────┘
+
+  Se rompe porque nada la impone: el SDP no la pide, y los desplazamientos que
+  encontró Nelder–Mead tampoco son simétricos. Debería valer $s_{Am} = -s_{Cp}$,
+  $s_{Ap} = -s_{Cm}$, $s_{Bm} = -s_{Bp}$, pero las sumas dan 0.075, −0.078 y
+  −0.005.
+
+  ¿Es un error? Para el resultado, no: el certificado verifica el grafo
+  concreto, sea simétrico o no. Pero imponer la simetría tiene sentido:
+  - no cuesta $\mu$: si $s$ es simétrico, el SDP es convexo, así que el promedio
+    de $P$ y su reflejo es igual de factible y da el mismo $\mu$. Siempre
+    existe un óptimo simétrico;
+  - Nelder–Mead buscaría en 3 parámetros en lugar de 6: más fácil, y quizás
+    encuentre un $\mu$ algo mejor (la curva de la Fase 0 es ruidosa justamente
+    por Nelder–Mead);
+  - la plantilla quedaría más limpia y comparable con la de O'Keeffe.
+
+  Ojo con un detalle: la simetría conviene en la plantilla. En el redondeo a
+  enteros no conviene forzarla, porque reduciría los enteros libres del
+  reticulado de 9 a ~5.
+
+  Qué propongo
+
+  1. Corregir el texto del notebook: 13 → 9 pares libres, y agregar en la
+     sección 3 o 4 una nota con la comparación de arriba (por qué hay pares < 1
+     y cómo se corresponden con el $p'$ de O'Keeffe).
+  2. Opcional, como experimento: imponer la simetría en la Fase 0 ($s$ simétrico
+     con 3 parámetros y $P$ simétrica en el SDP), y ver si cambia $\mu$ y si el
+     redondeo sigue funcionando con $n = 3\cdot10^7$.
+
+  ¿Hago alguna de las dos? El script que reconstruye la matriz de O'Keeffe quedó
+  en C:\Users\Nicolas\AppData\Local\Temp\claude\F--investighaton\1845675d-1a7f-
+  4f7e-90a5-5c8d003b93bc\scratchpad\okeeffe_P.py.
+
+✻ Baked for 2m 29s · done 13:36
+
+※ recap: Estamos entendiendo cómo se construye el grafo de la Fase 0 y la Fase 1, y comparamos qué densidades quedan por debajo de 1 frente a O'Keeffe. Falta que elijas: corregir el texto del notebook (13 → 9 pares libres), probar la plantilla con simetría impuesta, o ambas. (disable recaps in /config)
+
+❯ A ver, cuando me refiero con "simetria" en la matriz de P, me refiero a que   
+  los dos clusters m de A y C se conectan a uno de B (m o p) y deberian tener q 
+  como densidad. De alguna forma, segun lo que encontraste donde en la          
+  plantilla indica que 1 es la densidad, no necesariamente es asi y ademas      
+  puede ser cercano a 1 pero no 1, y de alguna manera poner una restriccion de  
+  simetria reduce o empeora la solucion decis? Obtener un grafo "computable" es 
+  la idea que teniamos, si bien puede que no sea el más chico, lo cual me       
+  parece un objetivo demasiado dificil de conseguir, obtener un grafo sencillo  
+  y elengante de entender me parece mejor                                       
+
+● Antes de responder si la simetría empeora la solución, lo voy a medir: pruebo
+  el SDP con distintas restricciones de simetría y veo cuánto $\mu$ cuesta cada
+  una. Primero armo un entorno con cvxpy, porque el .venv local no lo tiene.
+
+  Made 1 scratchpad edit +118, ran 4 shell commands, recalled 1 memory (ctrl+o to expand)
+
+● Ya tengo los resultados. Anoto en la memoria tu prioridad (un grafo elegante
+  antes que el más chico) y te los resumo.
+
+  Wrote 1 memory (ctrl+o to expand)
+
+● Lo medí. La respuesta corta: depende de qué simetría. La simetría "geométrica"
+  (el reflejo) no empeora nada, mejora un poco y deja un grafo más simple. La
+  que planteás (las cuatro densidades cruzadas iguales a un solo $q$) cuesta 
+  demasiado: nunca supera 11/16.
+
+  1. Por qué las cuatro densidades cruzadas no son iguales
+
+  Tu lectura del patrón límite es correcta: Bp se conecta con densidad $q$ a Am
+  y a Cm, y Bm a Ap y a Cp. Pero con $h > 0$ esos pares no son geométricamente
+  iguales. Bp está en $\pi/2 + wh$, corrido hacia C:
+  - Am (en $-h$) queda a $\pi/2 + (1+w)h$ de Bp, más de 90°: es un par "lejano";
+  - Cm (en $\pi - h$) queda a $\pi/2 - (1+w)h$, menos de 90°: es un par
+    "cercano".
+
+  Eso importa porque el peso de un par en la estabilidad es $\cos(\varphi_a -
+  \varphi_b)$:
+  - par lejano: $\cos < 0$, los links desestabilizan;
+  - par cercano: $\cos > 0$, los links estabilizan.
+
+  Entonces conviene que los pares lejanos (Am–Bp, Cp–Bm) sean más finos que los
+  cercanos (Ap–Bm, Cm–Bp). Es lo que hacen tanto el SDP (0.612 contra 0.678)
+  como O'Keeffe ($q - 1.9h$ contra $q - 0.82h$). La simetría real es el reflejo,
+  que empareja lejano con lejano y cercano con cercano.
+
+  2. Los experimentos
+
+  Corrí el SDP con Nelder–Mead ($h = 0.03$, $\varepsilon = 10^{-3}$, tamaños (3,
+  5)) agregando cada restricción:
+
+  ┌─────────────────────────────────┬────────────┬─────────┬───────────────┐
+  │           restricción           │   $\mu$    │ pares < │   valores     │
+  │                                 │            │    1    │   distintos   │
+  ├─────────────────────────────────┼────────────┼─────────┼───────────────┤
+  │ ninguna (como ahora, plantilla  │ 0.6885     │ 9       │ 9             │
+  │ guardada)                       │            │         │               │
+  ├─────────────────────────────────┼────────────┼─────────┼───────────────┤
+  │ ninguna (corrida de nuevo)      │ 0.68795    │ 9       │ 7             │
+  ├─────────────────────────────────┼────────────┼─────────┼───────────────┤
+  │ reflejo ($s$ y $P$ simétricos)  │ 0.68858    │ 8       │ 4             │
+  ├─────────────────────────────────┼────────────┼─────────┼───────────────┤
+  │ reflejo + un solo $q$ en los 4  │ 0.6720 ❌  │ 10      │ 4             │
+  │ cruces                          │            │         │               │
+  ├─────────────────────────────────┼────────────┼─────────┼───────────────┤
+  │ reflejo + un solo valor en los  │ 0.5997 ❌  │ 15      │ 4             │
+  │ pares vecinos                   │            │         │               │
+  ├─────────────────────────────────┼────────────┼─────────┼───────────────┤
+  │ pares vecinos en 1 (Tabla II    │ infactible │ —       │ —             │
+  │ pura)                           │            │         │               │
+  └─────────────────────────────────┴────────────┴─────────┴───────────────┘
+
+  Reflejo. Es el mejor de todos: no cuesta $\mu$ (por convexidad, siempre hay un
+  óptimo simétrico) y Nelder–Mead busca en 3 parámetros en lugar de 6, así que
+  encuentra un óptimo mejor. La matriz queda así, con todo lo demás en 0 o 1
+  exactos:
+
+  ┌────────┬────────────────────────────────┐
+  │ valor  │             pares              │
+  ├────────┼────────────────────────────────┤
+  │ 0.6124 │ Am–Bp, Cp–Bm (cruces lejanos)  │
+  ├────────┼────────────────────────────────┤
+  │ 0.6783 │ Ap–Bm, Cm–Bp (cruces cercanos) │
+  ├────────┼────────────────────────────────┤
+  │ 0.9892 │ Ap–Bp, Cm–Bm                   │
+  ├────────┼────────────────────────────────┤
+  │ 0.967  │ Ap–W, Cm–W                     │
+  └────────┴────────────────────────────────┘
+
+  Son 4 números, cada uno repetido en su espejo. Es el $p + hp'$ de O'Keeffe,
+  pero con los valores óptimos. Fijate que los pares que bajan de 1 son los que 
+  tocan a Ap o a Cm, las mitades que miran hacia B.
+
+  Un solo $q$. Probé 8 combinaciones de $h \in {0.005, \dots, 0.03}$ y
+  $\varepsilon \in {10^{-4}, 10^{-3}}$, y el mejor $\mu$ fue 0.6872, siempre por
+  debajo de 11/16 = 0.6875. Es un barrido con Nelder–Mead, no una prueba, pero
+  es consistente: forzar lejano = cercano cuesta $O(h)$ de $\mu$, y eso es justo
+  lo que separa 0.6875 de 0.69.
+
+  Pares vecinos en 1. Es infactible: con los vecinos en 1 no existe un
+  equilibrio estable. Esto confirma lo que dice O'Keeffe: con $h > 0$, algunos
+  "1" del patrón límite tienen que bajar.
+
+  3. Algo que suma para el grafo elegante
+
+  Clasifiqué las direcciones blandas del Jacobiano según el reflejo. De las 3
+  direcciones blandas, 2 son antisimétricas ($\sigma = 5.4\cdot10^{-6}$ y
+  $8.1\cdot10^{-4}$) y 1 es simétrica ($6.9\cdot10^{-6}$).
+
+  Si los grados enteros también son simétricos, el error de redondeo es
+  simétrico y no puede empujar en las direcciones antisimétricas: esas dos
+  ecuaciones se cumplen solas. Queda 1 ecuación blanda (en lugar de 3) para 4 
+  enteros (uno por pareja). Además, en las direcciones antisimétricas ya no hay
+  pliegue que cuidar: solo hace falta $1/n \ll \sigma$, que es mucho más fácil
+  que $1/n \ll \sigma^2$.
+
+  Esto es un razonamiento, no lo corrí todavía. Pero sugiere que el grafo
+  simétrico podría no salir más grande que el actual, y hasta podría salir más
+  chico.
+
+  Propuesta
+
+  Un grafo simétrico de punta a punta:
+  1. Fase 0: plantilla con reflejo (la de arriba, $\mu = 0.68858$).
+  2. Fase 1: redondeo simétrico. 4 enteros, 1 ecuación blanda, y el mismo
+     reticulado (o casi a mano, porque es 1 ecuación con 4 incógnitas).
+  3. Fases 2–3: el blow-up y el certificado no cambian.
+
+  El resultado se describiría con 4 números ($d_{\text{lejano}},
+  d_{\text{cercano}}, d_{\text{Ap–Bp}}, d_{\text{Ap–W}}$) más los tamaños, y
+  tendría la simetría de C4 visible.
+
+  ¿Lo corro? Primero vería qué $n$ necesita el redondeo simétrico, antes de
+  tocar el notebook. Los scripts de esta prueba están en
+  C:\Users\Nicolas\AppData\Local\Temp\claude\F--investighaton\1845675d-1a7f-4f7e
+  -90a5-5c8d003b93bc\scratchpad\simetria_sdp.py y
+  C:\Users\Nicolas\AppData\Local\Temp\claude\F--investighaton\1845675d-1a7f-4f7e
+  -90a5-5c8d003b93bc\scratchpad\paridad.py.
+✻ Brewed for 8m 2s · done 13:54
+
+※ recap: Buscamos un grafo S7 explícito, simple y elegante con μ > 11/16; la plantilla simétrica por reflejo da μ = 0.68858, y forzar un solo q no supera 11/16. Falta tu visto bueno para correr el redondeo simétrico y ver qué n necesita. (disable recaps in /config)
+
+❯ Hacelo en un notebook separado                                                
+
+● Primero leo las piezas de src/ que voy a reutilizar (pulido, evaluación,
+  certificado, blow-up), para que el notebook nuevo use lo mismo que el
+  original.
+
+  Searched for 1 pattern, ran 4 shell commands (ctrl+o to expand)
+
+● Ya entiendo las piezas. Instalo lo que falta en el entorno de prueba
+  (matplotlib, nbconvert) y armo primero el experimento como script, para saber
+  qué $n$ hace falta antes de escribir el notebook.
+
+  Made 1 scratchpad edit +282, ran 2 shell commands (ctrl+o to expand)
+
+● Confirmo que funciona: el grafo simétrico queda certificado desde n = 10^6
+  (frente a los 3·10^7 del no simétrico). Antes de escribir el notebook,
+  revisaré el script de visualización para reutilizarlo.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Armo el notebook con un script que genera las celdas, y después lo ejecuto
+  completo para verificar que todo corre y que los números del texto coinciden
+  con los resultados.
+
+  Made 1 scratchpad edit +832 (ctrl+o to expand)
+
+● Bash(S="C:/Users/Nicolas/AppData/Local/Temp/claude/F--investighaton/1845675d-1
+      a7f-4f7e-90a5-5c8d003b93bc/scratchpad"; cd /f/investighaton &&
+      "$S/env/Scripts/python.e…)
+  ⎿  ok 35 celdas
+     [NbConvertApp] Converting notebook Grafo_simetrico_S7.ipynb to noteboo
+     k
+     … +14 lines (ctrl+o to expand)
+  ⎿  3 files changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+● Corrió completo en 2 minutos. Ahora reviso las salidas (tablas e imágenes)
+  para confirmar que el texto del notebook coincide con los resultados.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Las tablas no se dibujaron porque importar visualizar_grafo al inicio fija el
+  backend de matplotlib en Agg, anulando los gráficos en línea. Voy a mover ese
+  import a la sección 7, que es la única que lo necesita, y vuelvo a ejecutar.
+
+● Bash(S="C:/Users/Nicolas/AppData/Local/Temp/claude/F--investighaton/1845675d-1
+      a7f-4f7e-90a5-5c8d003b93bc/scratchpad"; cd "$S" && PYTHONIOENCODING=utf-8
+      ./env/Scripts…)
+  ⎿  1
+     ok 35 celdas
+     [NbConvertApp] Writing 585508 bytes to Grafo_simetrico_S7.ipynb
+     … +15 lines (ctrl+o to expand)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+  Read 9 files (ctrl+o to expand)
+
+● Veo que con n=3·10^5 el residuo queda 10 veces por encima de σ² pero el
+  equilibrio sigue siendo estricto, porque el umbral real es σ²/(2|c|) y no σ².
+  Voy a calcular c para trazar el umbral correcto en la figura.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● El umbral real resulta unas 500 veces mayor que σ², lo que explica por qué el
+  método ingenuo falla en toda la tabla. Ahora corrijo el notebook para calcular
+  c correctamente y dejar esto bien explicado.
+
+  Read 1 file (ctrl+o to expand)
+
+● Aplico las correcciones de texto en el generador: la lectura de la Fase 0 (sin
+  restricciones también da 8 pares), el umbral del pliegue y la lectura de la
+  Fase 1.
+
+  Made 9 scratchpad edits +55 -27, searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+● Corrijo la tabla del resumen con los números reales de la corrida y vuelvo a
+  ejecutar el notebook completo.
+
+  Made 1 scratchpad edit +10 -5 (ctrl+o to expand)
+
+● Bash(S="C:/Users/Nicolas/AppData/Local/Temp/claude/F--investighaton/1845675d-1
+      a7f-4f7e-90a5-5c8d003b93bc/scratchpad"; cd /f/investighaton &&
+      "$S/env/Scripts/python.e…)
+  ⎿  ok 35 celdas
+     [NbConvertApp] Writing 589889 bytes to Grafo_simetrico_S7.ipynb
+     [19] parejas libres: [['Am–Bp', 'Bm–Cp'], ['Ap–Bm', 'Bp–Cm'], ['Ap–Bp'
+     … +14 lines (ctrl+o to expand)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+  Read 3 files (ctrl+o to expand)
+
+● Listo: el grafo simétrico queda certificado con $n = 299,989$ y $\mu = 
+  206565/299989 \approx 0.688575 > 11/16$. Se describe con 4 enteros y es 100
+  veces más chico que el del notebook original. El notebook nuevo es
+  notebooks/Grafo_simetrico_S7.ipynb; lo ejecuté completo (tarda unos 2 minutos
+  en CPU) y quedó guardado con sus salidas.
+
+  Resultados
+
+  Fase 0, el SDP con restricciones ($h = 0.03$, $\varepsilon = 10^{-3}$):
+
+  ┌──────────────────────┬───────────────────┬─────────────────────────────┐
+  │     restricción      │       $\mu$       │    valores intermedios      │
+  │                      │                   │          distintos          │
+  ├──────────────────────┼───────────────────┼─────────────────────────────┤
+  │ sin restricciones    │ 0.687923          │ 6                           │
+  ├──────────────────────┼───────────────────┼─────────────────────────────┤
+  │ reflejo              │ 0.688579          │ 4                           │
+  ├──────────────────────┼───────────────────┼─────────────────────────────┤
+  │ reflejo + un solo    │ 0.671711 (<       │ 4                           │
+  │ $q$                  │ 11/16)            │                             │
+  ├──────────────────────┼───────────────────┼─────────────────────────────┤
+  │ vecinos en 1         │ infactible        │ —                           │
+  └──────────────────────┴───────────────────┴─────────────────────────────┘
+
+  - Reflejo: no pierde nada de $\mu$ y hasta gana un poco, porque Nelder–Mead
+    busca en 3 parámetros en lugar de 6.
+  - Un solo $q$: queda debajo de 11/16. Eso responde tu pregunta: esa simetría
+    sí empeora la solución, y alcanza para perder el resultado.
+  - Vecinos en 1: confirma que algunos pares que en el patrón límite valen 1
+    tienen que bajar.
+
+  Paridad de las direcciones blandas: de las 3, dos son antisimétricas y una
+  simétrica. Con grados simétricos queda 1 ecuación blanda para 4 enteros, y en
+  lugar del reticulado alcanza una búsqueda exhaustiva: $41^4 \approx 2.8$
+  millones de combinaciones, evaluadas en una sola multiplicación de matrices.
+
+  Fase 1:
+  - El redondeo ingenuo no da un equilibrio estricto para ningún $n$ de la
+    grilla, ni siquiera $3\cdot10^7$.
+  - El Newton entero da equilibrio estricto desde $n = 3\cdot10^5$, cambiando
+    cada entero en a lo sumo 20 unidades.
+  - Certificado: pasan todos los $n$ desde $3\cdot10^5$, usando
+    certificar_blowup de src/ sin cambios.
+
+  El grafo ($g = 13,043$, tamaños $k = (3,3,3,3,3,3,5)$):
+
+  ┌────────┬───────────────┬────────┬──────────┐
+  │ entero │     pares     │ grado  │ densidad │
+  ├────────┼───────────────┼────────┼──────────┤
+  │ j1     │ Am–Bp y Bm–Cp │ 23 984 │ 0.6129   │
+  ├────────┼───────────────┼────────┼──────────┤
+  │ j2     │ Ap–Bm y Bp–Cm │ 26 540 │ 0.6783   │
+  ├────────┼───────────────┼────────┼──────────┤
+  │ j3     │ Ap–Bp y Bm–Cm │ 38 697 │ 0.9890   │
+  ├────────┼───────────────┼────────┼──────────┤
+  │ j4     │ Ap–W y Cm–W   │ 63 070 │ 0.9671   │
+  └────────┴───────────────┴────────┴──────────┘
+
+  Todos los demás pares son completos o vacíos. En la figura de la estructura se
+  ve el espejo vertical que pasa por B y W.
+
+  Una corrección a lo que te expliqué antes
+
+  Te dije que el error de redondeo tolerado en una dirección blanda era
+  $\sim\sigma^2$. El umbral real es $\sigma^2/(2|c|)$, y acá $c \approx
+  9\cdot10^{-4}$ también es chico. Medido da $2.7\cdot10^{-8}$, unas 500 veces
+  más que $\sigma^2$. Por eso en mi tabla anterior las cuentas de "mil veces de
+  más" estaban exageradas. El notebook calcula $c$ y usa el umbral correcto.
+
+  Con esto, el límite en $n$ ya no lo pone el pliegue. Con $n = 10^5$ el residuo
+  ya está debajo del umbral, pero falla la estabilidad: el redondeo mueve las
+  densidades en $\sim10^{-5}$, más que el margen $\sim5\cdot10^{-6}$.
+
+  Para tener en cuenta
+
+  - El resultado depende del óptimo que encuentra Nelder–Mead. En una prueba
+    previa, con otra opción de Nelder–Mead (adaptive), la plantilla salió apenas
+    distinta y $n = 3\cdot10^5$ fallaba, aunque $10^6$ sí pasaba. Con la
+    configuración del notebook la corrida es determinista.
+  - No repetí la validación ciega ni las simulaciones del notebook original. Lo
+    dejé anotado como pendiente en el resumen.
+  - Archivos nuevos, sin commitear:
+    - notebooks/Grafo_simetrico_S7.ipynb
+    - data/grafo_simetrico_s7.json
+    - data/figuras/grafo_simetrico_n299989_estructura.png
+  - En git status también aparece notes/Explanation.md como archivo nuevo. No lo
+    creé yo y no lo toqué.
+  - Tu .venv local no tiene mpmath ni cvxpy, así que ejecuté todo en un entorno
+    aparte con las dependencias de notebooks/requirements.txt.
+
+✻ Churned for 20m 26s · done 15:22
+
+※ recap: Buscamos un grafo S7 simétrico y elegante con μ > 11/16, y ya está en notebooks/Grafo_simetrico_S7.ipynb: certificado con n = 299 989 y μ ≈ 0.688575. Lo próximo es que lo revises y decidas si lo commiteamos.
+
+❯ Hace un md con toda la explicacion completa en detalles desde el principio,   
+  partiendo desde OKeefe y Canale                                               
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Dejaré notes/Explanation.md intacto, ya que es tu copia, y crearé un archivo
+  nuevo. Antes de escribirlo, voy a revisar los papers y las notas del proyecto
+  para que la parte sobre Canale y O'Keeffe sea precisa.
+
+  Ran 6 shell commands (ctrl+o to expand)
+
+● Ya tengo el contexto necesario: tus notas confirman que el objetivo O1 era
+  justo la simetría espejo exacta que acabamos de lograr. Reviso el camino B en
+  blowup_explicito.md para citarlo correctamente y escribo el documento.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Tengo todo. Escribo el documento en notes/explicacion_completa_S7.md.
+● Write(F:\investighaton\notes\explicacion_completa_S7.md)
+  ⎿  Wrote 763 lines to F:\investighaton\notes\explicacion_completa_S7.md
+       1 # De Canale y O'Keeffe a un grafo S7 explícito: la explicación c
+       2 
+         afo **concreto, sin pesos y certificado**
+       4 con $\mu > 11/16$ que tiene un equilibrio estable no sincronizad
+       5 dos construcciones de las que partimos (Canale 2022 y O'Keeffe 2
+       6 nuestra construcción, explicando qué se hace y **por qué**. Term
+       7 más simple: un grafo de $n = 299\,989$ vértices descrito por cua
+         tro enteros.
+       9 Notebooks: `notebooks/Grafo_explicito_S7.ipynb` (construcción ge
+      10 `notebooks/Grafo_simetrico_S7.ipynb` (versión simé
+     … +1064 lines (ctrl+o to expand)
+
+● Update(F:\investighaton\notes\explicacion_completa_S7.md)
+  ⎿  Added 2 lines, removed 1 line
+      391  Restricciones: contar los links entre $a$ y $b$ desde los dos 
+           lados da $n_a d_{ab} = n_b d_{ba}$; y cada
+      392  cluster es un clique, $d_{aa} = n_a - 1$. Hay **un entero por 
+           par** $a < b$. De los 21 pares, 6 son
+      393  opuestos (vacíos) y los que valen 0 o 1 en la plantilla quedan
+            fijos. En la plantilla $h = 0.03$ quedan
+      394 -**9 pares libres** (no 13, como decía por error una versión an
+          -terior del notebook).                                         
+      394 +**9 pares libres**. (`Grafo_explicito_S7.ipynb` dice 13 en el 
+          +texto de la sección 6; es un error del                        
+      395 +texto, el código usa `pares_libres` y trabaja con los 9.)     
+      396  
+      397  **Redondeo ingenuo:** cada $d_{ab}$ es el entero permitido más
+            cercano a $P_{ab} n_b$. Cada densidad
+      398  cambia en $\sim 1/n$.
+
+● Escribí la explicación completa en notes/explicacion_completa_S7.md. Empieza
+  por el problema, sigue con Canale y O'Keeffe, y recorre cada fase hasta el
+  grafo simétrico, explicando qué se hace y por qué.
+
+  Estructura (13 secciones):
+  1. El problema: el modelo de Kuramoto, qué es una trampa, la conectividad
+     $\mu$, $\mu_c$, y la tabla histórica de cotas (de la Tabla I de O'Keeffe).
+  2. Plantillas $(x, \varphi, P)$: desde la idea del "stackeo" de notes/idea.md
+     hasta las cuatro condiciones (grado, equilibrio, vértice suelto, modos de
+     cluster).
+  3. C4: por qué tiene $\mu = 3/4$ pero es neutro.
+  4. Canale: el grafo pesado $G_p$ con sus cuatro tipos de aristas, el Lema $c^2
+     > 2ad$, el k-spinning (el antecedente de nuestro blow-up) y la cuenta $\mu
+     = (5.5k-1)/(8k) \to 11/16$.
+  5. O'Keeffe:
+     - la familia S7 y el patrón límite;
+     - la cuenta de $\mu_0(q) = (4+2q)/(7+q)$ y la esquina $(q^, w^)$;
+     - la corrección $p'$ con $\kappa = 1.9$;
+     - por qué su grafo tiene $n > 9\cdot10^{84}$.
+  6. Nuestro plan: las dos causas de ese $n$ y cómo atacamos cada una.
+  7. Fase 0: por qué el problema es un SDP y por qué importa que sea convexo, el
+     lazo con Nelder–Mead, y el margen $\varepsilon$ en lugar de $t$.
+  8. Fase 1:
+     - el pliegue, con el umbral correcto $\sigma^2/(2|c|)$;
+     - Lyapunov–Schmidt y el Newton entero;
+     - Kannan, LLL y Babai, con los ejemplos de $\sqrt2$ y de la base mala en
+       2D.
+  9. Fases 2 y 3: el blow-up circulante y el certificado (Fourier, Krawczyk,
+     Cholesky, Gershgorin).
+  10. Simetría: por qué hay pares "casi 1", el reflejo, los pares lejanos y
+      cercanos, y la tabla de experimentos.
+  11. El grafo simétrico: la paridad de las direcciones blandas, el sistema
+      reducido, los 4 enteros y los resultados.
+  12. Comparación final: Canale, O'Keeffe, nuestra construcción general, el
+      camino B y la simétrica; qué logramos, qué no, y el estado de O1, O2 y O3.
+  13. Glosario.
+
+  Al escribirlo encontré y corregí dos imprecisiones mías anteriores:
+  - El umbral del pliegue: es $\sigma^2/(2|c|)$, no $\sigma^2$.
+  - Los pares libres: son 9, no 13. El documento aclara que
+    Grafo_explicito_S7.ipynb todavía dice 13 en el texto de la sección 6. Es un
+    error solo del texto, porque el código usa pares_libres. Si querés, lo
+    corrijo en el notebook.
+
+  Los datos de Canale (definición del k-spinning, Lema 1, elección de $a, b, c,
+  d$, valores para $k = 34$ y $k = 1250$) y de O'Keeffe (Tabla II, $p'$,
+  Proposición 1, Lema 2, $D$ y $n$) los saqué de los PDFs de papers/.
+
+  No toqué notes/Explanation.md y no hice commit.
+
+✻ Crunched for 4m 37s · done 15:56
+
+※ recap: Buscamos un grafo S7 explícito, simple y certificado con μ > 11/16; ya está el notebook simétrico (n = 299 989) y la explicación completa en notes/explicacion_completa_S7.md. Lo siguiente: corregir el "13 pares" en Grafo_explicito_S7.ipynb, si querés.
+
+❯ En lugar de solo poner la plantilla simetrica con los pares de P, mostra la   
+  matriz completa, si queres remarcando los pares, pero que se vean todas las   
+  densidades                                                                    
+
+● Lo cambio en los dos lugares: la tabla del notebook simétrico y la sección
+  11.1 del md. Antes de regenerar, verifico que no hayas editado el notebook
+  desde mi última corrida.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● No lo editaste, así que actualizo el generador y regenero. La tabla nueva
+  muestra la matriz $7\times7$ completa, con cada pareja espejo pintada de un
+  color.
+
+  Made 2 scratchpad edits +65 -27 (ctrl+o to expand)
+
+● Bash(S="C:/Users/Nicolas/AppData/Local/Temp/claude/F--investighaton/1845675d-1
+      a7f-4f7e-90a5-5c8d003b93bc/scratchpad"; cd /f/investighaton &&
+      "$S/env/Scripts/python.e…)
+  ⎿  ok 35 celdas
+     [NbConvertApp] Writing 608154 bytes to Grafo_simetrico_S7.ipynb
+     Am–Bp y Bm–Cp: 0.6124
+     … +3 lines (ctrl+o to expand)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+  Read 1 file (ctrl+o to expand)
+
+● La figura coincide con la plantilla, y la nota del notebook se cumple: la fila
+  de Am leída al revés es la de Cp. Ahora actualizo la sección 11.1 del md con
+  la misma matriz completa.
+
+● Update(F:\investighaton\notes\explicacion_completa_S7.md)
+  ⎿  Added 24 lines, removed 9 lines
+      607  
+      608  ### 11.1 La plantilla
+      609  
+      610 -Con el reflejo, la plantilla ($h = 0.03$, $\varepsilon = 10^{-
+          -3}$, tamaños $(3,5)$, $\mu = 0.688579$) tiene                 
+      611 -solo **cuatro densidades intermedias**, cada una en un par y s
+          -u espejo. Todo lo demás es 0 o 1:                             
+      610 +Con el reflejo, la plantilla ($h = 0.03$, $\varepsilon = 10^{-
+          +3}$, tamaños $(3,5)$, $\mu = 0.688579$,                       
+      611 +desplazamientos $s = (-0.9367,\ 0.8967,\ -1.2782,\ 1.2782,\ -0
+          +.8967,\ 0.9367)$) tiene esta matriz de                        
+      612 +densidades completa. Las intermedias están en negrita, y la le
+          +tra indica a qué pareja espejo pertenecen:                    
+      613  
+      613 -| densidad | pares |                                          
+      614 -|---|---|                                                     
+      615 -| 0.6124 | Am–Bp y Bm–Cp (cruzados lejanos) |                 
+      616 -| 0.6783 | Ap–Bm y Bp–Cm (cruzados cercanos) |                
+      617 -| 0.9892 | Ap–Bp y Bm–Cm |                                    
+      618 -| 0.9670 | Ap–W y Cm–W |                                      
+      614 +| $P$ | Am | Ap | Bm | Bp | Cm | Cp | W |                     
+      615 +|---|---|---|---|---|---|---|---|                             
+      616 +| **Am** | 1 | 1 | 1 | **0.6124** ᵃ | 0 | 0 | 1 |             
+      617 +| **Ap** | 1 | 1 | **0.6783** ᵇ | **0.9892** ᶜ | 0 | 0 | **0.9
+          +670** ᵈ |                                                     
+      618 +| **Bm** | 1 | **0.6783** ᵇ | 1 | 1 | **0.9892** ᶜ | **0.6124*
+          +* ᵃ | 0 |                                                     
+      619 +| **Bp** | **0.6124** ᵃ | **0.9892** ᶜ | 1 | 1 | **0.6783** ᵇ 
+          +| 1 | 0 |                                                     
+      620 +| **Cm** | 0 | 0 | **0.9892** ᶜ | **0.6783** ᵇ | 1 | 1 | **0.9
+          +670** ᵈ |                                                     
+      621 +| **Cp** | 0 | 0 | **0.6124** ᵃ | 1 | 1 | 1 | 1 |             
+      622 +| **W** | 1 | **0.9670** ᵈ | 0 | 0 | **0.9670** ᵈ | 1 | 1 |   
+      623  
+      620 -Los que bajan de 1 son los pares que tocan a Ap o a Cm, las mi
+          -tades que miran hacia B.                                      
+      624 +- ᵃ Am–Bp y Bm–Cp: cruzados **lejanos** (0.6124);             
+      625 +- ᵇ Ap–Bm y Bp–Cm: cruzados **cercanos** (0.6783);            
+      626 +- ᶜ Ap–Bp y Bm–Cm (0.9892);                                   
+      627 +- ᵈ Ap–W y Cm–W (0.9670).                                     
+      628  
+      629 +Son solo **cuatro valores** intermedios, cada uno en un par y 
+          +su espejo. Todo lo demás es 0 (sectores                       
+      630 +opuestos) o 1. La matriz respeta el espejo: la fila de Am leíd
+          +a al revés es la de Cp, la de Ap es la de                     
+      631 +Cm, la de Bm es la de Bp, y la de W es simétrica en sí misma. 
+      632 +                                                              
+      633 +Comparada con el patrón límite de la sección 5.2: los cuatro $
+          +q$ se separaron en dos valores (lejano y                      
+      634 +cercano), y cuatro "1" bajaron un poco. Esos cuatro son los pa
+          +res que tocan a Ap o a Cm, las mitades que                    
+      635 +miran hacia B.                                                
+      636 +                                                              
+      637  ### 11.2 Por qué la simetría ayuda al redondeo
+      638  
+      639  Un movimiento de fases se refleja como $\delta\varphi_{R(a)} \
+           mapsto -\delta\varphi_a$. Cada dirección del
+
+● Ahora la plantilla simétrica se muestra como la matriz $7\times7$ completa,
+  con todas las densidades, en los dos lugares:
+
+  En el notebook (notebooks/Grafo_simetrico_S7.ipynb, sección 2):
+  - reemplacé la tabla de pares por la matriz completa, con los nombres de los
+    clusters en filas y columnas;
+  - las densidades intermedias van en negrita y con un color por pareja espejo
+    (azul, naranja, verde, amarillo);
+  - debajo se imprime la leyenda de cada color con su valor, y el texto que
+    sigue explica qué es cada color;
+  - lo regeneré y ejecuté de nuevo: corrió sin errores y los resultados son los
+    mismos.
+
+          Am      Ap      Bm      Bp      Cm      Cp      W
+  Am      1       1       1       0.6124  0       0       1
+  Ap      1       1       0.6783  0.9892  0       0       0.9670
+  Bm      1       0.6783  1       1       0.9892  0.6124  0
+  Bp      0.6124  0.9892  1       1       0.6783  1       0
+  Cm      0       0       0.9892  0.6783  1       1       0.9670
+  Cp      0       0       0.6124  1       1       1       1
+  W       1       0.9670  0       0       0.9670  1       1
+
+  En el md (notes/explicacion_completa_S7.md, sección 11.1):
+  - puse la misma matriz, con las intermedias en negrita y una letra (ᵃ ᵇ ᶜ ᵈ)
+    para indicar la pareja espejo, porque Markdown no permite colorear celdas;
+  - agregué los desplazamientos $s$ de la plantilla;
+  - sumé una comparación con el patrón límite de O'Keeffe: los cuatro $q$ se
+    separan en dos valores (lejano y cercano) y cuatro "1" bajan un poco.
+
+  En la matriz se ve la simetría: la fila de Am leída al revés es la de Cp, la
+  de Ap es la de Cm, la de Bm es la de Bp, y la de W es simétrica en sí misma.
+
+✻ Worked for 3m 5s · done 16:42
+
+※ recap: We're building a simple, certified S7 graph with μ > 11/16; the symmetric notebook (n = 299,989, four integers) and the full explanation in notes/explicacion_completa_S7.md are done. Next: correct the leftover "13 pares" in Grafo_explicito_S7.ipynb, if you want.
+
+❯ No entendi lo de la busqueda exhaustiva?                                      
+
+● Te lo explico con los números reales del grafo de $n = 299\,989$. Primero los
+  saco del notebook: los enteros ingenuos, cuánto mueve $g$ cada entero y qué
+  combinación elige la búsqueda.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Va con los números reales del grafo que quedó certificado ($n = 299,989$).
+
+  1. El objetivo
+
+  Hay 4 enteros que se pueden elegir, uno por pareja espejo. Arrancan en el
+  redondeo ingenuo:
+
+  $$j = (23,964,\ 26,542,\ 38,706,\ 12,612).$$
+
+  Con esos grados, el residuo blando (el error que queda en la única dirección
+  frágil) es
+
+  $$g = -1.466\cdot10^{-6}.$$
+
+  Para que exista el equilibrio, $|g|$ tiene que quedar por debajo del umbral
+  del pliegue, $2.7\cdot10^{-8}$. Es una ventana muy angosta alrededor de 0: hay
+  que bajar $g$ unas 55 veces.
+
+  2. Cuánto mueve cada entero
+
+  Si a un entero le sumás 1, $g$ cambia en una cantidad fija $G_c$. La calculé
+  recomputando $g$:
+
+  ┌────────┬────────┬──────────────────────────┐
+  │ entero │ pareja │ cambio de $g$ al sumar 1 │
+  ├────────┼────────┼──────────────────────────┤
+  │ $j_1$  │ Am–Bp  │ $-2.460\cdot10^{-6}$     │
+  ├────────┼────────┼──────────────────────────┤
+  │ $j_2$  │ Ap–Bm  │ $-2.241\cdot10^{-6}$     │
+  ├────────┼────────┼──────────────────────────┤
+  │ $j_3$  │ Ap–Bp  │ $-2.497\cdot10^{-6}$     │
+  ├────────┼────────┼──────────────────────────┤
+  │ $j_4$  │ Ap–W   │ $+11.85\cdot10^{-6}$     │
+  └────────┴────────┴──────────────────────────┘
+
+  Como cada cambio es chico, $g$ se comporta casi linealmente: si movés los
+  enteros en $u = (u_1, u_2, u_3, u_4)$, el nuevo residuo es aproximadamente
+
+  $$g_{\text{nuevo}} \approx g + u_1 G_1 + u_2 G_2 + u_3 G_3 + u_4 G_4 .$$
+
+  3. Por qué un entero solo no alcanza
+
+  Cada entero mueve $g$ de a "saltos" de $\sim 2.5\cdot10^{-6}$. Eso es 100 
+  veces más grande que la ventana, así que con un solo entero siempre te pasás:
+
+  ┌───────────────┬──────────────┬────────────────────────────┐
+  │ moviendo solo │ mejor opción │ $\lvert g\rvert$ que queda │
+  ├───────────────┼──────────────┼────────────────────────────┤
+  │ $j_1$         │ restar 1     │ $9.9\cdot10^{-7}$          │
+  ├───────────────┼──────────────┼────────────────────────────┤
+  │ $j_2$         │ restar 1     │ $7.8\cdot10^{-7}$          │
+  ├───────────────┼──────────────┼────────────────────────────┤
+  │ $j_3$         │ restar 1     │ $1.0\cdot10^{-6}$          │
+  ├───────────────┼──────────────┼────────────────────────────┤
+  │ $j_4$         │ no moverlo   │ $1.5\cdot10^{-6}$          │
+  └───────────────┴──────────────┴────────────────────────────┘
+
+  Ninguno entra en la ventana de $2.7\cdot10^{-8}$.
+
+  4. La idea: combinar los saltos
+
+  Los cuatro saltos son parecidos pero no iguales, y eso permite pasos mucho más
+  finos. Por ejemplo, sumar 1 a $j_1$ y restar 1 a $j_2$ mueve $g$ en
+
+  $$-2.460 + 2.241 = -0.219 \quad (\times 10^{-6}),$$
+
+  un paso 10 veces más fino. Combinando más, los pasos se hacen todavía más
+  finos.
+
+  Es como pagar un monto exacto con monedas de 2.46, 2.24, 2.50 y 11.85
+  centavos, pudiendo también dar vuelto (usar coeficientes negativos). Con pocas
+  monedas de cada tipo se puede armar casi cualquier monto con mucha precisión.
+
+  5. La búsqueda exhaustiva: probar todas las combinaciones
+
+  Se fija un radio $R$: cada entero se puede mover entre $-R$ y $+R$. Después se
+  arma la lista de todas las combinaciones posibles $u$, se calcula el
+  $g_{\text{nuevo}}$ predicho de cada una y se elige la de menor
+  $|g_{\text{nuevo}}|$. "Exhaustiva" significa justamente eso: no hay ninguna
+  estrategia inteligente, se prueban todas.
+
+  ┌───────┬───────────────┬────────────────┬────────────────────┬──────────┐
+  │       │               │                │                    │ cuántas  │
+  │ radio │ combinaciones │   mejor $u$    │ $\lvert g\rvert$   │ entran   │
+  │       │               │                │      predicho      │  en la   │
+  │       │               │                │                    │ ventana  │
+  ├───────┼───────────────┼────────────────┼────────────────────┼──────────┤
+  │ 1     │ $3^4 = 81$    │ $(-1,-1,1,0)$  │ $7.4\cdot10^{-7}$  │ 0        │
+  ├───────┼───────────────┼────────────────┼────────────────────┼──────────┤
+  │ 3     │ $7^4 = 2,401$ │ $(3,-2,3,1)$   │ $1.2\cdot10^{-9}$  │ 1        │
+  ├───────┼───────────────┼────────────────┼────────────────────┼──────────┤
+  │ 10    │ $21^4 =       │ $(9,7,8,5)$    │ $1.2\cdot10^{-9}$  │ 47       │
+  │       │ 194,481$      │                │                    │          │
+  ├───────┼───────────────┼────────────────┼────────────────────┼──────────┤
+  │ 20    │ $41^4 =       │ $(20,-2,-9,2)$ │ $6.1\cdot10^{-10}$ │ 307      │
+  │       │ 2,825,761$    │                │                    │          │
+  └───────┴───────────────┴────────────────┴────────────────────┴──────────┘
+
+  Para que veas que la cuenta cierra, con radio 3 el mejor es $u = (3,-2,3,1)$:
+
+  $$3(-2.460) - 2(-2.241) + 3(-2.497) + 1(11.85) = +1.461 \quad
+  (\times10^{-6}),$$
+
+  que cancela casi exactamente el $-1.466\cdot10^{-6}$ inicial.
+
+  Probar 2.8 millones de combinaciones parece mucho, pero es una sola operación:
+  una matriz de $2.8\text{M}\times 4$ (todas las $u$) multiplicada por el
+  vector de 4 saltos. Tarda una fracción de segundo.
+
+  6. Los dos detalles que faltan
+
+  - Verificar y corregir. La fórmula lineal es una aproximación. Después de
+    elegir $u$ con radio 20, se recalcula el $g$ verdadero con los grados nuevos
+    y se hace una segunda búsqueda, chica (radio 3), para corregir el error de
+    la aproximación. En este caso el resultado final fue $|g| =
+    4.2\cdot10^{-10}$, 60 veces por debajo de la ventana. Después la evaluación
+    exacta y el certificado confirman que el equilibrio existe y es estable.
+  - Por qué el menor $|g|$ y no cualquiera que entre en la ventana. Cuanto más
+    lejos del pliegue, más estable queda el equilibrio. La estabilidad es
+    $\sqrt{\sigma^2 - 2c,g}$, que es mayor cuanto más chico es $g$.
+
+  7. Por qué acá alcanza y en el notebook original no
+
+  Con 4 enteros y radio 20 son 2.8 millones de combinaciones, algo trivial. En
+  la versión sin simetría había 9 enteros: con el mismo radio serían $41^9
+  \approx 3\cdot10^{14}$ combinaciones, imposible de recorrer. Por eso allá
+  hacía falta el reticulado (Kannan + LLL + Babai), que encuentra una buena
+  combinación sin probarlas todas. La simetría reduce el problema a 4 enteros y
+  1 ecuación, y ahí la fuerza bruta alcanza.
+
+  Si te sirve, puedo agregar al notebook una celda con este ejemplo (las dos
+  tablas y la cuenta de $(3,-2,3,1)$), justo antes del barrido en $n$.
+
+✻ Baked for 2m 16s · done 16:54
+
+※ recap: Querías entender y simplificar el grafo S7: ya está el notebook simétrico (n = 299 989, cuatro enteros, certificado) y el md completo, y te expliqué la búsqueda exhaustiva. Lo siguiente sería, si querés, agregar ese ejemplo numérico al notebook.

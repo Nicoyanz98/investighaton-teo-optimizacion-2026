@@ -1,0 +1,1885 @@
+ ▐▛███▛█   Claude Code v2.1.302
+▝▜██████▀  Opus 5.5 · Claude Pro
+ ▝▝   ▝▝   F:\investighaton
+
+
+❯ Primero lee los archivos @charla_corta_kuramoto.pdf y @charla_kuramoto_mc.pdf 
+  ⎿  Referenced PDF charla_corta_kuramoto.pdf (page count unknown)
+  ⎿  Read charla_kuramoto_mc.pdf (394.9KB)
+
+  Read 3 files, ran 3 shell commands (ctrl+o to expand)
+
+● The Read tool can't render these PDFs (poppler isn't installed), so I'm
+  pulling the text out with a small Python script. The first try hung on a stray
+  cat, so I'm stopping it and running it again.
+
+● Stop Task
+  ⎿  cat > /dev/null; python - <<'EOF'
+     import re,zlib… · stopped
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● pdftotext is available.
+
+  Ran 3 shell commands (ctrl+o to expand)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ Como te installo poppler para que puedas usarlo                               
+
+● El Read tool necesita pdftoppm, que viene con poppler. Git Bash trae pdftotext
+  (/mingw64/bin), y con eso ya saqué el texto de las dos charlas, pero no trae
+  pdftoppm. Elegí una de estas opciones:
+
+  Opción 1: winget (viene con Windows 11)
+  winget install oschwartz10612.Poppler
+
+  Opción 2: Scoop o Chocolatey, si ya usás alguno:
+  scoop install poppler
+  # o, en una terminal de administrador:
+  choco install poppler
+
+  Opción 3: a mano
+  1. Bajá el zip de la última release en
+     https://github.com/oschwartz10612/poppler-windows/releases
+  2. Descomprimilo, por ejemplo en C:\poppler.
+  3. Agregá C:\poppler\Library\bin al PATH del usuario: Configuración → Sistema 
+     → Información → Configuración avanzada del sistema → Variables de entorno.
+
+  Después:
+  - Cerrá y volvé a abrir Claude Code para que tome el PATH nuevo.
+  - Para comprobar que quedó bien, escribí acá: ! pdftoppm -v
+
+  Cuando esté instalado, decime y leo los PDFs como imágenes, con fórmulas y
+  figuras. Ahora solo tengo el texto plano, y las fórmulas salen bastante rotas.
+
+✻ Crunched for 9s · done sábado, 11:10
+
+❯ Fijate si ahora podes usar popple                                             
+
+  Read 1 file, ran 2 shell commands (ctrl+o to expand)
+
+● Poppler quedó bien instalado (winget, versión 25.07.0) y su carpeta bin ya
+  está en el PATH de tu usuario. Igual todavía no lo puedo usar: probé leer el
+  PDF y sigue fallando porque Claude Code arrancó antes de la instalación y
+  tiene el PATH viejo.
+
+  Para que funcione: cerrá Claude Code y la terminal donde corre, y volvé a
+  abrir los dos.
+
+  Después escribí ! pdftoppm -v para confirmar que aparece, y pedime de nuevo
+  que lea charla_corta_kuramoto.pdf y charla_kuramoto_mc.pdf.
+
+✻ Sautéed for 19s · done sábado, 11:13
+
+❯ Listo volve a leer las presentaciones                                         
+
+  Read 1 file, ran 1 shell command (ctrl+o to expand)
+
+● El entorno sigue con el PATH antiguo y no detecta poppler, así que usaré la
+  ruta completa de pdftoppm para convertir las slides en imágenes y luego
+  leerlas.
+
+  Read 8 files, ran 1 shell command (ctrl+o to expand)
+
+● Ya leí la charla corta. Sigo con la charla larga (charla_kuramoto_mc.pdf): son
+  34 slides después de sacar las repeticiones de las animaciones.
+
+  Read 32 files (ctrl+o to expand)
+
+● Ya leí las dos presentaciones. El Read tool sigue sin encontrar poppler en
+  esta sesión, así que convertí las slides en imágenes con pdftoppm usando su
+  ruta completa y las leí así. Me salteé las repeticiones de las animaciones y
+  quedaron 13 de las 24 slides de la charla corta y 34 de las 77 de la larga.
+  Revisé con atención casi todas; las demás eran portadas, separadores o slides
+  con poco texto.
+
+  charla_corta_kuramoto.pdf (la presentación corta)
+
+  - Motivación: sincronización en aplausos, luciérnagas, neuronas, metrónomos,
+    láseres, robots y redes.
+  - Modelo: un grafo G = (V, E) y una fase θ_v en el círculo para cada vértice.
+    La energía es 𝓔G(θ) = Σ{u~v} (1 − cos(θ_u − θ_v)) y la dinámica es θ̇ =
+    −∇𝓔_G.
+  - Sincronización global: el grafo sincroniza globalmente si los únicos mínimos
+    locales de la energía son los estados sincronizados.
+  - Conectividad: μ(G) = (min deg + 1)/n. La conectividad crítica μ_c es el
+    menor μ tal que todo grafo con μ(G) ≥ μ sincroniza.
+  - Estado del intervalo:
+    - Cotas superiores: 0.9395 (Taylor 2012), luego ≈0.79 (Ling–Xu–Bandeira 2019
+      y Lu–Steinerberger 2020), luego 3/4 (Kassabov–Strogatz–Townsend 2021).
+    - Cotas inferiores: 0.6828, luego 0.6838, luego 11/16.
+    - En agosto de 2026, Lepsveridze–Zhang probaron μ_c ≤ 3/4 − η, lo que refuta
+      la conjetura μ_c = 3/4.
+  - El desafío: dos semanas para achicar el intervalo 11/16 ≤ μ_c ≤ 3/4 − η, o
+    para explicarlo mejor que nadie.
+
+  charla_kuramoto_mc.pdf (la charla larga, con matrix completion y reglas)
+
+  1. Modelo y energía: θ̇_v = Σ_u w_uv sin(θ_u − θ_v). La energía equivale a la
+     energía elástica de resortes que unen partículas e^{iθ} sobre el círculo, y
+     Kuramoto es su flujo gradiente.
+  2. Descenso de gradiente y "paisajes benignos": paisajes sin mínimos locales
+     espurios. G sincroniza globalmente si y solo si el paisaje de 𝓔_G es
+     benigno.
+  3. Grafo completo K_n: la cuenta usa el parámetro de orden r = (1/n) Σ
+     e^{iθ_u}, que da 𝓔 = (n²/2)(1 − |r|²). Analizando los puntos críticos sale
+     que K_n sincroniza.
+  4. El problema abierto:
+     - El ciclo C_n con n ≥ 5 tiene twisted states θ_v = 2πqv/n como mínimos
+       espurios.
+     - El estado del arte es el mismo de la charla corta.
+     - Lepsveridze–Zhang además prueban que, cerca de 3/4, el único obstáculo
+       posible es un clustering en 4 grupos alrededor de {0, π/2, π, 3π/2}.
+     - Los grafos aleatorios y los expansores sincronizan con conectividad mucho
+       menor; la dificultad está en el peor caso.
+  5. Matrix completion:
+     - Las matrices C(θ) y S(θ), con entradas cos(θ_u − θ_v) y sin(θ_u − θ_v),
+       tienen rango ≤ 2, y C + iS = zz* tiene rango 1.
+     - La sincronización de fases es una completación de matriz de bajo rango
+       con el patrón de observaciones Ω = E.
+     - El objetivo de factorización vale exactamente 2𝓔_G(φ).
+     - Se conecta con el Netflix Prize, Cryo-EM, relojes distribuidos y SLAM.
+  6. La competencia (3 semanas):
+     - Calentamiento: simular K_n, buscar los twisted states de C_n y su
+       Hessiano, y armar C_{n,k} preguntando hasta qué k hay alguno estable.
+     - A (la principal): buscar grafos con μ > 11/16 que tengan un mínimo no
+       sincronizado. Las herramientas propuestas son búsqueda exhaustiva con
+       nauty, búsqueda estocástica, aprendizaje por refuerzo, GNN y productos de
+       grafos.
+     - B: explicitar la constante η.
+     - C: estudiar la geometría de los clusters cerca de 3/4.
+     - D: variantes (pesos, Kuramoto–Sakaguchi).
+     - E: exposición creativa.
+     - Recomiendan empezar por A o E.
+     - Un resultado riguroso necesita un certificado: el Hessiano definido
+       positivo en el ortogonal a la rotación global.
+     - Entrega: informe de hasta 5 páginas con una declaración obligatoria del
+       uso de IA, un repositorio con los historiales de LLM, y un póster más una
+       presentación de 15 minutos.
+     - Se valora, en orden: corrección y claridad, profundidad, reproducibilidad
+       y originalidad.
+
+  En la carpeta también están propuesta_kuramoto_mc.pdf y dos papers de arXiv
+  (2104.14516v1.pdf y 2610.21271v1.pdf).
+
+● User declined to answer questions
+  ⎿  · ¿Cómo seguimos? (Leer propuesta + papers / Plan del calentamiento / 
+     Elegir dirección)
+
+✻ Cogitated for 2m 25s · done sábado, 11:16
+
+❯ Mas que nada quiero repasar algunos temas:                                    
+  -la nocion de energia sin quedarme clara                                      
+  -que significa realmente que se sincronizen (o no sincronizan)                
+  -explicita un poco mejor la idea de paisaje beningno                          
+  Teniendo esto en cuenta si queres empezamos desde el comienzo de la           
+  presentacion "completa" (la larga)                                            
+
+● Vamos en el orden de la charla larga: primero el modelo, después la energía,
+  qué quiere decir sincronizar y por último el paisaje benigno.
+
+  ---
+
+  0. El modelo, en concreto
+
+  Cada vértice v tiene una fase θ_v. Pensala como la aguja de un reloj: un
+  ángulo, o sea un punto del círculo. Lo que importa son las diferencias de fase
+  entre vecinos.
+
+  La dinámica es
+
+    θ̇_v = Σ_u w_uv · sin(θ_u − θ_v)
+
+  Cada vecino u "tira" de v:
+  - Si u está un poco adelante (0 < θ_u − θ_v < π), el seno es positivo y v
+    avanza hacia u.
+  - Si u está un poco atrás, el seno es negativo y v retrocede hacia u.
+  - Si están en fase (diferencia 0) o en antifase (diferencia π), el seno es 0 y
+    ese vecino no tira.
+
+  El ejemplo mínimo: dos osciladores. Llamá φ = θ₂ − θ₁ a la diferencia.
+  Restando las dos ecuaciones queda
+
+    φ̇ = −2 sin φ
+
+  Esta ecuación tiene dos equilibrios:
+  - φ = 0 (en fase), estable. Si lo perturbás, vuelve.
+  - φ = π (antifase), inestable. Si lo perturbás un poquito, se va hacia 0.
+
+  Así que dos osciladores se sincronizan siempre, salvo que arranquen
+  exactamente opuestos. Toda la teoría es esta misma idea en grafos grandes.
+
+  ---
+
+  1. La energía
+
+  Qué es
+
+    𝓔G(θ) = Σ{aristas uv} (1 − cos(θ_u − θ_v))
+
+  (La slide la escribe como ½ Σ_{u,v} w_uv(…). El ½ está porque así cada arista
+  se cuenta dos veces; es la misma suma.)
+
+  Pensala como una medida de desacuerdo. Cada arista aporta:
+  - 0 si los dos extremos están en fase;
+  - 2 si están en antifase;
+  - algo intermedio en los demás casos.
+
+  Entonces 𝓔 = 0 quiere decir que todos los vecinos están de acuerdo, y 𝓔 grande
+  quiere decir mucho desacuerdo.
+
+  Por qué 1 − cos y no (θ_u − θ_v)²
+
+  Porque los ángulos viven en el círculo: θ y θ + 2π son el mismo punto, así que
+  la penalización tiene que ser periódica. Para diferencias chicas, 1 − cos x ≈
+  x²/2, o sea que localmente es el cuadrado de siempre.
+
+  La imagen física (resortes)
+
+  Pensá cada fase como una partícula z_v = e^{iθ_v} sobre el círculo unitario, y
+  cada arista como un resorte de longitud natural cero entre dos partículas.
+  Vale |z_u − z_v|² = 2(1 − cos(θ_u − θ_v)), así que
+
+    𝓔(θ) = ½ Σ_{aristas} |z_u − z_v|²
+
+  es exactamente la energía elástica de los resortes. Las partículas no se
+  pueden salir del círculo y se deslizan para aflojar los resortes.
+
+  Lo importante: la dinámica es bajar la energía
+
+  Derivando un término: ∂/∂θ_v [1 − cos(θ_u − θ_v)] = −sin(θ_u − θ_v). Sumando
+  sobre los vecinos sale
+
+    θ̇ = −∇𝓔(θ)
+
+  La energía no es una magnitud que el oscilador "tenga" en sí misma. Es una
+  función que la dinámica siempre hace bajar, porque
+
+    d𝓔/dt = −‖∇𝓔‖² ≤ 0.
+
+  La imagen correcta es una bolita que rueda cuesta abajo en miel: no tiene
+  inercia, solo baja. Se detiene solamente donde ∇𝓔 = 0, así que los puntos
+  críticos de 𝓔 son los equilibrios de la dinámica.
+
+  Un detalle que confunde
+
+  Si rotás todas las fases el mismo ángulo α, la energía no cambia, porque solo
+  dependen de las diferencias. Por eso:
+  - el mínimo no es un punto sino un círculo de puntos (todas las fases iguales
+    a cualquier ψ);
+  - el Hessiano siempre tiene un autovalor 0 en la dirección (1, 1, …, 1).
+
+  Por eso la charla pide que el certificado sea "definido positivo en el 
+  ortogonal a la rotación global".
+
+  ---
+
+  2. ¿Qué significa sincronizar (o no)?
+
+  Hay que separar dos cosas.
+
+  (a) Un estado sincronizado
+
+  Es una configuración con θ_u = θ_v para toda arista. Si G es conexo, eso
+  equivale a que todas las fases sean iguales. Además:
+
+    sincronizado ⟺ 𝓔 = 0 ⟺ mínimo global
+
+  Aclaración: en el modelo general cada oscilador tiene su frecuencia natural
+  ω_v. Acá son idénticos, así que en un sistema de referencia que rota con ellos
+  podés tomar ω = 0. "Sincronizar" acá quiere decir estar en fase: todas las
+  agujas apuntando al mismo lado.
+
+  (b) Un grafo que sincroniza globalmente
+
+  G sincroniza globalmente si, desde casi cualquier condición inicial, la
+  dinámica termina en un estado sincronizado. La charla lo define así:
+
+    los únicos mínimos locales de 𝓔 son los sincronizados.
+
+  ¿Por qué son lo mismo? Porque la bolita, que siempre baja, puede terminar en
+  tres tipos de puntos críticos:
+
+  ┌───────────┬─────────────────────────────────────────────────────────────┐
+  │   Tipo    │                    ¿Atrapa a la bolita?                     │
+  ├───────────┼─────────────────────────────────────────────────────────────┤
+  │ Máximo o  │ Solo si arrancás exactamente encima, un conjunto de medida  │
+  │ silla     │ cero (como los dos osciladores en antifase). Cualquier      │
+  │           │ perturbación la saca.                                       │
+  ├───────────┼─────────────────────────────────────────────────────────────┤
+  │ Mínimo    │ Sí. Tiene una cuenca de atracción con volumen positivo:     │
+  │ local     │ muchísimas condiciones iniciales terminan ahí.              │
+  └───────────┴─────────────────────────────────────────────────────────────┘
+
+  Entonces "¿desde casi todo arranque llego a sincronizar?" es lo mismo que
+  preguntar "¿hay mínimos locales no sincronizados?".
+
+  Cómo se ve no sincronizar: los twisted states del ciclo
+
+  Tomá el ciclo C₈ y poné θ_v = 2πv/8. Las fases dan una vuelta completa al
+  recorrer el ciclo, con 45° de diferencia entre vecinos.
+
+  - Es un equilibrio. Cada oscilador tiene un vecino 45° adelante y otro 45°
+    atrás, y sin(45°) + sin(−45°) = 0. Las dos fuerzas se cancelan.
+  - Es estable. Si movés un oscilador un poco hacia adelante, el vecino de atrás
+    lo tira de vuelta más fuerte que el de adelante. En cuentas, la estabilidad
+    pide cos(2π/n) > 0, o sea n ≥ 5. Por eso la slide dice "C_n con n ≥ 5".
+  - Es topológico. El "número de vueltas" q no puede cambiar de a poco. Para
+    desenrollarlo, alguna arista tendría que pasar por diferencia π, y eso
+    cuesta subir energía. La bolita está en un valle del que no puede salir
+    bajando.
+
+  Ojo: "no sincronizar" no es caos ni desorden. El sistema converge prolijamente
+  a un equilibrio estable, pero con un patrón de desfasajes fijo distinto de
+  "todos iguales". Cada oscilador está localmente conforme, pero globalmente
+  quedó enroscado.
+
+  ---
+
+  3. Paisaje benigno
+
+  Imaginá 𝓔 como un terreno. Cada punto del "suelo" es una configuración
+  completa θ = (θ₁, …, θ_n), es decir un punto del toro de n dimensiones, y la
+  altura es la energía. El descenso de gradiente es soltar la bolita y dejarla
+  rodar.
+
+  En un terreno general hay cuatro tipos de puntos críticos:
+  1. Mínimo global, el fondo absoluto. Ahí queremos llegar.
+  2. Mínimo local espurio, un pozo que no es el fondo. Este es el enemigo.
+  3. Silla, que baja en alguna dirección y sube en otras.
+  4. Máximo.
+
+  Un paisaje es benigno cuando:
+  - (i) todo mínimo local es global, es decir, no hay pozos trampa;
+  - (ii) toda silla es estricta, o sea que el Hessiano tiene algún autovalor
+    negativo y hay una dirección clara por donde caer. Así la bolita solo se
+    queda en la silla si arrancó en un conjunto de medida cero.
+
+  Con (i) y (ii), el descenso de gradiente funciona desde casi cualquier punto
+  de partida, aunque la función no sea convexa.
+
+  Una imagen en una dimensión:
+  - \_/ es convexo: un solo pozo, trivialmente benigno.
+  - \/\_/ no es benigno: hay un pozo local y uno global, y según dónde sueltes
+    la bolita queda en uno o en otro.
+  - Una función puede tener muchas sillas y lomas y aun así ser benigna,
+    mientras ningún pozo sea trampa.
+
+  Los dos ejemplos de la charla
+
+  - K_n (todos con todos) es benigno.
+    - Usando el parámetro de orden r = (1/n) Σ e^{iθ_v}, la energía es 𝓔 =
+      (n²/2)(1 − |r|²), así que bajar energía es lo mismo que agrupar las
+      partículas.
+    - Los puntos críticos son configuraciones con cada fase en ψ o en ψ + π.
+    - Si hay al menos una "en contra", girarla un poco hacia ψ baja la energía.
+      Entonces es una silla, no un mínimo.
+    - Los únicos mínimos son los sincronizados.
+  - C_n con n ≥ 5 no es benigno. Los twisted states son pozos trampa.
+
+  Por qué importa más allá de Kuramoto
+
+  En el machine learning moderno se minimizan funciones no convexas enormes por
+  descenso de gradiente y muchas veces funciona. La pregunta de fondo es qué 
+  problemas tienen paisaje benigno y por qué.
+
+  La sección de matrix completion de la charla muestra que la energía de
+  Kuramoto es literalmente la función objetivo de un problema de completar una
+  matriz de bajo rango (rango 1 en notación compleja). Así que "¿G sincroniza
+  globalmente?" es lo mismo que "¿el descenso de gradiente para ese problema de
+  completación encuentra la solución desde casi cualquier inicio?".
+
+  Y μ_c en este lenguaje
+
+  μ_c es el umbral de grado mínimo a partir del cual el paisaje de todo grafo es
+  benigno.
+  - Para subir la cota inferior (11/16) hay que exhibir un grafo denso con un
+    pozo trampa, y certificar que lo es con el Hessiano definido positivo fuera
+    de la rotación.
+  - Para bajar la cota superior hay que probar que con tanta conectividad no
+    puede haber pozos trampa.
+
+  ---
+
+  Resumen
+
+  Energía:
+  - Mide el desacuerdo entre vecinos.
+  - Físicamente es la energía de resortes que unen partículas sobre el círculo.
+  - La dinámica de Kuramoto es exactamente bajarla.
+
+  Sincronizar:
+  - Un estado sincronizado es un mínimo global (𝓔 = 0).
+  - Un grafo sincroniza globalmente si no hay otros mínimos locales, porque son
+    los únicos lugares donde la bolita puede quedar atrapada sin perturbaciones
+    finas.
+
+  Paisaje benigno:
+  - No hay pozos trampa y toda silla tiene una salida.
+  - Con eso, el descenso de gradiente llega al óptimo desde casi cualquier
+    arranque aunque la función no sea convexa.
+
+  Si te sirve, el próximo paso puede ser hacer a mano las cuentas del Hessiano.
+  En el estado sincronizado es exactamente el Laplaciano de G, y en el twisted
+  state de C_n sale la condición cos(2π/n) > 0. También puedo armarte una
+  simulación chiquita para que veas un twisted state quedarse trabado.
+
+✻ Cooked for 1m 12s · done sábado, 11:22
+
+※ recap: Estás repasando la charla larga de Kuramoto, y ya te expliqué la energía, qué significa sincronizar y qué es un paisaje benigno. Lo próximo es hacer a mano las cuentas del Hessiano para el estado sincronizado y el twisted state, o simularlo. (disable recaps in /config)
+
+❯ Llegue a 2 (por las dudas @text.md tiene esta respuesta asi no tenes que leer 
+  todo). Entonces no sincronizar implica que si bien llego a un equilibrio, no  
+  es sincronizado porque las fases no son todas iguales. El punto alcanzado es  
+  un minimo local no global o un punto silla?                                   
+  ⎿  Read text.md (180 lines)
+
+● Las dos cosas pueden pasar, pero solo una cuenta: cuando decimos que un grafo 
+  "no sincroniza", el punto alcanzado es un mínimo local no global. Las sillas
+  existen, pero no cuentan.
+
+  Por qué las sillas no cuentan
+
+  Una trayectoria sí puede terminar en una silla, pero solo si arrancás en un
+  conjunto de medida cero, o sea con una condición inicial "afinada"
+  exactamente:
+  - Dos osciladores que arrancan en antifase exacta (φ = π) se quedan ahí para
+    siempre. Ese punto es un máximo en la variable φ: no sincronizan, pero
+    cualquier perturbación mínima los saca.
+  - En K_n, una configuración con fases en ψ y ψ + π es un equilibrio, pero es
+    una silla. Igual decimos que K_n sincroniza globalmente.
+
+  Esos casos son como apoyar un lápiz parado sobre la punta: en teoría se queda,
+  en la práctica nunca. Si sorteás la condición inicial al azar, la
+  probabilidad de caer en una silla es 0.
+
+  Por qué los mínimos locales sí cuentan
+
+  Un mínimo local espurio tiene una cuenca de atracción con volumen positivo: un
+  "pedazo" del espacio de condiciones iniciales en el que todas las
+  trayectorias terminan ahí. Si sorteás la condición inicial al azar, caés ahí
+  con probabilidad positiva. Además es robusto: si lo perturbás, vuelve.
+
+  Eso es lo que hacen los twisted states de C_n con n ≥ 5:
+  - Son equilibrios con 𝓔 > 0, así que no son mínimos globales. En C₈ con q = 1,
+    𝓔 = 8(1 − cos 45°) ≈ 2.34.
+  - Son estables, así que son mínimos locales.
+  - Son mínimos locales no globales: pozos trampa.
+
+  Dos matices para que quede preciso
+
+  1. "No sincroniza" no quiere decir "nunca sincroniza".
+     - Quiere decir que existe un conjunto de condiciones iniciales con
+       probabilidad positiva que no termina sincronizado.
+     - En C₈, muchas condiciones iniciales al azar igual llegan al estado
+       sincronizado (q = 0); otras quedan atrapadas en q = ±1, etc.
+     - El grafo "falla" porque no garantiza sincronizar, no porque nunca lo
+       haga.
+  2. El caso límite (silla degenerada).
+     - En C₄ el twisted state tiene diferencias de 90°, así que cos(90°) = 0 y
+       el Hessiano no alcanza para decidir si es mínimo o silla.
+     - Mirando más fino, resulta no ser mínimo: es una silla "degenerada" y C₄
+       sincroniza globalmente.
+     - Por eso, para probar que algo es un mínimo trampa, la charla pide un
+       certificado: Hessiano definido positivo (fuera de la dirección de
+       rotación global), no solo semidefinido.
+
+  Resumiendo:
+
+  ┌──────────────────────┬───────────────────────┬─────────────────────────┐
+  │  Dónde termina la    │      ¿Pasa con        │ ¿Hace que el grafo "no  │
+  │     trayectoria      │     probabilidad      │      sincronice"?       │
+  │                      │       positiva?       │                         │
+  ├──────────────────────┼───────────────────────┼─────────────────────────┤
+  │ Mínimo global        │ Sí                    │ —                       │
+  │ (sincronizado)       │                       │                         │
+  ├──────────────────────┼───────────────────────┼─────────────────────────┤
+  │ Silla / máximo       │ No (medida cero)      │ No                      │
+  ├──────────────────────┼───────────────────────┼─────────────────────────┤
+  │ Mínimo local no      │ Sí                    │ Sí                      │
+  │ global               │                       │                         │
+  └──────────────────────┴───────────────────────┴─────────────────────────┘
+
+  ¿Seguimos con la parte 3 (paisaje benigno)? Es esta misma tabla dicha en
+  general: un paisaje es benigno cuando la última fila está vacía.
+
+✻ Cogitated for 20s · done sábado, 12:52
+
+❯ que es ψ ?                                                                    
+
+● ψ es un ángulo, y en lo que te escribí aparece con dos usos parecidos.
+
+  Uso 1: la dirección del "centro de masa" (el de la slide 13)
+
+  Primero se arma el parámetro de orden, que es el promedio de las partículas
+  sobre el círculo:
+
+    r = (1/n) Σ_v e^{iθ_v}
+
+  r es un número complejo, o sea una flecha en el plano. Como todo número
+  complejo, se escribe en forma polar:
+
+    r = |r| · e^{iψ}
+
+  - |r| es el largo de la flecha y mide cuán agrupadas están las fases: cerca de
+    1 si están casi todas juntas, cerca de 0 si están desparramadas.
+  - ψ es el ángulo de la flecha y dice hacia dónde apunta el grupo: la "fase
+    promedio".
+
+  Es la flecha negra del dibujo de la slide 11, con las partículas naranjas casi
+  juntas. Su largo es |r| ≈ 0.97 y su ángulo es ψ.
+
+  Con esto se entiende el análisis de K_n. La condición de punto crítico queda
+
+    |r| · sin(ψ − θ_v) = 0 para todo v,
+
+  así que, si r ≠ 0, cada θ_v está sobre la recta de la flecha: en ψ (a favor
+  del promedio) o en ψ + π (en contra). Ahí sale el caso "m osciladores en
+  contra":
+  - si m ≥ 1, girar uno de esos hacia ψ alarga la flecha y baja la energía, así
+    que es una silla;
+  - si m = 0, todos están en ψ, o sea sincronizados.
+
+  Uso 2: "todas las fases iguales a ψ" (cuando hablé de la energía)
+
+  Ahí ψ es simplemente un ángulo cualquiera. El estado sincronizado no es una
+  única configuración sino una familia:
+
+    θ_1 = θ_2 = … = θ_n = ψ, para cualquier ψ.
+
+  Todas tienen energía 0, porque la energía solo mira diferencias. "Todos a las
+  3 en punto" y "todos a las 7" son igual de sincronizados.
+
+  Los dos usos coinciden: si todas las fases valen ψ, el centro de masa apunta
+  justo a ψ y tiene largo 1.
+
+✻ Churned for 10s · done sábado, 13:01
+※ recap: Estamos repasando la charla larga de Kuramoto (energía, sincronización, paisaje benigno); ya cubrimos la parte 2 y aclaré qué es ψ. Lo siguiente es la parte 3, el paisaje benigno, cuando quieras. (disable recaps in /config)
+
+❯ en el ciclo no entiendo qv                                                    
+
+● En θ_v = 2π·q·v/n, qv es simplemente q por v: el producto de dos números
+  enteros.
+
+  Qué es cada letra
+
+  - n es la cantidad de vértices del ciclo.
+  - v es el número del vértice: los numerás 0, 1, 2, …, n−1 en orden alrededor
+    del ciclo, así que v = 0 y v = n−1 son vecinos.
+  - q es un entero fijo (…, −2, −1, 0, 1, 2, …) que dice cuántas vueltas 
+    completas dan las fases al recorrer el ciclo.
+
+  Ejemplo con n = 8 y q = 1
+
+  θ_v = 2π·v/8 = v · 45°
+
+  ┌─────────┬─────┬─────┬─────┬──────┬──────┬──────┬──────┬──────┬──────────┐
+  │ vértice │  0  │  1  │  2  │  3   │  4   │  5   │  6   │  7   │ (vuelvo  │
+  │    v    │     │     │     │      │      │      │      │      │  al 0)   │
+  ├─────────┼─────┼─────┼─────┼──────┼──────┼──────┼──────┼──────┼──────────┤
+  │ fase    │ 0°  │ 45° │ 90° │ 135° │ 180° │ 225° │ 270° │ 315° │ 360° =   │
+  │ θ_v     │     │     │     │      │      │      │      │      │ 0° ✓     │
+  └─────────┴─────┴─────┴─────┴──────┴──────┴──────┴──────┴──────┴──────────┘
+
+  Si pensás cada fase como la aguja de un reloj: el vértice 0 apunta a las 12,
+  el 1 un poquito más girado, el 2 a las 3, y así hasta que, al volver al
+  vértice 0, la aguja dio una vuelta entera. Cada vecino está 45° más adelante
+  que el anterior.
+
+  Ejemplo con n = 8 y q = 2
+
+  θ_v = 2·v·45° = v · 90°
+
+  ┌─────┬─────┬─────┬──────┬──────┬──────┬──────┬──────┬──────┬─────────────┐
+  │  v  │  0  │  1  │  2   │  3   │  4   │  5   │  6   │  7   │     (0)     │
+  ├─────┼─────┼─────┼──────┼──────┼──────┼──────┼──────┼──────┼─────────────┤
+  │ θ_v │ 0°  │ 90° │ 180° │ 270° │ 360° │ 450° │ 540° │ 630° │ 720° = 0° ✓ │
+  └─────┴─────┴─────┴──────┴──────┴──────┴──────┴──────┴──────┴─────────────┘
+
+  Ahora cada vecino está 90° adelante y al recorrer el ciclo la aguja da dos 
+  vueltas.
+
+  Los otros valores de q
+
+  - q = 0 da todas las fases en 0°, es decir el estado sincronizado (cero
+    vueltas).
+  - q = −1 es igual que q = 1 pero girando para el otro lado.
+
+  Por qué q tiene que ser entero
+
+  Al dar la vuelta al ciclo volvés al vértice 0, y su fase tiene que coincidir:
+  2πq tiene que ser un múltiplo de 2π. Con q = 1.5 terminarías en 540° = 180°,
+  que no es 0°, y la configuración no cierra. Por eso q no puede cambiar "de a
+  poco": salta de entero en entero. Es el motivo por el que el twisted state no
+  se puede desenrollar suavemente.
+
+  Lo único que importa: la diferencia entre vecinos
+
+  θ_{v+1} − θ_v = 2πq/n, igual para todas las aristas. Por eso cada oscilador
+  tiene un vecino adelante y otro atrás a la misma distancia, las fuerzas se
+  cancelan y es un equilibrio.
+
+  Es estable si esa diferencia es menor que 90°, es decir |q| < n/4:
+  - C₈ con q = 1 (45°) es estable: un pozo trampa.
+  - C₈ con q = 2 (90°) es justo el caso límite, igual que C₄ con q = 1.
+  - C₅ con q = 1 da 72° < 90°, así que es estable. Por eso la slide dice "n ≥
+    5".
+
+✻ Crunched for 13s · done sábado, 13:11
+
+❯ podriamos ver un poco mejor lo del porque es a partir de n>=5 que no          
+  sincroniza globalmente?                                                       
+
+● Sí. Todo se reduce a una sola condición: la diferencia de fase entre vecinos
+  tiene que ser menor que 90°. En el twisted state con q = 1 esa diferencia es
+  360°/n, y 360°/n < 90° ⟺ n > 4. Te lo armo en tres pasos.
+
+  ---
+
+  Paso 1: un solo oscilador
+
+  Tomá el twisted state de C_n con q = 1. Todos los vecinos están separados por
+  el mismo ángulo
+
+    d = 2π/n  (en grados, 360°/n).
+
+  Mirá un vértice v. Tiene un vecino d adelante y otro d atrás. La fuerza que
+  hace cada vecino es el seno de la diferencia, así que en el equilibrio se
+  cancelan: sin(d) − sin(d) = 0.
+
+  Ahora empujá v un poquito hacia adelante, una cantidad ε:
+  - el vecino de adelante queda a distancia d − ε;
+  - el de atrás queda a distancia d + ε.
+
+  La fuerza neta sobre v es
+
+    sin(d − ε) − sin(d + ε) ≈ −2 cos(d) · ε
+
+  - Si cos d > 0 (d < 90°): la fuerza tiene signo contrario a ε, así que lo
+    empuja de vuelta. Estable.
+  - Si cos d < 0 (d > 90°): la fuerza tiene el mismo signo que ε, así que lo
+    aleja más. Inestable.
+
+  La intuición física
+
+  El "tirón" de un vecino es sin(d):
+  - Entre 0° y 90°, el seno crece: si te alejás más, el vecino tira más fuerte.
+    Es como un resorte normal.
+  - Pasando 90°, el seno decrece: si te alejás más, el vecino tira menos. El
+    resorte "se rinde", y por eso no puede devolverte.
+
+  90° es justo el punto donde el seno deja de crecer.
+
+  ---
+
+  Paso 2: la cuenta con la energía (todos a la vez)
+
+  Lo anterior movía un solo oscilador. Para ver que no hay ninguna dirección de
+  escape, mirá la energía. Conviene escribirla en función de las diferencias
+  entre vecinos, d_1, …, d_n:
+
+    𝓔 = Σ_i (1 − cos d_i),  con la restricción d_1 + … + d_n = 2π (una vuelta).
+
+  Perturbá todas las diferencias a la vez: d_i = d + ε_i. Para que siga siendo
+  una vuelta, Σ ε_i = 0. Desarrollando cos a segundo orden:
+  - el término lineal es sin(d) · Σ ε_i = 0, por la restricción;
+  - el término cuadrático queda
+
+    𝓔 ≈ 𝓔* + (cos d / 2) · Σ_i ε_i²
+
+  Leyendo el resultado:
+  - cos d > 0: cualquier perturbación (que no sea rotar todo) sube la energía.
+    Es un mínimo local estricto, un pozo trampa.
+  - cos d < 0: cualquier perturbación la baja. Es un máximo en estas
+    direcciones.
+  - cos d = 0: el término cuadrático desaparece y hay que mirar más fino.
+
+  (Esto es el Hessiano disfrazado. En general es un Laplaciano con pesos cos(θ_u
+  − θ_v); acá todos los pesos son iguales a cos d.)
+
+  ---
+
+  Paso 3: n por n
+
+  ┌──────┬───────────┬───────┬────────────────────────────────────────────┐
+  │  n   │   d =     │ cos d │         ¿Qué es el twisted state?          │
+  │      │  360°/n   │       │                                            │
+  ├──────┼───────────┼───────┼────────────────────────────────────────────┤
+  │ 3    │ 120°      │ −½    │ Máximo (en las direcciones de las          │
+  │      │           │       │ diferencias)                               │
+  ├──────┼───────────┼───────┼────────────────────────────────────────────┤
+  │ 4    │ 90°       │ 0     │ Caso límite (ver abajo)                    │
+  ├──────┼───────────┼───────┼────────────────────────────────────────────┤
+  │ 5    │ 72°       │ ≈     │ Mínimo local, pozo trampa                  │
+  │      │           │ 0.31  │                                            │
+  ├──────┼───────────┼───────┼────────────────────────────────────────────┤
+  │ 6    │ 60°       │ ½     │ Pozo trampa                                │
+  ├──────┼───────────┼───────┼────────────────────────────────────────────┤
+  │ 8    │ 45°       │ ≈     │ Pozo trampa                                │
+  │      │           │ 0.71  │                                            │
+  ├──────┼───────────┼───────┼────────────────────────────────────────────┤
+  │ n →  │ → 0°      │ → 1   │ Pozo cada vez más profundo                 │
+  │ ∞    │           │       │                                            │
+  └──────┴───────────┴───────┴────────────────────────────────────────────┘
+
+  El caso n = 4. Con d = 90° hay que ir a tercer orden. Como cos(90° + ε) ≈ −ε +
+  ε³/6, queda
+
+    𝓔 ≈ 𝓔* − (1/6) Σ ε_i³
+
+  Tomando ε = (−s, −s, −s, 3s) con s > 0 chico (suma 0), resulta Σ ε_i³ = 24s³ >
+  0 y la energía baja. Es una silla degenerada, no un mínimo. Por eso el umbral
+  es estricto: n ≥ 5.
+
+  ---
+
+  Lo que esto prueba y lo que no
+
+  Para n ≥ 5: encontraste un mínimo local no sincronizado (𝓔 > 0). Tiene una
+  cuenca de atracción con volumen positivo, así que C_n no sincroniza 
+  globalmente. Este lado queda completo.
+
+  Para n = 3, 4: solo mostraste que los twisted states no son trampa. Para decir
+  que C_3 y C_4 sí sincronizan globalmente falta ver que no haya otras trampas.
+  Para el ciclo se puede hacer, y es un lindo ejercicio:
+  - En un equilibrio, la fuerza que entra a cada vértice tiene que igualar a la
+    que sale, así que todas las aristas tienen el mismo sin(d_i).
+  - Con un poco más de trabajo se ve que los únicos equilibrios estables son los
+    de todas las diferencias iguales y menores que 90°.
+  - O sea, los twisted states con |q| < n/4.
+  - Para n ≤ 4 el único entero que cumple eso es q = 0: el estado sincronizado.
+
+  ---
+
+  Cómo se conecta con la competencia
+
+  La moraleja geométrica es: una trampa necesita "enroscarse" con pasos menores 
+  que 90°.
+  - En el ciclo es fácil, porque cada vértice tiene solo 2 vecinos y alcanza con
+    que n sea grande.
+  - Si agregás aristas, cada vértice tiene vecinos más lejanos en el ciclo, que
+    lo ven desfasado más de 90° y tiran para el lado que desestabiliza.
+
+  Eso es el calentamiento 3 de la charla: en C_{n,k} (k vecinos de cada lado),
+  ¿hasta qué k el twisted state sigue siendo un pozo? Y es el corazón de μ_c:
+  ¿cuánta conectividad puede tener un grafo y todavía esconder una trampa? El
+  ciclo tiene μ = 3/n, muchísimo menos que 11/16. El juego es construir trampas
+  en grafos mucho más densos.
+
+✻ Brewed for 48s · done sábado, 13:21
+
+❯ de donde que seno de la diferencia es la fuerza? quiera la formula para       
+  llegar a sin d - sin d                                                        
+
+● Lo de "fuerza" es un nombre informal para lo que aporta cada vecino a la 
+  velocidad θ̇_v. Te muestro de dónde sale y después la cuenta paso a paso.
+
+  ---
+
+  1. De dónde sale que la "fuerza" es el seno
+
+  (a) Es la definición del modelo
+
+  El modelo de Kuramoto se define así (slide 3/34):
+
+    θ̇_v = Σ_u w_uv · sin(θ_u − θ_v)
+
+  θ̇_v es la velocidad con que se mueve la fase de v. Es una suma con un término
+  por cada vecino u, y el término sin(θ_u − θ_v) es lo que ese vecino "empuja".
+  No hay inercia (la bolita en miel): la velocidad es directamente la suma de
+  los empujes. Por eso llamo "fuerza" a cada término.
+
+  (b) Sale de la energía
+
+  La fuerza es menos la derivada de la energía. Para una arista uv:
+
+    ∂/∂θ_v [1 − cos(θ_u − θ_v)] = −sin(θ_u − θ_v)
+
+  porque la derivada de cos(θ_u − θ_v) respecto de θ_v es sin(θ_u − θ_v), ya que
+  la derivada interna es −1. Entonces
+
+    −∂𝓔/∂θ_v = Σ_u sin(θ_u − θ_v) = θ̇_v ✓
+
+  (c) Sale de los resortes
+
+  - La partícula v está en z_v = e^{iθ_v} y el resorte la tira hacia z_u con
+    fuerza z_u − z_v.
+  - Como v no puede salirse del círculo, solo cuenta la componente tangente al
+    círculo. La dirección tangente en z_v es i·z_v.
+  - La componente tangente es Im( z̄_v · (z_u − z_v) ) = Im( e^{i(θ_u−θ_v)} − 1 )
+    = sin(θ_u − θ_v).
+
+  Las tres visiones dan lo mismo.
+
+  ---
+
+  2. La cuenta en el ciclo
+
+  En C_n el vértice v tiene dos vecinos, v+1 y v−1, con pesos w = 1. La ecuación
+  queda:
+
+    θ̇v = sin(θ{v+1} − θ_v) + sin(θ_{v−1} − θ_v)
+
+  En el twisted state
+
+  Con θ_v = 2πqv/n y d = 2πq/n:
+  - θ_{v+1} − θ_v = 2πq(v+1)/n − 2πqv/n = d
+  - θ_{v−1} − θ_v = 2πq(v−1)/n − 2πqv/n = −d
+
+  Reemplazando:
+
+    θ̇_v = sin(d) + sin(−d) = sin d − sin d = 0
+
+  En el último paso usé que el seno es impar: sin(−d) = −sin d. Eso vale para
+  todo v, así que es un equilibrio.
+
+  Perturbando v
+
+  Movés solo v: θ_v → θ_v + ε, y los vecinos quedan quietos. Las diferencias
+  pasan a ser:
+  - θ_{v+1} − (θ_v + ε) = d − ε
+  - θ_{v−1} − (θ_v + ε) = −d − ε
+
+  Entonces:
+
+    θ̇_v = sin(d − ε) + sin(−d − ε) = sin(d − ε) − sin(d + ε)
+
+  Usando la identidad sin a − sin b = 2 cos((a+b)/2) · sin((a−b)/2) con a = d −
+  ε y b = d + ε:
+  - (a + b)/2 = d
+  - (a − b)/2 = −ε
+
+    θ̇_v = 2 cos(d) · sin(−ε) = −2 cos(d) · sin ε ≈ −2 cos(d) · ε
+
+  Para ε chico, sin ε ≈ ε y sin ε tiene el mismo signo que ε. Entonces:
+  - cos d > 0: θ̇_v tiene signo opuesto a ε, así que v vuelve. Estable.
+  - cos d < 0: θ̇_v tiene el mismo signo que ε, así que v se aleja. Inestable.
+
+✻ Sautéed for 18s · done sábado, 13:23
+
+❯ En el paso 2 de la cuenta con energia te perdi con desarrollando cos a        
+  segundo orden                                                                 
+
+● "Desarrollar a segundo orden" quiere decir aproximar cos(d + ε) para ε chico,
+  quedándote con los términos en ε y en ε² y tirando los de ε³ en adelante.
+  Vamos por partes.
+
+  ---
+
+  1. La aproximación de cos(d + ε)
+
+  Por la fórmula del coseno de una suma:
+
+    cos(d + ε) = cos d · cos ε − sin d · sin ε
+
+  Para ε chico se usan las aproximaciones de siempre:
+  - cos ε ≈ 1 − ε²/2
+  - sin ε ≈ ε
+
+  Reemplazando:
+
+    cos(d + ε) ≈ cos d · (1 − ε²/2) − sin d · ε
+         = cos d − sin d · ε − (cos d / 2) · ε²
+
+  (Es lo mismo que sale por Taylor: la derivada primera de cos en d es −sin d y
+  la segunda es −cos d.)
+
+  Lo que necesitamos es 1 − cos, así que se cambian todos los signos:
+
+    1 − cos(d + ε) ≈ (1 − cos d) + sin d · ε + (cos d / 2) · ε²
+
+  Chequeo numérico con d = 45° y ε = 0.1:
+  - valor exacto: 1 − cos(45° + 0.1 rad) ≈ 0.3669
+  - aproximación: 0.2929 + 0.0707 + 0.0035 = 0.3671 ✓
+
+  ---
+
+  2. De dónde sale Σ ε_i = 0
+
+  Supongamos que movés cada fase un poquito, θ_v → θ_v + δ_v. La arista entre v
+  y v+1 tenía diferencia d y ahora tiene
+
+    d + (δ_{v+1} − δ_v) = d + ε_v,  con ε_v := δ_{v+1} − δ_v.
+
+  Al sumar todas las ε alrededor del ciclo, los términos se cancelan de a pares:
+
+    Σ ε_v = (δ_2 − δ_1) + (δ_3 − δ_2) + … + (δ_1 − δ_n) = 0
+
+  Dicho de otra forma: las perturbaciones chicas no cambian la cantidad de
+  vueltas.
+
+  ---
+
+  3. Sumar sobre todas las aristas
+
+  La energía es la suma de 1 − cos sobre las n aristas. Aplicando la
+  aproximación del punto 1 a cada una y sumando:
+
+    𝓔 ≈ Σ_i [ (1 − cos d) + sin d · ε_i + (cos d/2) · ε_i² ]
+
+  Se separa en tres partes:
+
+    𝓔 ≈ n(1 − cos d)  +  sin d · Σ ε_i  +  (cos d/2) · Σ ε_i²
+
+  1. n(1 − cos d) es la energía del twisted state, 𝓔*. Es una constante.
+  2. sin d · Σ ε_i vale 0, porque Σ ε_i = 0. El término lineal desaparece, y eso
+     es justamente lo que significa estar en un punto crítico: a primer orden,
+     moverse no cambia la energía.
+  3. (cos d/2) · Σ ε_i² es lo que decide. Σ ε_i² es una suma de cuadrados, así
+     que es positiva si movés algo (salvo una rotación global, que deja todas
+     las ε en 0).
+
+  Queda
+
+    𝓔 ≈ 𝓔* + (cos d / 2) · Σ ε_i²
+
+  - cos d > 0: la energía sube para cualquier perturbación. Es un mínimo local,
+    un pozo.
+  - cos d < 0: la energía baja para cualquier perturbación. Es un máximo en esas
+    direcciones.
+
+  ---
+
+  4. Ejemplo concreto: C₈, d = 45°
+
+  Mové solo el vértice 3 hacia adelante 0.1:
+  - la arista 2→3 se estira: ε₂ = +0.1;
+  - la arista 3→4 se achica: ε₃ = −0.1;
+  - las demás no cambian.
+
+    Δ𝓔 ≈ (cos 45° / 2) · (0.1² + 0.1²) ≈ 0.354 · 0.02 ≈ +0.007 > 0
+
+  Subió, así que el twisted state resiste.
+
+  En C₃ (d = 120°) la misma cuenta da cos 120° = −½ y Δ𝓔 < 0: baja y se escapa.
+
+✻ Brewed for 22s · done sábado, 13:41
+
+※ recap: Estamos repasando la charla larga de Kuramoto (energía, sincronización y paisaje benigno), y acabamos de ver por qué el twisted state de C_n es un pozo trampa desde n ≥ 5. El próximo paso es la parte 3, paisaje benigno. (disable recaps in /config)
+
+❯ Ok. Ahora vayamos al calentamiento. Empezemos por 1 simular el flujo en Kn    
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● User answered Claude's questions:
+  ⎿  · Python 3.14 está instalado pero sin numpy/matplotlib (y no hay Julia). 
+     ¿En qué formato querés el simulador? → Notebook pero como podríamos hacer 
+     para trabajar en Colab?
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  User rejected Claude's plan:
+     ╭─────────────────────────────────────────────────────────────────────────╮
+     │ Calentamiento 1: simular el flujo gradiente de Kuramoto en K_n          │
+     │ (notebook para Colab)                                                   │
+     │                                                                         │
+     │ Contexto                                                                │
+     │                                                                         │
+     │ Investigathon Kuramoto (charla_kuramoto_mc.pdf, slide 26/34). El        │
+     │ calentamiento 1 pide simular el flujo                                   │
+     │ θ̇ = −∇𝓔(θ) en el grafo completo K_n y verificar que siempre sincroniza. │
+     │ El usuario quiere aprender                                              │
+     │ paso a paso (venimos repasando energía, sincronización, paisaje         │
+     │ benigno, twisted states) y quiere un                                    │
+     │ notebook que corra en Google Colab. Este notebook además arma el        │
+     │ "pipeline básico" (simulador +                                          │
+     │ test de estabilidad por Hessiano) que se reutiliza en los               │
+     │ calentamientos 2 (C_n) y 3 (C_{n,k}).                                   │
+     │                                                                         │
+     │ Entorno local: Python 3.14 sin numpy/matplotlib, sin Julia. Colab ya    │
+     │ trae numpy/scipy/matplotlib,                                            │
+     │ así que el notebook no necesita instalar nada allá.                     │
+     │                                                                         │
+     │ Archivo a crear                                                         │
+     │                                                                         │
+     │ F:\investighaton\notebooks\01_calentamiento_Kn.ipynb — celdas markdown  │
+     │ en español (explicación                                                 │
+     │ corta que conecta con lo repasado) + celdas de código.                  │
+     │                                                                         │
+     │ Contenido del notebook                                                  │
+     │                                                                         │
+     │ 1. Setup: numpy, matplotlib, rng = np.random.default_rng(seed).         │
+     │ 2. Funciones generales (toman matriz de adyacencia W, así sirven para   │
+     │    C_n y C_{n,k} después):                                              │
+     │    - complete_graph(n) → W = 1 - I.                                     │
+     │    - velocity(theta, W): θ̇_v = Σ_u W_uv sin(θ_u − θ_v), vectorizado con │
+     │      np.subtract.outer.                                                 │
+     │    - energy(theta, W): ½ Σ W_uv (1 − cos(θ_u − θ_v)).                   │
+     │    - order_parameter(theta): r = mean(e^{iθ}).                          │
+     │    - hessian(theta, W): Laplaciano con pesos W_uv cos(θ_u − θ_v)        │
+     │      (H_uv = −W_uv cos(θ_u−θ_v), H_vv = Σ_u W_uv cos(θ_u−θ_v)).         │
+     │    - simulate(theta0, W, h, tol, max_steps): descenso de gradiente      │
+     │      explícito                                                          │
+     │      θ ← θ + h·velocity (Euler = el "x_{k+1} = x_k − h∇f" de la         │
+     │      slide 8), paso h = 0.5/max_deg                                     │
+     │      (estable porque λ_max(H) ≤ 2·max_deg); corta cuando ‖∇𝓔‖ < tol.    │
+     │      Guarda trayectoria, 𝓔(t), |r|(t).                                  │
+     │    - classify(theta, W): autovalores del Hessiano → "mínimo estricto"   │
+     │      (uno ≈0 por la rotación, resto >0),                                │
+     │      "silla" (algún autovalor < 0), "degenerado".                       │
+     │ 3. Chequeos de sanidad: velocity == −∇𝓔 por diferencias finitas; en     │
+     │    K_n, 𝓔 == (n²/2)(1−|r|²)                                             │
+     │    (identidad mágica, slide 12) y θ̇_v == n|r| sin(ψ − θ_v).             │
+     │ 4. Experimento A — una corrida (n=10, inicio uniforme al azar):         │
+     │    gráficos de θ_v(t), 𝓔(t) (log),                                      │
+     │    |r|(t), y "fotos" de las partículas en el círculo en 4 tiempos.      │
+     │    Assert de que 𝓔 decrece monótonamente.                               │
+     │ 5. Experimento B — muchas corridas: n ∈ {3, 5, 10, 20, 50, 100}, 200    │
+     │    inicios al azar cada uno;                                            │
+     │    fracción que termina sincronizada (1−|r| < 1e-8) y clasificación por │
+     │    Hessiano del punto final.                                            │
+     │    Esperado: 100 %, todos "mínimo estricto".                            │
+     │ 6. Experimento C — sillas: arrancar en θ_v ∈ {ψ, ψ+π} con m "en         │
+     │    contra":                                                             │
+     │    (i) sin ruido → se queda (equilibrio, medida cero); (ii) con ruido   │
+     │    1e-6 → meseta de 𝓔 y después cae a 0.                                │
+     │    Hessiano en la silla muestra autovalor negativo; en el estado final, │
+     │    mínimo estricto.                                                     │
+     │ 7. Cierre: qué se verificó y qué cambia para C_n (adelanto del          │
+     │    calentamiento 2).                                                    │
+     │                                                                         │
+     │ Cómo llevarlo a Colab                                                   │
+     │                                                                         │
+     │ - Opción simple: colab.research.google.com → Archivo → Subir notebook → │
+     │   elegir el .ipynb.                                                     │
+     │ - Opción repo (recomendada a futuro, la entrega pide repositorio):      │
+     │   subir a GitHub y abrir con                                            │
+     │   https://colab.research.google.com/github/<user>/<repo>/blob/main/note │
+     │   books/01_calentamiento_Kn.ipynb.                                      │
+     │ - (Hay un conector de Google Drive disponible; si el usuario quiere, se │
+     │   puede subir ahí directamente.)                                        │
+     │                                                                         │
+     │ Verificación                                                            │
+     │                                                                         │
+     │ - Crear .venv local en F:\investighaton e instalar numpy matplotlib     │
+     │   nbconvert ipykernel.                                                  │
+     │ - Ejecutar jupyter nbconvert --to notebook --execute                    │
+     │   notebooks/01_calentamiento_Kn.ipynb y revisar                         │
+     │   que corran todas las celdas, que pasen los asserts (gradiente,        │
+     │   identidad mágica, energía monótona) y                                 │
+     │   que el experimento B dé 100 % sincronizado.                           │
+     │ - Guardar el notebook ejecutado (con gráficos) para que el usuario lo   │
+     │   vea ya con salidas al abrirlo.                                        │
+     ╰─────────────────────────────────────────────────────────────────────────╯
+
+✻ Brewed for 1m 2s · done sábado, 15:33
+
+❯ Okay me parece bien el plan                                                   
+
+● Arranco. Primero creo el entorno local para probar el notebook, en segundo
+  plano mientras lo escribo.
+
+  Made 1 scratchpad edit +381, listed 1 directory, ran 2 shell commands (ctrl+o to expand)
+
+● Ya generé el notebook. Falta que termine de instalarse el entorno local
+  (numpy, matplotlib, nbconvert) para ejecutarlo de punta a punta y revisar los
+  resultados.
+
+✻ Cogitated for 1m 51s · done sábado, 15:38
+
+● Background command "Create local venv and install numpy, matplotlib,
+nbconvert" completed (exit code 0)
+
+  Read 4 files, ran 3 shell commands (ctrl+o to expand)
+
+● Corrió todo sin errores y los resultados son los esperados. Agrego una nota
+  que explica la tabla de sillas (sobre todo el caso m = 5) y lo vuelvo a
+  ejecutar.
+
+  Made 1 scratchpad edit +11 -3, ran 1 shell command (ctrl+o to expand)
+
+● El notebook del calentamiento 1 está listo en
+  F:\investighaton\notebooks\01_calentamiento_Kn.ipynb. Lo ejecuté entero en
+  local sin errores y quedó guardado con los gráficos, así que al abrirlo ya ves
+  los resultados.
+
+  Para abrirlo en Colab: entrá a colab.research.google.com, andá a Archivo → 
+  Subir notebook y elegí ese archivo. No hace falta instalar nada, Colab ya trae
+  numpy y matplotlib. Más adelante, como la entrega pide un repositorio,
+  conviene subirlo a GitHub y abrirlo desde ahí en Colab.
+
+  Resultados:
+  - Las cuentas a mano coinciden con el código. El gradiente, el Hessiano, la
+    identidad 𝓔 = (n²/2)(1 − |r|²) y el arrastre de cada fase hacia el centro de
+    masa dan errores de 10⁻⁹ o menos.
+  - Una corrida con n = 10: la energía baja en cada paso, de 34.8 a 0, y |r|
+    llega a 1. El Hessiano del estado final da un mínimo estricto: autovalores 0
+    (la rotación global) y nueve veces 10, que es el Laplaciano de K₁₀.
+  - Muchas corridas: con n = 3, 5, 10, 20, 50 y 100, de a 200 condiciones
+    iniciales al azar cada uno, todas sincronizan y todas terminan en un mínimo
+    estricto.
+  - Sillas: con m osciladores en contra, la energía es 2m(n−m) y el Hessiano
+    tiene m autovalores negativos.
+    - Si arranco exactamente en la silla, la bolita se queda ahí.
+    - Si arranco en la silla con un ruido de 10⁻⁶, la energía se queda un rato
+      en una meseta y después cae a 0: la bolita escapa y sincroniza.
+    - El caso m = n/2 (r = 0) es la energía máxima, pero degenerada.
+
+  El simulador es el descenso de gradiente de la slide 8. Usé un paso h =
+  1/(2·grado máximo), que garantiza que la energía nunca suba. Las funciones
+  simulate y classify reciben cualquier matriz de adyacencia, así que sirven tal
+  cual para el ciclo C_n del calentamiento 2.
+
+  Para probarlo en local creé un entorno virtual en F:\investighaton\.venv y
+  registré un kernel de Jupyter llamado python3 en tu usuario. Si no los querés,
+  se pueden borrar.
+
+✻ Cooked for 1m 20s · done sábado, 15:41
+
+※ recap: Estamos con los calentamientos de la Investigathon Kuramoto: el notebook del primero (K_n en Colab) ya está listo y probado, y todas las corridas sincronizan. Lo próximo es subirlo a Colab y revisarlo, y después seguimos con el ciclo C_n.
+
+❯ Ahi lo probe un funciona bien. El unico detalle es que algunos graficos       
+  tienen como titulo el nombre del axis "y". Me gustaria que si los axis son    
+  parte del titulo, aparezcan al lado de su axis y de ser necesario en el       
+  titulo del grafo. de lo contrario que no haya un titulo del grafico.          
+
+  Made 3 scratchpad edits +3 -3, read 2 files, ran 3 shell commands (ctrl+o to expand)
+
+● Los gráficos quedaron bien; guardo esta preferencia para los próximos
+  notebooks.
+
+  Ran 1 shell command, wrote 3 memories (ctrl+o to expand)
+
+● Listo, ya corregí los gráficos. El notebook está actualizado en
+  F:\investighaton\notebooks\01_calentamiento_Kn.ipynb; lo volví a ejecutar sin
+  errores y quedó con los gráficos nuevos.
+
+  - Experimento A (los 3 gráficos): "fase relativa θ_v − ψ", "energía 𝓔(t)" y
+    "|r(t)|" ahora están como etiqueta del eje y, y los gráficos no tienen
+    título.
+  - Experimento C (los 2 gráficos): lo mismo con "energía 𝓔(t)" y "|r(t)|".
+    Saqué el título "meseta y caída"; la línea punteada con su leyenda "energía
+    de la silla" ya muestra la meseta.
+  - Las fotos de las partículas en el círculo mantienen su título (t, E, |r|),
+    porque ahí no hay ejes y el título dice en qué momento es cada foto.
+
+  En Colab tenés que volver a subir el archivo para ver los cambios.
+
+  Guardé esta preferencia para los próximos notebooks: nombres de variables en
+  los ejes y título solo si agrega información.
+✻ Churned for 1m 41s · done sábado, 16:58
+
+※ recap: Estás preparando el Investigathon sobre conectividad crítica en Kuramoto; el notebook del calentamiento 1 (K_n) está terminado y corregido. Lo siguiente es volver a subirlo a Colab y arrancar el calentamiento 2: twisted states en C_n con el Hessiano.
+
+❯ Okay antes de arrancar con el proximo calentamiento ajusta los titulos de las 
+  secciones del notebook para indicar que lo de hasta ahora son cosas del       
+  primer calentamiento tipo 1.1, 1.2, etc. Y luego continua con el proximo      
+  calentamiento lo que sería la sección 2                                       
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  User rejected Claude's plan:
+     ╭─────────────────────────────────────────────────────────────────────────╮
+     │ Notebook de calentamientos: renumerar sección 1 (K_n) y agregar sección │
+     │ 2 (C_n)                                                                 │
+     │                                                                         │
+     │ Contexto                                                                │
+     │                                                                         │
+     │ El calentamiento 1 (K_n) ya está hecho y probado por el usuario en      │
+     │ Colab                                                                   │
+     │ (F:\investighaton\notebooks\01_calentamiento_Kn.ipynb). El notebook se  │
+     │ genera con el script                                                    │
+     │ scratchpad\build_nb01.py (construye el .ipynb como JSON). El usuario    │
+     │ pide:                                                                   │
+     │ 1. renumerar lo existente como 1.1, 1.2, … (todo pertenece al           │
+     │    calentamiento 1);                                                    │
+     │ 2. agregar en el mismo notebook la sección 2 = calentamiento 2 (slide   │
+     │    26/34):                                                              │
+     │    "Lo mismo en C_n (n ≥ 5): encontrar los twisted states estables y    │
+     │    verificar su estabilidad con el                                      │
+     │    espectro del Hessiano".                                              │
+     │                                                                         │
+     │ Como el notebook pasa a tener ambos calentamientos, se renombra a       │
+     │ notebooks/calentamientos.ipynb                                          │
+     │ (se borra el 01_calentamiento_Kn.ipynb generado antes; el usuario       │
+     │ vuelve a subir el nuevo a Colab).                                       │
+     │                                                                         │
+     │ Cambios                                                                 │
+     │                                                                         │
+     │ Estructura de títulos                                                   │
+     │                                                                         │
+     │ - # Calentamientos: el flujo de Kuramoto (intro + nota de Colab)        │
+     │ - ## 1. Calentamiento 1: el grafo completo K_n                          │
+     │   - ### 1.1 Recordatorio · ### 1.2 Funciones (incluye el simulador) ·   │
+     │     ### 1.3 Chequeos de sanidad                                         │
+     │   - ### 1.4 Experimento A: una corrida · ### 1.5 Experimento B: muchas  │
+     │     corridas                                                            │
+     │   - ### 1.6 Experimento C: las sillas · ### 1.7 Conclusiones            │
+     │ - ## 2. Calentamiento 2: el ciclo C_n (nuevo, abajo)                    │
+     │                                                                         │
+     │ Sección 2 (reutiliza velocity, energy, hessian, simulate, classify,     │
+     │ draw_circle, wrap)                                                      │
+     │                                                                         │
+     │ - 2.1 Recordatorio: C_n, twisted states θ_v = 2πqv/n, d = 2πq/n;        │
+     │   energía n(1−cos d);                                                   │
+     │   en el twisted state el Hessiano es cos(d)·L_{C_n}, y los autovalores  │
+     │   de L_{C_n} son 2−2cos(2πk/n),                                         │
+     │   así que eig(H) = cos(2πq/n)·(2−2cos(2πk/n)) → estable ⟺ cos d > 0 ⟺   │
+     │   |q| < n/4.                                                            │
+     │ - 2.2 Funciones nuevas: cycle_graph(n), twisted_state(n, q),            │
+     │   winding_number(theta) = Σ_v wrap(θ_{v+1}−θ_v)/2π (entero).            │
+     │   draw_circle gana un parámetro                                         │
+     │   opcional W para dibujar las aristas (así se ve el polígono            │
+     │   "enroscado").                                                         │
+     │ - 2.3 Chequeos: todo twisted state es equilibrio (‖velocity‖ ≈ 0); el   │
+     │   espectro numérico del Hessiano                                        │
+     │   coincide con la fórmula cerrada.                                      │
+     │ - 2.4 Tabla de estabilidad: n = 3…12, q = 0…⌊n/2⌋ → classify vs         │
+     │   predicción |q| < n/4                                                  │
+     │   (incluye el caso límite n=4, q=1 → "degenerado", que conecta con la   │
+     │   cuenta a tercer orden).                                               │
+     │ - 2.5 Experimento A: una corrida que queda atrapada (n=20, inicios al   │
+     │   azar hasta que uno termine en                                         │
+     │   q≠0): 𝓔(t) se estanca en n(1−cos d) > 0 en vez de ir a 0; θ_v vs v al │
+     │   final (escalera); foto en el                                          │
+     │   círculo con aristas; classify → "mínimo estricto" con 𝓔 > 0 = pozo    │
+     │   trampa.                                                               │
+     │ - 2.6 Experimento B: estadística de cuencas: n ∈ {5, 8, 10, 15, 20, 30, │
+     │   50}, 500 inicios al azar cada uno:                                    │
+     │   fracción que sincroniza (q=0), distribución del q final (gráfico de   │
+     │   barras para algunos n), chequeo de                                    │
+     │   que todo final es mínimo estricto con |q| < n/4 y energía             │
+     │   n(1−cos(2πq/n)), y cuántas veces q final = q inicial.                 │
+     │ - 2.7 Experimento C: escapar de un twisted inestable: n=8, q=3 (d=135°) │
+     │   + ruido 1e-6 →                                                        │
+     │   q(t) baja de a saltos enteros (una arista pasa por π) hasta un        │
+     │   twisted estable o la sincronización;                                  │
+     │   gráficos de 𝓔(t) y q(t).                                              │
+     │ - 2.8 Conclusiones + adelanto del calentamiento 3 (C_{n,k}).            │
+     │                                                                         │
+     │ Gráficos: nombres de variables como etiquetas de eje, sin títulos salvo │
+     │ que aporten (preferencia guardada).                                     │
+     │                                                                         │
+     │ Archivos                                                                │
+     │                                                                         │
+     │ - Builder: scratchpad\build_nb01.py → se renombra a                     │
+     │   scratchpad\build_calentamientos.py y se edita.                        │
+     │ - Salida: F:\investighaton\notebooks\calentamientos.ipynb (ejecutado,   │
+     │   con gráficos).                                                        │
+     │                                                                         │
+     │ Verificación                                                            │
+     │                                                                         │
+     │ - Generar y ejecutar con .venv/Scripts/jupyter nbconvert --to notebook  │
+     │   --execute --inplace.                                                  │
+     │ - 0 errores; sección 1 da los mismos resultados que antes; en la        │
+     │   sección 2: twisted states equilibrio,                                 │
+     │   espectro = fórmula, tabla 2.4 coincide con |q| < n/4, fracción        │
+     │   sincronizada en C_n decrece con n                                     │
+     │   (y es < 100 % para n ≥ 5), todos los finales mínimos estrictos.       │
+     │ - Exportar las figuras y revisarlas visualmente.                        │
+     ╰─────────────────────────────────────────────────────────────────────────╯
+
+  Listed 1 directory, ran 1 shell command (ctrl+o to expand)
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Updated plan
+  ⎿  /plan to preview
+
+● User approved Claude's plan
+  ⎿  Plan saved to: 
+     C:\Users\Nicolas\.claude\plans\primero-lee-los-archivos-wild-lovelace.md · 
+     /plan to edit
+     Notebook de calentamientos: renumerar sección 1 (K_n) y agregar sección 2 
+     (C_n)
+
+     Contexto
+
+     El calentamiento 1 (K_n) ya está hecho. El usuario editó su notebook
+     F:\investighaton\notebooks\01_calentamiento_Kn.ipynb (agregó subtítulos
+     "### Hessiano" y
+     "### Arrancando desde la silla…", fusionó un markdown en 1.3, renombró
+     "Conclusiones", kernel = .venv).
+     Ese archivo es ahora la fuente de verdad; el viejo builder build_nb01.py
+     queda obsoleto.
+     El usuario pide:
+     1. renumerar lo existente como 1.1, 1.2, … (todo pertenece al
+        calentamiento 1);
+     2. agregar en el mismo notebook la sección 2 = calentamiento 2 (slide
+        26/34):
+        "Lo mismo en C_n (n ≥ 5): encontrar los twisted states estables y
+        verificar su estabilidad con el
+        espectro del Hessiano".
+
+     Restricción del usuario: no tocar sus celdas de código (solo si hiciera
+     falta refactorizar).
+     Por eso: (1) copiar su notebook a scratchpad\calentamientos_base.ipynb; (2)
+     un script
+     scratchpad\patch_calentamientos.py carga ese JSON, solo cambia la primera 
+     línea (heading) de celdas
+     markdown y agrega celdas nuevas al final; las celdas de código existentes
+     no se tocan (se
+     verifica comparando su source antes/después). Las funciones nuevas de la
+     sección 2 van en celdas nuevas
+     (p.ej. draw_cycle llama a draw_circle y dibuja las aristas, en vez de
+     modificar draw_circle).
+     La salida se escribe sobre el mismo archivo del usuario (la copia del
+     scratchpad queda como backup).
+
+     Cambios
+
+     Estructura de títulos (solo headings de markdown)
+
+     - celda 0: # Calentamientos: el flujo de Kuramoto + ## 1. Calentamiento 1: 
+       el grafo completo K_n
+       (resto del texto igual)
+     - ## 0. Recordatorio → ### 1.1 Recordatorio
+     - ## 1. Funciones → ### 1.2 Funciones; ### El simulador… → #### El 
+       simulador…
+     - ## 2. Chequeos de sanidad → ### 1.3 Chequeos de sanidad
+     - ## 3. Experimento A… → ### 1.4 …; ### Fotos… → #### Fotos…
+     - ## 4. Experimento B… → ### 1.5 …; ### ¿Qué dice el Hessiano… → #### …
+     - ## 5. Experimento C… → ### 1.6 …; ### Hessiano y ### Arrancando desde la 
+       silla… → ####
+     - ## 6. Conclusiones → ### 1.7 Conclusiones
+     - nueva: ## 2. Calentamiento 2: el ciclo C_n con subsecciones ### 2.x
+
+     Sección 2 (reutiliza velocity, energy, hessian, simulate, classify, 
+     draw_circle, wrap)
+
+     - 2.1 Recordatorio: C_n, twisted states θ_v = 2πqv/n, d = 2πq/n; energía
+       n(1−cos d);
+       en el twisted state el Hessiano es cos(d)·L_{C_n}, y los autovalores de
+       L_{C_n} son 2−2cos(2πk/n),
+       así que eig(H) = cos(2πq/n)·(2−2cos(2πk/n)) → estable ⟺ cos d > 0 ⟺ |q| <
+       n/4.
+     - 2.2 Funciones nuevas: cycle_graph(n), twisted_state(n, q),
+       winding_number(theta) = Σ_v wrap(θ_{v+1}−θ_v)/2π (entero). draw_cycle(ax,
+       theta, title)
+       dibuja las aristas del ciclo y llama a draw_circle (así se ve el polígono
+       "enroscado").
+     - 2.3 Chequeos: todo twisted state es equilibrio (‖velocity‖ ≈ 0); el
+       espectro numérico del Hessiano
+       coincide con la fórmula cerrada.
+     - 2.4 Tabla de estabilidad: n = 3…12, q = 0…⌊n/2⌋ → classify vs predicción
+       |q| < n/4
+       (incluye el caso límite n=4, q=1 → "degenerado", que conecta con la
+       cuenta a tercer orden).
+     - 2.5 Experimento A: una corrida que queda atrapada (n=20, inicios al azar
+       hasta que uno termine en
+       q≠0): 𝓔(t) se estanca en n(1−cos d) > 0 en vez de ir a 0; θ_v vs v al
+       final (escalera); foto en el
+       círculo con aristas; classify → "mínimo estricto" con 𝓔 > 0 = pozo 
+       trampa.
+     - 2.6 Experimento B: estadística de cuencas: n ∈ {5, 8, 10, 15, 20, 30,
+       50}, 500 inicios al azar cada uno:
+       fracción que sincroniza (q=0), distribución del q final (gráfico de
+       barras para algunos n), chequeo de
+       que todo final es mínimo estricto con |q| < n/4 y energía
+       n(1−cos(2πq/n)), y cuántas veces q final = q inicial.
+     - 2.7 Experimento C: escapar de un twisted inestable: n=8, q=3 (d=135°) +
+       ruido 1e-6 →
+       q(t) baja de a saltos enteros (una arista pasa por π) hasta un twisted
+       estable o la sincronización;
+       gráficos de 𝓔(t) y q(t).
+     - 2.8 Conclusiones + adelanto del calentamiento 3 (C_{n,k}).
+
+     Gráficos: nombres de variables como etiquetas de eje, sin títulos salvo que
+     aporten (preferencia guardada).
+
+     Archivos
+
+     - Backup/base: scratchpad\calentamientos_base.ipynb (copia exacta del
+       notebook del usuario).
+     - Patch: scratchpad\patch_calentamientos.py.
+     - Salida: F:\investighaton\notebooks\01_calentamiento_Kn.ipynb (mismo
+       archivo; ejecutado, con gráficos).
+       Se le sugiere al usuario, sin hacerlo, renombrarlo a
+       calentamientos.ipynb.
+
+     Verificación
+
+     - Assert en el patch: las celdas de código originales son idénticas (mismo
+       source, mismo orden).
+     - Ejecutar con .venv/Scripts/jupyter nbconvert --to notebook --execute 
+       --inplace.
+     - 0 errores; sección 1 da los mismos resultados que antes; en la sección 2:
+       twisted states equilibrio,
+       espectro = fórmula, tabla 2.4 coincide con |q| < n/4, fracción
+       sincronizada en C_n decrece con n
+       (y es < 100 % para n ≥ 5), todos los finales mínimos estrictos.
+     - Exportar las figuras y revisarlas visualmente.
+
+  Ran 1 shell command, wrote 2 memories (ctrl+o to expand)
+
+● Ahora escribo el script que solo toca los títulos de markdown y agrega la
+  sección 2 al final.
+
+  Made 1 scratchpad edit +372, read 5 files, ran 2 shell commands (ctrl+o to expand)
+
+● Todo coincide con la teoría en 45 de 45 casos, salvo dos discrepancias con el
+  texto original (el winding en 2.7 y el cambio de q en 2.6), que ahora voy a
+  corregir.
+
+  Made 3 scratchpad edits +8 -5, ran 1 shell command, wrote 1 memory (ctrl+o to expand)
+
+● Las dos cosas están hechas en tu notebook notebooks/01_calentamiento_Kn.ipynb.
+  Lo ejecuté entero sin errores (unos 45 segundos) y tus celdas de código
+  quedaron exactamente iguales, lo verifiqué comparándolas con una copia de
+  respaldo. Partí de tu versión, con los subtítulos que agregaste.
+
+  Títulos. El notebook se llama ahora "Calentamientos: el flujo de Kuramoto" y
+  la sección 1 tiene 1.1 Recordatorio, 1.2 Funciones, 1.3 Chequeos, 1.4–1.6
+  Experimentos A, B y C, y 1.7 Conclusiones. Tus subtítulos ("Hessiano",
+  "Arrancando desde la silla…") quedaron un nivel más abajo, dentro de 1.6.
+
+  Sección 2: el ciclo C_n. Agregué celdas nuevas al final y usa tus funciones
+  sin cambiarlas:
+  - 2.1 Recordatorio: en un twisted state el Hessiano es cos(2πq/n) por el
+    Laplaciano del ciclo. Eso da una fórmula cerrada para sus autovalores y la
+    regla: mínimo si |q| < n/4, máximo si |q| > n/4, degenerado si |q| = n/4.
+  - 2.2 Funciones nuevas: cycle_graph, twisted_state, winding_number (el q de
+    una configuración) y draw_cycle, que dibuja el círculo con las aristas del
+    ciclo.
+  - 2.3 Chequeos: todos los twisted states son equilibrios y los autovalores
+    numéricos coinciden con la fórmula, con error de 10⁻¹⁵.
+  - 2.4 Tabla de estabilidad (n de 3 a 12): la clasificación por Hessiano
+    coincide con la regla en los 45 casos. El primer pozo trampa aparece en n =
+    5 con q = 1.
+  - 2.5 Una corrida que queda atrapada (n = 20): termina en q = 1 con energía
+    0.979, igual a la fórmula, y el Hessiano confirma que es un mínimo estricto.
+  - 2.6 Muchas corridas: la fracción que sincroniza cae de 93 % con n = 5 a 34 %
+    con n = 40. Todos los puntos finales son mínimos estrictos con |q| < n/4.
+  - 2.7 Escapar de un twisted inestable (n = 8, q = 3): el winding salta 3 → 2 →
+    1 → 0 → −1 y queda trabado en q = −1.
+  - 2.8 Conclusiones y un adelanto del calentamiento 3.
+
+  Dos resultados no salieron como yo esperaba y ajusté el texto:
+  - En 2.6, el q final coincide con el de la condición inicial solo en un 30 a
+    60 % de las corridas. La trampa donde termina no queda decidida desde el
+    arranque.
+  - En 2.7, el winding pasa por q = 0 con la energía todavía alta y sigue de
+    largo. Que q sea 0 no quiere decir que esté sincronizado.
+
+  En Colab tenés que volver a subir el archivo. El nombre 01_calentamiento_Kn ya
+  no describe bien el contenido; si querés, renombralo a algo como
+  calentamientos.ipynb.
+
+✻ Baked for 5m 55s · done sábado, 17:19
+
+※ recap: Estás repasando y simulando los calentamientos del Investigathon de Kuramoto; tu notebook ya tiene la sección 1 (K_n) renumerada y la sección 2 (ciclo C_n) agregada, ejecutada sin errores. Lo próximo es subirlo a Colab y revisar la sección 2.
+
+❯ Estuve viendo el calentamiento 2 y me queda una duda de concepto. No          
+  modifiques el codigo, solo quiero charlar el tema. En sí por que el q es      
+  dependiente del tiempo? No era una constante inicial para la configuración?   
+
+● Tenés razón en una parte. Lo que pasa es que la letra q se usa con dos
+  sentidos distintos.
+
+  1. Dos usos de la misma letra
+
+  (a) q como parámetro de una configuración particular. En la fórmula θ_v =
+  2πqv/n, q es un número que elegís para construir un twisted state. Con q = 1
+  armás una configuración, con q = 2 otra. Acá q es fijo porque la configuración
+  está fija (además es un equilibrio, así que no se mueve).
+
+  (b) q como medición de cualquier configuración. winding_number(θ) es una
+  función que se le puede aplicar a cualquier configuración, no solo a un
+  twisted state:
+
+    q(θ) = (1/2π) Σ_v wrap(θ_{v+1} − θ_v)
+
+  Recorrés el ciclo, sumás las diferencias entre vecinos llevándolas a (−π, π] y
+  contás cuántas vueltas completas da la suma. Para un twisted state devuelve
+  su q, pero también le da un número a una configuración al azar.
+
+  Durante la simulación la configuración θ(t) cambia en el tiempo, así que la
+  medición también:
+
+    q(t) = q(θ(t))
+
+  Para una configuración dada q es una constante, sí. Pero la configuración va
+  cambiando.
+
+  2. Por qué casi siempre se queda quieto
+
+  Primero, por qué q es entero. Sin el wrap, las diferencias alrededor del ciclo
+  suman exactamente 0:
+
+    (θ₂ − θ₁) + (θ₃ − θ₂) + … + (θ₁ − θ_n) = 0.
+
+  El wrap le resta a cada diferencia un múltiplo de 2π para llevarla a (−π, π],
+  así que la suma final es un múltiplo de 2π.
+
+  Ahora, mientras las fases se mueven de forma continua:
+  - cada diferencia wrap(θ_{v+1} − θ_v) se mueve de forma continua, salvo cuando
+    cruza ±π, donde salta de +π a −π, o al revés;
+  - si ninguna arista cruza ±π, la suma varía de forma continua pero tiene que
+    ser siempre un múltiplo de 2π. Algo continuo que solo puede tomar valores
+    enteros no puede cambiar: q se queda constante.
+
+  q solo cambia cuando alguna arista pasa por diferencia π, es decir, cuando dos
+  vecinos quedan exactamente opuestos. En ese instante la diferencia de esa
+  arista salta 2π y q salta ±1. Por eso en los gráficos q(t) es una escalera:
+  tramos constantes y saltos de a uno.
+
+  3. Lo que te dije antes, ajustado
+
+  Cuando hablamos del twisted state dije que "q no puede cambiar de a poco" y
+  que desenrollarlo "cuesta subir energía". Las dos cosas son ciertas, pero hay
+  que leerlas bien:
+  - "No cambia de a poco" quiere decir que no cambia de forma continua: salta.
+    No quiere decir que nunca cambie.
+  - "Cuesta subir energía" vale cerca de un twisted state estable. Ahí todas las
+    diferencias son chicas (menos de 90°) y, para que una arista llegue a π, la
+    configuración tiene que salir del pozo, cuesta arriba. Como el flujo solo
+    baja, una vez cerca del pozo ya no puede cambiar q. Eso es lo que lo hace
+    una trampa.
+  - Lejos de los pozos, por ejemplo en una condición inicial al azar, hay
+    aristas con diferencias cerca de π y cruzarlas no cuesta nada. El flujo baja
+    la energía y en el camino cruza π sin problema. Por eso en 2.6 el q final
+    difiere del inicial en muchas corridas, y en 2.7 se ve 3 → 2 → 1 → 0 → −1
+    mientras la energía cae.
+
+  4. Una imagen para quedarse
+
+  Pensá el espacio de configuraciones dividido en regiones por "paredes": las
+  configuraciones donde alguna arista tiene diferencia exactamente π.
+  - Dentro de cada región, q es constante.
+  - Cruzar una pared cambia q en ±1.
+  - Cada twisted state estable está en el fondo de un pozo, en el interior de
+    una región. Cerca del fondo, las paredes quedan "arriba" en energía y la
+    bolita no las puede alcanzar.
+
+  Por eso se dice que q es un invariante topológico: no lo cambia ninguna
+  deformación continua mientras no se toque una pared. La dinámica sí las toca a
+  veces, sobre todo al principio, cuando todavía hay mucha energía para bajar.
+
+✻ Worked for 26s · done 10:46
+
+❯ Tu imagen no me queda clara. Osea entendi el porque cambia a lo largo del     
+  tiempo pero sigo sin entender realmente que representa. Decirme que es la     
+  "cantidad de vueltas que da al circulo", sigue siendo ambiguo. Lo angulos no  
+  se "clipean" en 0 a 2pi, entonces porque decimos que da vuelta?               
+
+● Tu objeción es justa: no tiene nada que ver con cuánto giró cada ángulo en el
+  tiempo. q describe algo espacial: el patrón de fases a lo largo del ciclo en
+  un instante dado.
+
+  1. Las vueltas son a lo largo del ciclo, no en el tiempo
+
+  Congelá el tiempo y hacé este recorrido:
+  - Parate en el vértice 0 y mirá su aguja (su fase).
+  - Pasá al vértice 1, al 2, y así hasta volver al 0.
+  - En cada paso, la aguja cambia de la posición de un vértice a la del
+    siguiente.
+
+  Al volver al vértice 0, la aguja está donde empezó. La pregunta es cuántas 
+  vueltas netas dio en el camino. Eso es q.
+
+  Para que eso tenga sentido falta una regla: cuando pasás del vértice v al v+1,
+  ¿la aguja gira para un lado o para el otro? Ir de 0° a 90° puede ser +90° o
+  −270°. La regla es: por el camino más corto. Eso es exactamente lo que hace
+  wrap: lleva cada diferencia a (−π, π], o sea, elige el arco más corto.
+
+  2. Por qué no importa que los ángulos no estén "clipeados"
+
+  θ_v y θ_v + 2π son el mismo estado: la misma aguja, el mismo punto del
+  círculo. La dinámica solo usa sin y cos de diferencias, así que no los
+  distingue. Los números reales que guarda el código son una forma arbitraria de
+  anotar puntos del círculo.
+
+  Justamente por eso hace falta el wrap:
+  - Sin wrap, la suma de las diferencias alrededor del ciclo da siempre 0, sin
+    importar la configuración, porque los términos se cancelan de a pares. No
+    mide nada.
+  - Con wrap, la cuenta depende solo de los puntos del círculo, no de cómo los
+    anotaste. Si le sumás 2π a cualquier θ_v, las dos diferencias que lo tocan
+    cambian en ±2π, el wrap las devuelve a lo mismo, y q no cambia.
+
+  Ejemplo con n = 4. La misma configuración anotada de dos formas:
+
+  ┌─────────────┬─────┬─────┬──────┬──────┐
+  │   vértice   │  0  │  1  │  2   │  3   │
+  ├─────────────┼─────┼─────┼──────┼──────┤
+  │ anotación A │ 0°  │ 90° │ 180° │ 270° │
+  ├─────────────┼─────┼─────┼──────┼──────┤
+  │ anotación B │ 0°  │ 90° │ 180° │ −90° │
+  └─────────────┴─────┴─────┴──────┴──────┘
+
+  Recorrido con la anotación A:
+  - 0→1: +90°
+  - 1→2: +90°
+  - 2→3: +90°
+  - 3→0: de 270° a 0°. Lo crudo es −270°, pero el arco más corto es +90°.
+  - Total: +360°, así que q = 1.
+
+  Recorrido con la anotación B:
+  - +90°, +90°
+  - 2→3: de 180° a −90°. Lo crudo es −270°, el arco corto es +90°.
+  - 3→0: de −90° a 0°, +90°.
+  - Total: +360°, así que q = 1 otra vez.
+
+  Ahora una configuración distinta: 0°, 10°, 0°, −10°. Los pasos son +10, −10,
+  −10, +10 y suman 0, así que q = 0. La aguja va y viene pero nunca da la
+  vuelta.
+
+  3. Por qué "el camino más corto" es la regla natural
+
+  Los vecinos interactúan por sin(θ_u − θ_v). Cuando dos vecinos están cerca
+  (menos de 90°, como en todo pozo), el arco corto entre ellos es la forma
+  natural de "conectarlos". Es lo que el resorte tiende a acortar.
+
+  Una imagen física: pasá un hilo por las partículas en el orden del ciclo, de
+  modo que cada tramo entre vecinos vaya por el arco corto del círculo. Como el
+  ciclo se cierra, el hilo forma un lazo cerrado enrollado alrededor del anillo
+  q veces.
+  - q = 0: el lazo va y vuelve sin rodear el anillo. Lo podés achicar hasta un
+    punto, que es sincronizar.
+  - q = 1: el lazo abraza el anillo una vez. No lo podés achicar sin "romperlo".
+    Es como una gomita alrededor de un tubo.
+  - ¿Cuándo se puede soltar? Solo si algún tramo llega a medir media vuelta
+    (diferencia π). Ahí "el arco más corto" es ambiguo: el tramo puede pasar al
+    otro lado del círculo, y el lazo pierde o gana una vuelta. Es el salto ±1
+    que viste en q(t).
+
+  4. Dónde ya lo viste: la "fase acumulada" de 2.5
+
+  El gráfico de la izquierda en 2.5 es exactamente este recorrido. El eje x es
+  el vértice v y el eje y es la suma de los pasos cortos hasta v.
+  - En un twisted state es una escalera recta: cada paso sube 2πq/n.
+  - Al volver al vértice inicial subió en total 2πq: q vueltas.
+  - En el estado sincronizado sería una línea plana en 0.
+
+  Resumiendo: q es cuántas vueltas netas da la fase cuando recorrés el ciclo de 
+  vértices una vez, pasando de cada vértice al siguiente por el arco más corto.
+  No dice nada de cuánto giró cada oscilador en el tiempo; es una propiedad de
+  la foto, no de la película.
+
+✻ Brewed for 31s · done 10:53
+
+※ recap: Estamos en los calentamientos del Investigathon Kuramoto: los dos primeros ya están en tu notebook y ahora charlábamos qué representa el winding number q. Lo próximo es seguir con esa duda o arrancar el calentamiento 3 (C_{n,k}). (disable recaps in /config)
+
+❯ Hay alguna manera de ver esto visiblemente? Genera un prompt para darle a     
+  Claude en web para que genere un corto video o imagenes seguidas que muestren 
+  el concepto. Perdon que no logre captar la idea todavia                       
+
+● Es un concepto que cuesta: mezcla dos círculos distintos, el de los vértices y
+  el de las fases, y verlo animado ayuda mucho. Claude en la web no hace
+  videos, pero puede armar un artifact interactivo: una página con la animación,
+  botones de play y paso a paso, y controles. Copiá este prompt tal cual:
+
+  Quiero una visualización interactiva (artifact HTML o React con SVG, sin 
+  librerías externas pesadas) para entender el "winding number" q de una 
+  configuración de fases en un grafo ciclo C_n, en el contexto del modelo de 
+  Kuramoto. Todo el texto de la interfaz en español. Tiene que funcionar como un
+  "video" paso a paso: botones ▶ Play / ⏸ Pausa / ⏭ Paso siguiente / ⟲ 
+  Reiniciar y un control de velocidad.
+
+  CONTEXTO MATEMÁTICO (respetalo exactamente):
+  - Hay n vértices v = 0, 1, ..., n−1 conectados en ciclo (v con v+1, y n−1 con 
+  0).
+  - Cada vértice tiene una fase θ_v, que es un PUNTO del círculo: θ y θ+2π son 
+  el mismo estado.
+  - Winding number: q = (1/2π) · Σ_v wrap(θ_{v+1} − θ_v), donde wrap lleva el 
+  ángulo a (−π, π], o sea, el paso de un vértice al siguiente se hace por el 
+  ARCO MÁS CORTO. q siempre es entero.
+  - Twisted state: θ_v = 2π q v / n.
+  - La idea clave que el usuario no está captando: q NO mide cuánto giró cada 
+  oscilador en el tiempo; es una propiedad de una "foto". Es cuántas vueltas 
+  netas da la fase al RECORRER LOS VÉRTICES DEL CICLO una vez, pasando de cada 
+  vértice al siguiente por el arco más corto.
+
+  LAYOUT: tres paneles que muestren claramente que hay DOS círculos distintos:
+  1. Panel izquierdo, "El grafo (los vértices)": los n vértices dibujados como 
+  nodos en un anillo, con posiciones FIJAS, numerados 0..n−1 y unidos por 
+  aristas. Cada nodo tiene adentro una pequeña aguja de reloj que apunta según 
+  su fase θ_v, y está coloreado por su fase (rueda de color cíclica, hue = θ). 
+  Rotulá que la posición del nodo NO es su fase.
+  2. Panel central, "El círculo de fases": un círculo donde cada vértice es una 
+  partícula ubicada en el ángulo θ_v, rotulada con su número v y con el mismo 
+  color.
+  3. Panel inferior, "Fase acumulada": eje x = vértice v (0..n), eje y = suma de
+  los pasos cortos hasta v (en vueltas o en radianes, con líneas guía en 0, 2π,
+  4π...). En un twisted state es una escalera recta.
+
+  ANIMACIÓN DEL RECORRIDO (lo central):
+  - Un "caminante" recorre los vértices 0 → 1 → ... → n−1 → 0. En cada paso:
+    - se resalta el nodo actual en el panel izquierdo y la arista que se 
+  recorre;
+    - en el panel central se dibuja progresivamente un HILO por el arco más 
+  corto entre la partícula v y la v+1. El hilo va quedando dibujado, un poco 
+  desplazado hacia afuera en cada vuelta, como una espiral, para que se vea 
+  cuántas veces rodea el círculo;
+    - una aguja grande "acumuladora" gira el ángulo del paso (con signo);
+    - un contador muestra "paso: +45°", "acumulado: 315°" y "vueltas: 0.875";
+    - en el panel inferior se agrega el punto de la escalera.
+  - Al volver al vértice 0, mostrar en grande: "q = (acumulado)/360° = 1" y el 
+  hilo cerrado rodeando el círculo q veces.
+
+  ESCENAS (un selector o una secuencia con "Siguiente escena"):
+  1. n = 8, twisted state q = 1 (pasos de +45°). El hilo rodea el círculo una 
+  vez.
+  2. n = 8, q = 0 con fases chicas que van y vuelven (por ejemplo 0°, 20°, 35°, 
+  20°, 0°, −20°, −35°, −20°). El hilo va y vuelve sin rodear: q = 0. Mostrar que
+  la aguja acumuladora vuelve a 0.
+  3. n = 8, q = 2 (pasos de +90°): el hilo rodea dos veces.
+  4. "Anotar distinto no cambia nada": la misma configuración de la escena 1, 
+  pero a un vértice se le suma 360° a su número θ_v (mostrar el número cambiando
+  en una tabla). La partícula NO se mueve, el paso crudo sería −315° pero el 
+  arco corto sigue siendo +45°, y q sigue siendo 1. Mostrar al lado, para 
+  contraste, que SIN wrap la suma de diferencias crudas da siempre 0.
+  5. "¿Cuándo cambia q?": arrancar en q = 1 con n = 8 e ir deformando 
+  continuamente (con un slider) la configuración, de modo que una arista se 
+  estire hacia 180°. Colorear cada tramo del hilo según su largo (verde si es 
+  menor a 90°, amarillo entre 90° y 180°, rojo al acercarse a 180°). Justo al 
+  cruzar 180°, el arco corto pasa al otro lado del círculo, el hilo "salta" y q 
+  pasa de 1 a 0. Mostrar el cartel: "q solo cambia cuando dos vecinos quedan 
+  exactamente opuestos".
+  6. Modo libre: elegir n (3 a 16) y arrastrar las partículas en el círculo de 
+  fases con el mouse. Se recalculan en vivo el hilo, la escalera y q.
+
+  ESTILO: fondo claro y legible; colores accesibles; nombres de las variables en
+  los ejes y no como títulos; un texto corto debajo de cada escena (2 o 3 
+  líneas) explicando qué mirar. Que funcione bien en pantalla de notebook y de 
+  celular.
+
+  Si el resultado sale muy cargado, pedile que haga primero solo las escenas 1,
+  2 y 5: son las que muestran mejor la idea. Después decime qué viste y lo
+  seguimos charlando.
+
+✻ Brewed for 32s · done 11:05
+
+❯ Ahi lo entendi. Ahora cual es el aporte que nos da? Osea que nos indica que   
+  el 1 haya cambiado, pasado por 0 pero que no se quede ahi, etc?               
+
+● q nos da tres cosas. La primera es la más importante: explica por qué existen
+  las trampas.
+
+  1. Explica la trampa: es un obstáculo topológico
+
+  El estado sincronizado tiene q = 0. Si estás en una configuración con q = 1 y
+  querés llegar a sincronizar, q tiene que cambiar. Para eso, alguna arista
+  tiene que pasar por diferencia π, con dos vecinos exactamente opuestos.
+
+  Con la energía sale una cuenta corta y rigurosa:
+  - Una arista con diferencia π aporta 1 − cos π = 2 a la energía.
+  - Entonces, si en algún momento 𝓔 < 2, ninguna arista puede estar en π en ese
+    momento.
+  - Como la energía nunca sube, tampoco lo va a estar en el futuro.
+
+  ▎ Una vez que 𝓔 < 2, q queda congelado para siempre.
+  ▎ Si en ese momento q ≠ 0, seguro no sincroniza.
+
+  En 2.5 (n = 20), el twisted state q = 1 tiene energía 0.98 < 2. Apenas la
+  corrida baja de 2 con q = 1, ya está garantizado que no va a sincronizar, sin
+  calcular ningún Hessiano.
+
+  Esta condición es suficiente, no necesaria. En 2.7 (n = 8) la trampa q = −1
+  tiene energía 2.34 > 2, y aun así es un mínimo estricto: ahí el que lo
+  garantiza es el Hessiano.
+
+  Esto es lo que la slide 15 llama "la obstrucción a sincronizar es topológica".
+  Cada oscilador está localmente conforme, pero el patrón global está
+  enroscado, y desenroscarlo exige pasar por una configuración cara.
+
+  2. Etiqueta y diagnóstico baratos
+
+  En C_n, los mínimos estables son exactamente los twisted states con |q| < n/4.
+  El q final te dice:
+  - en qué trampa caíste, porque cada q es un pozo distinto;
+  - la energía final, sin mirarla: n(1 − cos(2πq/n));
+  - si sincronizó: en un equilibrio estable, q = 0 equivale a sincronizado.
+
+  Calcular q es una suma de n números. El Hessiano requiere autovalores de una
+  matriz n × n. Para clasificar miles de corridas, q es la herramienta rápida.
+
+  3. Lo que muestran los saltos (3 → 2 → 1 → 0 → −1)
+
+  q no es lo que la dinámica minimiza. La dinámica solo baja la energía. No
+  "busca" q = 0 ni "intenta desenrollarse".
+
+  - Al principio la energía es alta y hay aristas cerca de π. Cruzar paredes no
+    cuesta nada, así que q salta libremente como efecto secundario de bajar la
+    energía.
+  - Pasar por q = 0 y seguir de largo muestra que q = 0 no es un lugar sino una
+    región. Esa región contiene el estado sincronizado pero también
+    configuraciones de energía alta. En 2.7, cuando q valía 0 la energía estaba
+    en ~6. La bolita venía cayendo rápido en una dirección y cruzó otra pared
+    antes de llegar al fondo.
+  - Al final la energía es baja y q se congela (punto 1). El q en el que estés
+    cuando se congela decide el destino.
+
+  Lo mismo explica el resultado de 2.6: el q inicial de una condición al azar no
+  predice bien el final. Lo que decide es en qué cuenca de energía caés, y q se
+  fija recién cuando la energía bajó lo suficiente.
+
+  4. Por qué importa para la competencia
+
+  El problema de μ_c es encontrar grafos densos con trampas. El ciclo muestra el
+  mecanismo, pero es muy poco denso: μ(C_n) = 3/n.
+
+  - Las construcciones conocidas de cotas inferiores (grafos circulantes, la de
+    Canale) son versiones más sofisticadas de configuraciones enroscadas:
+    twisted states sobre grafos con más aristas.
+  - El resultado de Lepsveridze–Zhang dice que, cerca de μ = 3/4, el único
+    obstáculo posible es agrupar las fases en 4 grupos en 0, π/2, π, 3π/2. Esto
+    es una interpretación mía, no algo que diga la slide: eso se parece a un
+    twisted state con q = 1 recorrido en 4 pasos de 90°, justo el caso borde n =
+    4 de nuestra tabla 2.4, donde cos d = 0. La frontera de 3/4 parecería ser
+    la frontera de "cuánto se puede enroscar sin que el pozo desaparezca".
+  - En la práctica, al buscar trampas en otros grafos (dirección A), calcular el
+    winding a lo largo de los ciclos del grafo es una forma natural de
+    etiquetar y entender los mínimos espurios que aparezcan.
+
+  Esa es la conexión con el calentamiento 3. En C_{n,k} cada vértice tiene
+  vecinos a distancia d, 2d, …, kd. Para que el pozo siga existiendo, todos esos
+  vecinos tienen que "tirar bien", y la pregunta es cuánto se puede densificar
+  el grafo antes de que el enroscamiento deje de sostenerse.
+
+✻ Sautéed for 37s · done 11:29
+
+❯ Ok. Antes de comenzar con el calentamiento 3, crea una archivo                
+  calentamientos.md en una carpeta notes/ que "resuma" o mencione todo lo que   
+  estuvimos charlando en esta sesión (desde que empezamos los calentamientos y  
+  las presentaciones)                                                           
+
+● Write(notes\calentamientos.md)
+  ⎿  Wrote 139 lines to notes\calentamientos.md
+      1 # Notas: presentaciones, teoría y calentamientos 1–2
+      2 
+      3 Resumen de lo charlado en la sesión del 17–18/10/2026 (con Claude
+        ). Complementa a `text.md`
+      4 (explicación larga de energía / sincronización / paisaje benigno)
+      5 `notebooks/01_calentamiento_Kn.ipynb` (secciones 1 y 2).
+      6 
+      7 ---
+      8 
+      9 ## 0. Las presentaciones
+     … +241 lines (ctrl+o to expand)
+● Creé F:\investighaton\notes\calentamientos.md con todo lo que charlamos, desde
+  las presentaciones hasta los dos calentamientos.
+
+  1. Las presentaciones: las definiciones de μ y μ_c, las cotas superiores e
+     inferiores hasta llegar a 11/16 ≤ μ_c ≤ 3/4 − η, la estructura de la charla
+     larga, las direcciones de trabajo A–E y las reglas de entrega.
+  2. La teoría repasada:
+     - el modelo y de dónde sale que la "fuerza" de un vecino es el seno;
+     - la energía y la imagen de los resortes;
+     - qué quiere decir sincronizar, con la tabla de mínimo, silla y máximo, y
+       qué es ψ;
+     - el paisaje benigno;
+     - los twisted states y por qué el umbral es n ≥ 5 (la cuenta con un
+       oscilador, la de segundo orden y el caso n = 4 a tercer orden);
+     - el winding number: los dos usos de la letra q, la imagen del recorrido
+       por el arco corto y del hilo, por qué cambia en el tiempo y qué nos
+       aporta (incluye que q queda congelado una vez que 𝓔 < 2).
+  3. Calentamiento 1: el pipeline y los resultados de K_n.
+  4. Calentamiento 2: los resultados de C_n con los números que salieron: 45/45
+     en la tabla, la caída de 93 % a 34 % en la fracción que sincroniza y el
+     escape 3 → −1.
+  5. Lo que sigue: el calentamiento 3, y un par de notas útiles para la
+     declaración de uso de IA que pide la entrega.
+
+  Al principio aclaro que complementa a text.md, que tiene la explicación más
+  larga de la primera parte. También marqué como "interpretación propia" la
+  conexión que hice entre los 4 grupos de Lepsveridze–Zhang y el caso n = 4,
+  porque no está en las slides.
+
+✻ Brewed for 1m 2s · done 11:40
+
+※ recap: Estás trabajando los calentamientos del Investigathon de Kuramoto: ya están hechos K_n y C_n en el notebook, y el resumen quedó en notes/calentamientos.md. Lo próximo es arrancar el calentamiento 3, C_{n,k}, como sección 3 del mismo notebook. (disable recaps in /config)
