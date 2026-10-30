@@ -1,0 +1,1495 @@
+
+● Lo guardé en notes/objetivos_grafo_elegante.md, marcado como "sin decidir". La
+  nota tiene cinco partes:
+
+  - Qué es exacto en el grafo actual y qué no: la tabla que compara O'Keeffe con
+    nuestro grafo (densidades, s, espejo, tamaños, h y t) y el motivo por el
+    que, así como está, es poco vistoso para la competencia.
+  - Hechos que entran en la discusión:
+    - los links W–A no son completos, y en O'Keeffe tampoco a h finito;
+    - el costo de ser fieles a su fórmula: hace falta h ≲ 0.005 y un n estimado
+      entre 10⁹ y 10¹¹, todavía sin medir;
+    - la cuenca diminuta de la trampa.
+  - Las tres propiedades "agradables": simetría espejo exacta, densidades puras
+    {0, q, 1} y una familia infinita G_ℓ como la de Canale. Cada una incluye su
+    hipótesis o pregunta abierta.
+  - La tabla de objetivos O1–O3, con criterio de éxito y riesgo, el orden
+    sugerido y la alternativa de fidelidad estricta a O'Keeffe.
+  - Las decisiones pendientes:
+    - qué propiedad priorizar si chocan entre sí;
+    - si el camino B entra o no;
+    - qué lugar ocupa el grafo actual en el relato.
+
+  En la sección "Pendiente" de notes/blowup_explicito.md agregué una entrada que
+  remite a esta nota. Ahí queda en pausa lo del camino B hasta que se decida.
+
+❯ /compact
+  ⎿  Compacted
+  ⎿  Referenced file notes/blowup_explicito.md
+  ⎿  Read notes/objetivos_grafo_elegante.md (88 lines)
+  ⎿  Referenced file ../../../../../tmp/claude-1000/okeeffe.txt
+  ⎿  Referenced file scripts/visualizar_grafo.py
+  ⎿  Plan file referenced
+     (~/.claude/plans/primero-lee-la-presentacion-floating-wadler.md)
+  ⎿  Skills restored (dataviz)
+
+❯ Fijate en @notebooks/Grafo_simetrico_S7.ipynb que logramos encontrar un nuevo
+  grafo mas pequeño que incluso cumple con algunas propiedades simetricas. En
+  @notes/explicacion_completa_S7.md tenemos la explicacion de todo lo que
+  hicimos hasta ahora. Haria falta hacer la validacion del grafo simetrico como
+  hicimos en el anterior de 30 millones?. Tambien quería preguntar si ¿el
+  metodo de Lanczos es "preciso" para esta tarea incluso para la del grafo
+  explicito? O hay metodos más precisos que podríamos usar que tal vez
+  requieran mas computo pero podríamos correr en un servidor con GPU?
+  ⎿  Read notes/explicacion_completa_S7.md (786 lines)
+
+  Listed 1 directory, ran 2 shell commands (ctrl+o to expand)
+
+● Mi recomendación es hacer la validación del grafo simétrico: es barata y
+  prueba algo que el certificado no prueba. Lanczos alcanza para la tarea; su
+  límite no es la precisión sino que da la cota en un solo sentido. Para el
+  resto del espectro hay un método mejor que no necesita GPU.
+
+  1. ¿Validar el grafo simétrico?
+
+  Matemáticamente no hace falta: la prueba es el certificado. Igual conviene
+  hacerla por tres razones:
+
+  - Controla un código distinto. El certificado trabaja con los datos (grados,
+    plantilla 7×7, Fourier). La validación arma el grafo real desde el JSON y
+    cuenta vecinos uno por uno. Si hubiera un error al pasar de los 4 enteros a
+    las tablas, el certificado no lo vería y la validación sí.
+  - Hay código nuevo. El camino simétrico agregó el sistema reducido, el pulido
+    simétrico y el paso de los enteros j a los grados. Nada de eso pasó por la
+    validación de 30 millones.
+  - Es barata. El grafo es 100 veces más chico que el de 30 millones, así que
+    corre en esta máquina, en CPU, en uno o dos minutos. En
+    explicacion_completa_S7.md (notes/explicacion_completa_S7.md) (sección 12)
+    figura como "no repetimos", y lo mejor es cerrarlo.
+
+  Los dos JSON tienen la misma estructura (grafo y certificado con las mismas
+  claves). Para correrla, a validar_grafo.py (scripts/validar_grafo.py) solo le
+  falta una opción para leer data/grafo_simetrico_s7.json, porque hoy solo lee
+  grafos_s7.json. La simulación con visualizar_grafo.py
+  (scripts/visualizar_grafo.py) es opcional.
+
+  2. ¿Lanczos es preciso?
+
+  La precisión no es el problema:
+
+  - Los modos delicados no pasan por Lanczos. Son los de cluster, del orden de
+    10⁻⁶ relativo, y la validación los calcula como una matriz Q de 7×7 con
+    productos exactos 1_aᵀH1_b. En el grafo de 30 millones, Q coincidió con la
+    fórmula con un error de 5·10⁻⁸, frente a un autovalor de 157.5.
+  - Lanczos se usa solo para el resto, con autovalores de alrededor de 0.22·n,
+    lejos de 0. La corrida en 1^⊥ reencontró 157.51 en 50 pasos.
+  - float64 alcanza: su error ronda 10⁻¹⁶·‖H‖, unos 10⁻¹¹ con n = 3·10⁵, muchos
+    órdenes por debajo de los autovalores que se miden.
+
+  El límite real es que la cota es de un solo lado. El valor que da Lanczos
+  siempre es mayor o igual que el verdadero λ_min. El residuo garantiza que hay
+  un autovalor cerca, pero no descarta uno más chico que no apareció.
+
+  En la validación de 30 millones, "λ_min = 6 537 169 ≥ cota 6 528 340" es
+  consistente con el certificado, pero no lo prueba. Solo habría detectado un
+  error si hubiera dado menos que la cota.
+
+  El método mejor es el espectro completo por Fourier. H conmuta con el
+  corrimiento v → v+1, así que se parte en g bloques hermíticos de 23×23, uno
+  por frecuencia. Con eso se calculan todos los autovalores:
+
+  - Simétrico: 13 043 bloques, menos de un segundo en CPU.
+  - 30 millones: 1.3·10⁶ bloques de 23×23. Se resuelven por lotes en segundos o
+    minutos, en CPU o GPU.
+
+  Así se obtiene el λ_min exacto del resto de los modos, no una cota superior.
+  Además, con Cholesky por intervalos aplicado a cada bloque (H_m − cota·I), se
+  vuelve una prueba rigurosa y más ajustada que Gershgorin.
+
+  Para que siga siendo un chequeo independiente, se compara el producto por
+  bloques con el producto implícito H·x sobre vectores al azar. Eso valida la
+  descomposición con un código distinto.
+
+  Otras opciones no ganan mucho:
+
+  - LOBPCG, Lanczos por bloques con reortogonalización o shift-invert: son más
+    robustos, pero siguen dando una cota de un solo lado.
+  - Autovalores densos: son imposibles; con n = 3·10⁵ la matriz ocupa unos 720
+    GB.
+  - La GPU no es lo que falta: el cuello de botella no es el cómputo.
+
+  Propongo dos pasos: primero, agregar a validar_grafo.py
+  (scripts/validar_grafo.py) la opción para el JSON simétrico y correrlo acá.
+  Segundo, una función de espectro completo por Fourier para los dos grafos.
+  ¿Hago las dos, o solo la primera?
+
+❯ Hace las dos
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● Empiezo por un módulo nuevo para el espectro completo y después adapto el
+  script de validación.
+
+● Write(src/espectro.py)
+  ⎿  Wrote 126 lines to src/espectro.py
+       1 """Espectro completo del Hessiano del blow-up por bloques de Fou
+       2
+          así que es unitariamente equivalente a
+       4 g matrices hermíticas H_m de K × K (K = Σ k_a), una por frecuenc
+       5   H_m[(a,i),(a,i)] = Σ_b d_ab cos_ab − (g·[m = 0] − 1),   H_m[(a
+       6   H_m[(a,i),(b,j)] = −cos_ab · N̂_ij(m),   N̂_ij(m) = Σ_{s<t_ij} e
+       7 A diferencia de Lanczos, que solo da una cota superior del menor
+          autovalor, acá se calculan todos los
+         2⌋.
+      10 Se lee solo la descripción compacta (k, g, grados, tablas, fases
+     … +144 lines (ctrl+o to expand)
+
+● Ahora la carga del grafo, compartida por los dos scripts, en
+  src/validacion.py:
+
+● Bash(cat >> src/validacion.py <<'EOF'…)
+  ⎿  Updated src/validacion.py (+18 -0)
+      284              "mayor": historial[-1]["mayor"], "pasos": historia
+           l[-1]["paso"],
+      285              "convergio": historial[-1]["residuo"] <= toleranci
+           a * abs(historial[-1]["menor"]),
+      286              "historial": historial}
+      287 +                                                              
+      288 +                                                              
+      289 +# ------------------------------------------------------------
+          +---- carga de los grafos certificados                         
+      290 +                                                              
+      291 +def elegir_grafo(filas, n=None):                              
+      292 +    """Fila certificada con ese n (o la de n más chico si n es
+          + None).                                                       
+      293 +                                                              
+      294 +    `filas` es el contenido de data/grafos_s7.json (lista; se 
+          +toman solo los redondeos por reticulado)                      
+      295 +    o de data/grafo_simetrico_s7.json (un solo grafo).        
+      296 +    """                                                       
+      297 +    if isinstance(filas, dict):                               
+      298 +        filas = [filas]                                       
+      299 +    filas = [f for f in filas if f.get("redondeo", "reticulado
+          +") == "reticulado" and f["certificado"]["ok"]]                
+      300 +    if n is not None:                                         
+      301 +        filas = [f for f in filas if f["grafo"]["n"] == n]    
+      302 +    if not filas:                                             
+      303 +        raise ValueError(f"no hay un grafo certificado con n =
+          + {n}")                                                        
+      304 +    return min(filas, key=lambda f: (f["grafo"]["n"], -f["h"])
+          +)                                                             
+  ⎿  Updated scripts/validar_grafo.py (+10 -12)
+      1 -"""Fase 4 del grafo explícito: validación ciega, en float64, de 
+        -un grafo certificado de data/grafos_s7.json.                    
+      1 +"""Fase 4 del grafo explícito: validación ciega, en float64, de 
+        +un grafo certificado de data/grafos_s7.json                     
+      2 +(o de data/grafo_simetrico_s7.json con --archivo).              
+      3  
+      4  Reconstruye el grafo a partir de su descripción compacta (k, g, 
+         tablas t, fases) y, sin usar Fourier
+      5  ni Gershgorin, calcula con productos implícitos W·y y H·x (src/v
+         alidacion.py):
+     ...
+       8    3. Modos de cluster: Q_ab = 1_aᵀ H 1_b / √(n_a n_b) con H imp
+          lícito, contra la fórmula de los grados.
+       9       Sus autovalores son los de H en los modos de cluster (uno 
+          es la rotación, ≈ 0).
+      10    4. Resto de los modos: Lanczos de H en el complemento de los 
+          modos de cluster. El certificado
+      10 -     garantiza λ ≥ (cota de Gershgorin); acá se mide λ_min de v
+         -erdad.                                                         
+      11 +     garantiza λ ≥ (cota de Gershgorin). El valor de Ritz es si
+         +empre ≥ el λ_min verdadero, así que                            
+      12 +     "≥ cota" es consistente pero no lo prueba; el espectro com
+         +pleto está en scripts/espectro_fourier.py.                     
+      13    5. Con --completo: Lanczos de H en 1^⊥ desde un vector al aza
+          r, sin separar los modos de cluster.
+      14       Tiene que dar el menor autovalor de Q (con n = 3·10⁷ conve
+          rgió en 50 pasos: el espectro son
+      15       pocos autovalores aislados más una banda lejana).
+     ...
+      19  
+      20  Comandos (en el server: GTX 1080 Ti, torch + CUDA):
+      21    .venv/bin/python scripts/validar_grafo.py --dispositivo cuda 
+          --completo
+      22 +Grafo simétrico (n = 299 989; CPU local, ~1 min):              
+      23 +  python scripts/validar_grafo.py --archivo grafo_simetrico_s7.
+         +json --dispositivo numpy --completo                            
+      24    (CPU sin torch: --dispositivo numpy; el grafo de 3·10⁷ nodos 
+          tarda varios segundos por producto)
+      25  """
+      26  import argparse
+     ...
+      33  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+      34  from src.experimentos import cargar_json, guardar_json  # noqa:
+           E402
+      35  from src.validacion import (  # noqa: E402
+      32 -    Arreglos, GrafoImplicito, cociente_formula, cociente_implic
+         -ito, grados_medidos, lanczos,                                  
+      36 +    Arreglos, GrafoImplicito, cociente_formula, cociente_implic
+         +ito, elegir_grafo, grados_medidos, lanczos,                    
+      37  )
+      38  
+      39  
+      36 -def elegir_grafo(n):                                           
+      37 -    """Fila de grafos_s7.json: el reticulado certificado con es
+         -e n (o el más chico si n es None)."""                          
+      38 -    filas = [f for f in cargar_json("grafos_s7.json") if f["red
+         -ondeo"] == "reticulado" and f["certificado"]["ok"]]            
+      39 -    if n is not None:                                          
+      40 -        filas = [f for f in filas if f["grafo"]["n"] == n]     
+      41 -    return min(filas, key=lambda f: (f["grafo"]["n"], -f["h"]))
+      42 -                                                               
+      43 -                                                               
+      40  def informar(etiqueta, inicio):
+     … 18 more lines (ctrl+o to expand)
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Ahora el script del espectro completo:
+
+● Write(scripts/espectro_fourier.py)
+  ⎿  Wrote 114 lines to scripts/espectro_fourier.py
+      1 """Espectro completo del Hessiano de un grafo certificado, por bl
+      2
+      3 Lanczos (scripts/validar_grafo.py) da una cota superior del menor
+      4 H se parte en g bloques hermíticos H_m de K × K, uno por frecuenc
+      5   1. Chequeo de la descomposición: H·x por bloques (FFT) contra e
+        l producto implícito de
+        ectores al azar.
+      7   2. Modos de cluster: autovalores de H_0 en la base de clusters,
+      8   3. Resto de m = 0 y m ≠ 0: el menor autovalor verdadero, contra
+      9      Si el menor au
+     … +152 lines (ctrl+o to expand)
+
+● Agrego los tests en tests/test_espectro.py:
+
+● Write(tests/test_espectro.py)
+  ⎿  Wrote 69 lines to tests/test_espectro.py
+       1 """Tests del espectro por bloques de Fourier (src/espectro.py) c
+         ontra el Hessiano denso."""
+       2 import sys
+       4
+       5 import numpy as np
+       6
+       7 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+       9 from src.blowup import (  # noqa: E402
+      10     adyacencia_densa, descripcion_compacta, fases_vertices, hess
+         iano_denso, hessiano_fourier,
+     … +69 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Los tests pasan. Arreglo el aviso de progreso para que use el lote real y
+  corro los dos scripts sobre el grafo simétrico:
+
+● Bash(python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated scripts/espectro_fourier.py (+4 -4)
+      38      return max(errores)
+      39  
+      40  
+      41 -def informar(inicio):                                          
+      42 -    """Función que imprime el progreso de la diagonalización.""
+         -"                                                              
+      41 +def informar(inicio, lote):                                    
+      42 +    """Función que imprime el progreso de la diagonalización (c
+         +ada 50 lotes)."""                                              
+      43      def imprimir(hechas, total):
+      44 -        if hechas == total or hechas % (50 * 4096) < 4096:     
+      44 +        if hechas == total or (hechas // lote) % 50 == 0:      
+      45              print(f"  {hechas}/{total} frecuencias ({time.time(
+          ) - inicio:.0f} s)", flush=True)
+      46      return imprimir
+      47  
+     ...
+      69      error = chequear_producto(descripcion, grafo, [0, 1], args.
+          lote)
+      70      print(f"1. H·x por Fourier contra el implícito: error relat
+          ivo {error:.1e}", flush=True)
+      71  
+      72 -    espectro = espectro_fourier(descripcion, lote=args.lote, in
+         -formar=informar(time.time()))                                  
+      72 +    espectro = espectro_fourier(descripcion, lote=args.lote, in
+         +formar=informar(time.time(), args.lote))                       
+      73      cluster = espectro["cluster"]
+      74      formula = np.linalg.eigvalsh(cociente_formula(descripcion))
+      75      rotacion = int(np.argmin(np.abs(cluster)))
+  ⎿  … 1 more file changed
+
+● Bash(python scripts/validar_grafo.py --archivo grafo_simetrico_s7.json
+      --dispositivo numpy --completo 2>&1 | grep -v "^  \[" | tail -20)
+  ⎿  Created data/validacion_s7_n299989.json (+55 -0)
+       1 +{                                                              
+       2 + "h": 0.03,                                                    
+       3 + "n": 299989,                                                  
+       4 + "dispositivo": "numpy",                                       
+       5 + "mu_exacto": "206565/299989",                                 
+       6 + "grados_ok": true,                                            
+       7 + "grado_min": 206564,                                          
+       8 + "max_velocidad": 7.275957614183426e-12,                       
+       9 + "Q_diferencia": 3.637978807091713e-11,                        
+      10 + "autovalores_Q": [                                            
+      11 +  7.978062367757249e-13,                                       
+      12 +  1.2506252671871416,                                          
+      13 +  1.645740977311325,                                           
+      14 +  233.43452083834347,                                          
+      15 +  78146.58941374462,                                           
+      16 +  78358.02077783697,                                           
+      17 +  78392.5739343731                                             
+      18 + ],                                                            
+      19 + "menor_cluster": 1.2506252671871416,                          
+      20 + "cota_gershgorin": 65278.0289894095,                          
+      21 + "resto": {                                                    
+      22 +  "menor": 65366.47516825741,                                  
+      23 +  "residuo": 0.02704422494016614,                              
+      24 +  "mayor": 79469.06903406477,                                  
+      25 +  "pasos": 50,                                                 
+      26 +  "convergio": true,                                           
+      27 +  "historial": [                                               
+      28 +   {                                                           
+      29 +    "paso": 50,                                                
+      30 +    "menor": 65366.47516825741,                                
+      31 +    "residuo": 0.02704422494016614,                            
+      32 +    "mayor": 79469.06903406477                                 
+      33 +   }                                                           
+      34 +  ],                                                           
+      35 +  "segundos": 1.6499440670013428                               
+      36 + },                                                            
+      37 + "completo": {                                                 
+      38 +  "menor": 1.2506252671069187,                                 
+      39 +  "residuo": 1.0182045460499862e-08,                           
+      40 +  "mayor": 79469.06903406479,                                  
+     … 16 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● La validación del grafo simétrico pasa completa, aunque en m = 0 el menor
+  autovalor queda ligeramente por debajo de la cota de Gershgorin (−5.6·10⁻¹⁶,
+  solo redondeo de float64). Voy a leer el script actualizado para agregar una
+  tolerancia a esa comparación.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Bash(python - <<'EOF'
+      from pathlib import Path…)  ⎿  Updated scripts/espectro_fourier.py (+5 -1)
+      89      print(f"   m ≠ 0: λ_min = {menor_fourier:.10e} en m = {m_me
+          nor}  cota certificada {cota_fourier:.6e}"
+      90            f"  (holgura {menor_fourier / cota_fourier - 1:.2e})"
+          , flush=True)
+      91  
+      92 -    respeta_cotas = menor_cero >= cota_cero and menor_fourier >
+         -= cota_fourier                                                 
+      92 +    # la cota de m = 0 puede ser exacta (cluster sin acople: au
+         +tovalor = Σ_b d_ab cos_ab + 1), así que                        
+      93 +    # se compara con una tolerancia del orden del redondeo de f
+         +loat64                                                         
+      94 +    tolerancia = 1e-12                                         
+      95 +    respeta_cotas = (menor_cero >= cota_cero * (1 - tolerancia)
+      96 +                     and menor_fourier >= cota_fourier * (1 - t
+         +olerancia))                                                    
+      97      estable = menor_cluster > 0 and menor_cero > 0 and menor_fo
+          urier > 0
+      98      print(f"\nλ_2(H) = {min(menor_cluster, menor_cero, menor_fo
+          urier):.6e} > 0: {estable}"
+      99            f"   respeta las cotas del certificado: {respeta_cota
+          s}   λ_max = {espectro['maximo']:.6e}"
+
+● La cota en m = 0 resulta exacta para W, ya que no hay acople en ese modo y su
+  autovalor coincide exactamente, sin indicar error. Ahora ejecutaré el espectro
+  del grafo de 30 millones, comenzando por revisar la memoria disponible.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Hay unos 10 GB libres y el pico estimado es de 3–4 GB, así que lo corro acá en
+  segundo plano:
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Pasan los 45 tests, incluidos los 4 nuevos. Espero el resultado de los 30
+  millones.
+
+● Bash(L=/tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-t
+      eo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/scratchpad/espec
+      tro_n3e7.log;…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+● Background command "Run Fourier spectrum on 30M graph" completed (exit code 0)
+
+● Falta volver a correr el simétrico, porque su JSON quedó guardado con la
+  comparación sin tolerancia:
+
+● Bash(python scripts/espectro_fourier.py --archivo grafo_simetrico_s7.json 2>&1
+      | grep "λ_2")
+  ⎿  Updated data/espectro_s7_n299989.json (+2 -2)
+      49   "cota_fourier": 65278.0289894095,
+      50   "maximo": 79469.06903406479,
+      51   "estable": true,
+      52 - "respeta_cotas": false,                                       
+      52 + "respeta_cotas": true,                                        
+      53   "curva_m_sobre_g": [
+      54    7.666947788085564e-05,
+      55    0.00038334738940427816,
+     ...
+      4054    65366.79132722418,
+      4055    65366.79132701299
+      4056   ],
+      4057 - "segundos": 1.171959638595581                               
+      4057 + "segundos": 1.0718324184417725                              
+      4058  }
+      4059   No newline at end of file
+
+● Hice las dos cosas, y los dos grafos pasan todos los chequeos: estado estable,
+  grados exactos y el certificado sin contradicciones. No commiteé nada. Los 45
+  tests pasan, 4 de ellos nuevos.
+
+  1. Validación del grafo simétrico (n = 299 989)
+
+  A validar_grafo.py (scripts/validar_grafo.py) le agregué la opción --archivo.
+  La función que carga el grafo pasó a src/validacion.py para que la usen los
+  dos scripts. Corrió en esta máquina, en CPU, en 4 s:
+
+  python scripts/validar_grafo.py --archivo grafo_simetrico_s7.json
+  --dispositivo numpy --completo
+
+  ┌───────────────────────────────┬─────────────────────────────────────────┐
+  │            chequeo            │                resultado                │
+  ├───────────────────────────────┼─────────────────────────────────────────┤
+  │ grados exactos                │ sí; δ = 206 564, μ = 0.68857525         │
+  ├───────────────────────────────┼─────────────────────────────────────────┤
+  │ max |θ̇| en las fases          │ 7.3·10⁻¹²                               │
+  │ certificadas                  │                                         │
+  ├───────────────────────────────┼─────────────────────────────────────────┤
+  │ Q implícita contra la fórmula │ 3.6·10⁻¹¹                               │
+  ├───────────────────────────────┼─────────────────────────────────────────┤
+  │ modos de cluster              │ 1.2506, 1.6457, 233.4, … (y la rotación │
+  │                               │  ≈ 0)                                   │
+  ├───────────────────────────────┼─────────────────────────────────────────┤
+  │ Lanczos en 1^⊥                │ 1.2506252671, igual que Q (diferencia   │
+  │                               │ 6·10⁻¹¹)                                │
+  └───────────────────────────────┴─────────────────────────────────────────┘
+
+  El resultado está en data/validacion_s7_n299989.json.
+
+  2. Espectro completo por Fourier
+
+  - src/espectro.py: arma los bloques H_m vectorizados, con la transformada de
+    los intervalos en forma cerrada. También tiene el producto H·x por FFT y el
+    espectro completo, que usa m = 0 … g/2 porque H_{g−m} es el conjugado de
+    H_m.
+  - scripts/espectro_fourier.py: antes de usar la descomposición, la valida
+    contra el producto implícito ciego.
+  - Tests: tests/test_espectro.py los compara con el Hessiano denso.
+
+  ┌────────────────────────────────┬───────────────────┬────────────────────┐
+  │                                │  simétrico (n =   │   general (n =     │
+  │                                │      3·10⁵)       │       3·10⁷)       │
+  ├────────────────────────────────┼───────────────────┼────────────────────┤
+  │ H·x Fourier contra implícito   │ 7·10⁻¹⁶           │ 9·10⁻¹⁶            │
+  ├────────────────────────────────┼───────────────────┼────────────────────┤
+  │ menor modo de cluster          │ 1.2506            │ 157.51             │
+  ├────────────────────────────────┼───────────────────┼────────────────────┤
+  │ m ≠ 0: λ_min exacto / cota de  │ 65 366.47 / 65    │ 6 537 169.2 / 6    │
+  │ Gershgorin                     │ 278.0             │ 528 340            │
+  ├────────────────────────────────┼───────────────────┼────────────────────┤
+  │ m = 0 resto: λ_min / cota      │ igual a la cota   │ igual a la cota    │
+  ├────────────────────────────────┼───────────────────┼────────────────────┤
+  │ tiempo (CPU local)             │ 1 s               │ 126 s              │
+  └────────────────────────────────┴───────────────────┴────────────────────┘
+
+  Los resultados están en data/espectro_s7_n299989.json y
+  data/espectro_s7_n30000004.json. Este es el comando para cada grafo:
+
+  python scripts/espectro_fourier.py --archivo grafo_simetrico_s7.json
+  python scripts/espectro_fourier.py
+
+  Lo que muestra
+
+  - Lanczos daba bien. Su valor para el resto de los modos quedó a 10⁻⁹ relativo
+    del mínimo exacto en los dos grafos. Ahora el número sale exacto y no hace
+    falta GPU.
+  - El certificado es correcto y Gershgorin es casi exacto. Para m ≠ 0, el
+    verdadero λ_min supera la cota por solo 0.13%, y el mínimo está en m = 1.
+  - En m = 0 la cota coincide exactamente con el autovalor. Pasa en el cluster
+    W, que no tiene acople en esos modos (s = 0): su autovalor es justo Σ_b d_Wb
+    cos + 1. La primera corrida marcó "no respeta" por una diferencia de 10⁻¹⁶,
+    que es redondeo de float64. Le agregué al script una tolerancia de 10⁻¹²
+    relativa, con un comentario que explica por qué.
+
+  Todavía no actualicé el notebook simétrico ni la sección 12 de
+  explicacion_completa_S7.md (notes/explicacion_completa_S7.md), que dice "no
+  repetimos la validación". Si querés, lo hago ahora.
+
+❯ <ide_opened_file>The user opened the file /home/imagenes/nicoyanez/investigha
+  ton/investighaton-teo-optimizacion-2026/notebooks/Grafo_simetrico_S7.ipynb in
+  the IDE. This may or may not be related to the current
+  task.</ide_opened_file>
+
+❯ actualiza el notebook y el md
+
+  Ran 4 shell commands (ctrl+o to expand)
+
+● Voy a preparar la nueva sección con un script en el scratchpad, ubicada antes
+  del Resumen, que corra en vivo y copie el código de src/ con sus assert, igual
+  que el notebook general. Primero reviso qué necesito para ejecutar el
+  notebook.
+
+  Made 1 scratchpad edit +581, ran 1 shell command (ctrl+o to expand)
+
+● Bash(cp notebooks/Grafo_simetrico_S7.ipynb
+      /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-teo-
+      optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061f…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+● Se ejecutó. Reviso las salidas (tablas y figura) y que los imports hayan
+  quedado bien:
+
+  Read 4 files, ran 1 shell command (ctrl+o to expand)
+
+● Las tablas están bien, pero en la figura las etiquetas se superponen con las
+  líneas y la curva es casi plana. Voy a ajustar la posición de las etiquetas y
+  el rango del eje, corregir "0.13%" por "0.14%" (1.35·10⁻³) y regenerar desde
+  el respaldo.
+
+● Bash(cd /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-
+      teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/scratchpad &&
+      python - <<'EO…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+  Read 1 file (ctrl+o to expand)
+
+● La figura quedó bien. Ahora el md: agrego la subsección 11.7, actualizo 9.3,
+  la sección 12 y el glosario.
+
+● Bash(python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated notes/explicacion_completa_S7.md (+55 -2)
+      534  | camino B (sub-piezas, `notes/blowup_explicito.md`) | 1 500 0
+           14 | 1032699/1500014 ≈ 0.688463 |
+      535  
+      536  Además, una validación "ciega" (el Hessiano del grafo completo
+            en float64, sin usar la teoría del
+      537 -certificado) y simulaciones de Kuramoto lo confirman. Las simu
+          -laciones muestran también que la cuenca de                    
+      537 +certificado), el espectro completo por bloques de Fourier (sec
+          +ción 11.7) y simulaciones de Kuramoto lo                      
+      538 +confirman. Las simulaciones muestran también que la cuenca de 
+      539  la trampa es diminuta (del orden de $10^{-4}$ rad en las direc
+           ciones lentas): desde fases al azar el grafo
+      540  sincroniza.
+      541  
+     ...
+      712  Datos completos en `data/grafo_simetrico_s7.json` y figura en
+      713  `data/figuras/grafo_simetrico_n299989_estructura.png`.
+      714  
+      715 +### 11.7 Validación y espectro completo                       
+      716 +                                                              
+      717 +El certificado trabaja con los **datos** del grafo (grados, pl
+          +antilla de $7\times7$, bloques de Fourier). Si                
+      718 +hubiera un error entre los datos y el grafo, por ejemplo al pa
+          +sar de los 4 enteros a las tablas, el                         
+      719 +certificado no lo vería. Por eso lo chequeamos de dos maneras 
+          +(sección 8 del notebook simétrico).                           
+      720 +                                                              
+      721 +**Validación ciega** (`scripts/validar_grafo.py --archivo graf
+          +o_simetrico_s7.json`, 4 s en CPU). A partir                   
+      722 +de la regla de adyacencia y nada más (productos $Wy$ y $Hx$ im
+          +plícitos con sumas prefijas, sin armar la                     
+      723 +matriz):                                                      
+      724 +- grados exactos, $\delta = 206\,564$;                        
+      725 +- velocidad en las fases certificadas $7\cdot10^{-12}$: son un
+          + equilibrio del grafo real;                                   
+      726 +- los modos de cluster ($Q_{ab} = \mathbf 1_a^\top H\mathbf 1_
+          +b/\sqrt{n_a n_b}$) coinciden con la fórmula de los            
+      727 +  grados; sus autovalores son 0 (la rotación), **1.2506**, 1.6
+          +457, 233.4 y tres $\approx 7.8\cdot10^4$;                     
+      728 +- Lanczos ciego en $\mathbf 1^\perp$ desde un vector al azar l
+          +lega a 1.2506252671, el menor autovalor de $Q$                
+      729 +  (diferencia relativa $6\cdot10^{-11}$).                     
+      730 +                                                              
+      731 +**Por qué no alcanza con Lanczos.** Cada valor de Ritz es **ma
+          +yor o igual** que el verdadero menor                          
+      732 +autovalor. El residuo garantiza que hay un autovalor cerca, pe
+          +ro no descarta uno más chico que el vector                    
+      733 +inicial no vio. Así, "Lanczos ≥ cota de Gershgorin" es consist
+          +ente con el certificado pero no lo prueba.                    
+      734 +La precisión de float64 no es el problema (error $\sim10^{-16}
+          +\|H\|$); el problema es que la cota es de un                  
+      735 +solo lado.                                                    
+      736 +                                                              
+      737 +**Espectro completo** (`scripts/espectro_fourier.py`, `src/esp
+          +ectro.py`). Correr $v \to v+1$ en todos los                   
+      738 +bloques conmuta con $H$, así que $H$ se parte en $g$ matrices 
+          +hermíticas $H_m$ de $23\times23$ y su                         
+      739 +espectro es la unión de los de ellas. Como $H_{g-m} = \overlin
+          +e{H_m}$, alcanza con $m \le g/2$. Se calculan                 
+      740 +**todos** los autovalores; antes, el producto por bloques (FFT
+          +) se compara con el implícito ciego.                          
+      741 +                                                              
+      742 +| | simétrico | general |                                     
+     … 41 more lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Actualicé el notebook y el md. La sección nueva del notebook está ejecutada
+  (corre en unos 5 s en CPU) y los 45 tests pasan. No commiteé nada.
+
+  Notebook Grafo_simetrico_S7.ipynb (notebooks/Grafo_simetrico_S7.ipynb)
+
+  Agregué una sección 8 nueva, "Validación", antes del Resumen, que pasa a ser
+  la 9:
+
+  - Introducción: por qué validar aunque haya certificado. El certificado
+    trabaja con los datos del grafo, y la validación con el grafo armado desde
+    la regla de adyacencia.
+  - 8.1, productos implícitos:
+    - la teoría de W·y y H·x con sumas prefijas;
+    - el código copiado de src/validacion.py: productos, grados, Q y Lanczos,
+      cada copia comparada con el original mediante un assert.
+  - 8.2, validación ciega: corre en vivo y deja una tabla con los cinco
+    chequeos, la lectura de los resultados y el recuadro con el comando de
+    validar_grafo.py --archivo ....
+  - 8.3, espectro por Fourier:
+    - por qué Lanczos da una cota de un solo lado;
+    - la descomposición en bloques H_m (tabla con sus entradas, fórmula cerrada
+      de la transformada, mitad de las frecuencias, separación de los modos de
+      cluster);
+    - el código copiado de src/espectro.py, también con assert.
+  - 8.4, espectro del grafo simétrico:
+    - tabla con los resultados frente a las cotas del certificado;
+    - figura con el menor autovalor de cada H_m al lado de la cota de
+      Gershgorin;
+    - la lectura de los resultados, incluido por qué la cota de m = 0 es exacta
+      (por el cluster W);
+    - el recuadro de espectro_fourier.py;
+    - una tabla que compara los dos grafos certificados, cargada de los JSON.
+
+  También toqué tres cosas fuera de esa sección:
+  - en la celda de imports agregué eigh_tridiagonal, cargar_json,
+    GrafoImplicito, Arreglos y los módulos validacion y espectro;
+  - en el índice inicial sumé el ítem 7;
+  - en el Resumen sumé dos filas (λ_min y espectro contra las cotas). El
+    "Pendiente" ahora solo nombra las simulaciones de la dinámica, que siguen
+    sin hacerse.
+
+  Las celdas anteriores no se volvieron a ejecutar y conservan sus salidas. La
+  sección 8 lee el grafo de data/grafo_simetrico_s7.json, que es lo que guarda
+  la sección 6, así que el notebook también corre completo de arriba abajo.
+
+  explicacion_completa_S7.md (notes/explicacion_completa_S7.md)
+
+  - 11.7 (nueva), "Validación y espectro completo": los resultados de la
+    validación ciega, por qué Lanczos no alcanza para probar, el método por
+    Fourier y una tabla que compara los dos grafos.
+  - 9.3: menciona el espectro completo.
+  - 12: el ítem "no repetimos" ahora se refiere solo a las simulaciones.
+  - Glosario: agregué Lanczos y espectro por bloques de Fourier.
+
+  Archivos para commitear
+
+  - Modificados:
+    - notebooks/Grafo_simetrico_S7.ipynb
+    - notes/explicacion_completa_S7.md
+    - scripts/validar_grafo.py
+    - src/validacion.py
+  - Nuevos:
+    - src/espectro.py
+    - scripts/espectro_fourier.py
+    - tests/test_espectro.py
+    - data/espectro_s7_n299989.json
+    - data/espectro_s7_n30000004.json
+    - data/validacion_s7_n299989.json
+
+  Dejé una copia del notebook anterior en /tmp/claude-1000/-home-imagenes-nicoya
+  nez-investighaton-investighaton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-
+  f9061fb90e2d/scratchpad/Grafo_simetrico_S7.respaldo.ipynb, por si querés
+  comparar.
+
+❯ En general, note que uno de los autovalores tiene 10^-12 o -13, eso implica
+  que es 0 por imprecision del calculo?, Como podemos determinar si realmente
+  es correcto el valor o que los datos que tenemos son coherentes? porque vos
+  obtuvimos un valor por encima de la cota de gershgorin que debria cumplirse
+  no?
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Sí: ese autovalor es exactamente 0, y el 10⁻¹² es pura imprecisión de float64.
+  Lo comprobé recalculando con 50 dígitos.
+
+  1. El autovalor ≈ 10⁻¹² es la rotación global
+
+  Que valga 0 no es un resultado numérico, es una identidad: si se suma la misma
+  constante a todas las fases, nada cambia. En el Hessiano eso dice que H·1 = 0
+  exactamente, porque cada fila suma cero (H_uu = Σ_v W_uv cos y H_uv = −W_uv
+  cos). En la matriz Q de 7×7, el vector correspondiente es (√n_a). Es el modo
+  que el certificado descarta como rotación.
+
+  Hay tres pruebas de que el 10⁻¹² es redondeo:
+
+  ┌───────────────────────────────────┬─────────────────────────────────────┐
+  │              prueba               │              resultado              │
+  ├───────────────────────────────────┼─────────────────────────────────────┤
+  │ Q·(√n_a) con 50 dígitos           │ 2·10⁻⁴⁴                             │
+  ├───────────────────────────────────┼─────────────────────────────────────┤
+  │ autovalor con 50 dígitos          │ 4·10⁻⁴⁷ (baja junto con la          │
+  │                                   │ precisión)                          │
+  ├───────────────────────────────────┼─────────────────────────────────────┤
+  │ autovector en float64 contra      │ coseno = 1.0                        │
+  │ (√n_a)                            │                                     │
+  ├───────────────────────────────────┼─────────────────────────────────────┤
+  │ error esperado en float64, ε·‖Q‖  │ 1.7·10⁻¹¹                           │
+  └───────────────────────────────────┴─────────────────────────────────────┘
+
+  El valor de float64 (−1.4·10⁻¹² o +8·10⁻¹³, según la corrida) queda por debajo
+  de 1.7·10⁻¹¹, así que es indistinguible de 0. Con 50 dígitos baja a 10⁻⁴⁷, lo
+  que confirma que es exactamente 0 visto con la precisión disponible. Los
+  demás autovalores en 50 dígitos (1.25062526719, 1.64574097732, …) coinciden
+  con los de float64 en todos los dígitos que mostramos.
+
+  2. ¿Cómo saber si un valor es correcto?
+
+  Hay dos niveles, y conviene no mezclarlos.
+
+  La prueba es el certificado. Usa aritmética de intervalos con redondeo hacia
+  afuera: cada número es un intervalo que seguro contiene el valor real. Ahí
+  nada depende de que float64 "acierte". La rotación se excluye por
+  construcción: Cholesky sobre L sin el modo constante.
+
+  Lo numérico es un control de coherencia. Para saber cuánto confiar en un
+  número de float64 se usa este argumento:
+  - Error del autovalor: eigh es estable hacia atrás. Lo que devuelve son los
+    autovalores exactos de H + E, con ‖E‖ ≈ K·ε·‖H‖, y por el teorema de Weyl
+    cada autovalor se mueve como mucho ‖E‖. En nuestro caso eso da un error
+    absoluto de ~10⁻¹¹ a 10⁻¹⁰.
+  - Lectura: 1.2506 es correcto en unos 10 dígitos, y cualquier cosa del orden
+    de 10⁻¹¹ es indistinguible de 0.
+  - Caminos independientes: el mismo 1.2506252671 sale por tres vías: Q
+    calculada con productos implícitos, Lanczos ciego y Fourier, que coinciden
+    en 10⁻¹⁰ relativo. Además, el pivote del Cholesky por intervalos del
+    certificado es positivo. Si los datos (JSON, tablas, fases) tuvieran algún
+    error, estas vías no coincidirían.
+
+  3. La cota de Gershgorin: sí, tiene que cumplirse, y se cumple
+
+  El certificado prueba λ_min ≥ cota, así que el valor real tiene que quedar por
+  encima.
+
+  - Para m ≠ 0: el valor real supera la cota en un 0.14% (65 366.47 contra 65
+    278.03, unas 88 unidades). Eso es unos 10¹² veces más que el error de
+    float64, así que no hay duda.
+  - Para m = 0: la diferencia (−5.6·10⁻¹⁶ relativo) cae dentro del error de
+    float64. Ahí float64 no puede decidir, pero no hace falta, porque el valor
+    exacto se conoce:
+    - las tablas de W con los demás clusters son constantes, así que en las
+      diferencias entre los 5 bloques de W no actúa ningún acople;
+    - entonces el autovalor es exactamente Σ_b d_Wb cos + 1, con multiplicidad 4
+      (5 bloques menos 1): en el espectro aparecen cuatro veces 65366.791329, y
+      los otros clusters también vienen de a cuatro;
+    - la cota se calcula con esa misma expresión, tomando el extremo inferior de
+      su intervalo.
+
+  ┌──────────────────────────────────┬───────────────────────┐
+  │                                  │         valor         │
+  ├──────────────────────────────────┼───────────────────────┤
+  │ Σ_b d_Wb cos + 1 (50 dígitos)    │ 65366.791328731108449 │
+  ├──────────────────────────────────┼───────────────────────┤
+  │ cota del certificado × n (float) │ 65366.7913287311      │
+  └──────────────────────────────────┴───────────────────────┘
+
+  Coinciden en todos los dígitos de float64. Por definición, la cota del
+  intervalo es menor o igual que el valor verdadero; la diferencia de −10⁻¹⁶
+  aparece solo al guardarla como float y compararla con otro cálculo en float.
+  Por eso el script compara con una tolerancia de 10⁻¹².
+
+  Si quisieran que también esta parte fuera rigurosa y no solo numérica, se
+  puede hacer Cholesky por intervalos de cada bloque H_m − cota·I. Son 6 522
+  bloques de 23×23: barato, pero en mpmath tarda bastante más que en float. No
+  hace falta para la prueba, porque Gershgorin ya alcanza. ¿Lo agrego?
+
+❯ No, con esto me quedo mas seguro
+
+● Entonces lo dejamos así; no hace falta más rigor.
+
+  Todavía no commiteé nada. Los cambios de esta tanda son:
+  - Modificados: el notebook simétrico, el md, scripts/validar_grafo.py y
+    src/validacion.py.
+  - Nuevos: src/espectro.py, scripts/espectro_fourier.py, tests/test_espectro.py
+    y los tres JSON en data/.
+
+  Lo único pendiente del grafo simétrico es la simulación de la dinámica. Es
+  opcional: no cambia la prueba, solo mostraría la cuenca.
+
+❯ Ah con respecto a la simulacion del explicito, en la de ruido 0.5, de alguna
+  manera en el grafico de r y distancia al certificado , la continuacion
+  dinamica exacta determina que sincroniza, pero eso es correcto? porque el
+  grafo en t=60 de la imagen se llega a un estado estable pero no todos son
+  sincronizados en la misma fase. Esta biene esa "dianmica exacta"
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ Ah con respecto a la simulacion del explicito, en la de ruido 0.5, de alguna
+  manera en el grafico de r y distancia al certificado , la continuacion
+  dinamica exacta determina que sincroniza, pero eso es correcto? porque el
+  grafo en t=60 de la imagen se llega a un estado estable pero no todos son
+  sincronizados en la misma fase. Esta bien esa "dianmica exacta"?
+● Antes de responder reviso los datos de esa corrida y cómo se armó la
+  continuación:
+
+  Read 1 file, ran 2 shell commands (ctrl+o to expand)
+
+● Sí, el resultado es correcto, con un matiz. Lo que en la imagen de t = 60
+  parece un estado estable no es un equilibrio todavía: el sistema se mueve tan
+  despacio que no se ve.
+
+  Qué pasa en t = 60
+
+  En t = 60 las fases ya están agrupadas en los 7 clusters, cerca de 0, π/2, π y
+  3π/2. A simple vista es la trampa. Pero en el panel de la distancia se ve que
+  el estado quedó a 1.16·10⁻² rad de θ*, no en θ*. La cuenca de la trampa en
+  las direcciones lentas mide ~10⁻⁴ rad, así que el estado quedó unas 100 veces
+  afuera. En un círculo, 0.01 rad no se distingue: por eso la foto engaña.
+
+  El ruido de 0.5 rad desaparece rápido dentro de cada cluster (tasa ≈ 0.26),
+  pero mientras dura corre las medias de los clusters una cantidad del orden de
+  σ². Ese corrimiento cae en los modos lentos, cuyas tasas son 5·10⁻⁶ y 7·10⁻⁶,
+  y ahí la dinámica casi no se mueve. Los números de la corrida lo muestran:
+
+  ┌────────┬────────────────┬──────────┐
+  │   t    │ distancia a θ* │    r     │
+  ├────────┼────────────────┼──────────┤
+  │ 60     │ 1.1572·10⁻²    │ 0.048994 │
+  ├────────┼────────────────┼──────────┤
+  │ 127    │ 1.1585·10⁻²    │ 0.048989 │
+  ├────────┼────────────────┼──────────┤
+  │ 229    │ 1.1629·10⁻²    │ 0.048981 │
+  ├────────┼────────────────┼──────────┤
+  │ 487    │ 1.2263·10⁻²    │ 0.048988 │
+  ├────────┼────────────────┼──────────┤
+  │ ≈ 1000 │ escapa         │ → 1      │
+  └────────┴────────────────┴──────────┘
+
+  Después de t = 60 la distancia crece, aunque muy lento: se aleja de θ* cada
+  vez más rápido hasta que se escapa y sincroniza. Es lo esperable cerca del
+  pliegue: la bolita está fuera del pozo, en una zona casi plana.
+
+  ¿La continuación es confiable?
+
+  La palabra "exacta" se refiere a la reducción, no al resultado:
+
+  - Es exacta en el caso ideal. Si todos los vértices de un cluster tienen la
+    misma fase, cada uno ve exactamente d_ab vecinos en cada cluster b. Entonces
+    el grafo completo cumple exactamente ẏ_a = Σ_b (d_ab/n) sin(y_b − y_a), sin
+    aproximación.
+  - El error real es despreciable. En t = 60 la dispersión dentro de cada
+    cluster es ~0.5·e^(−0.26·60) ≈ 10⁻⁷ rad, y su efecto sobre las medias es de
+    orden dispersión², ~10⁻¹⁴. Integrado hasta t ≈ 1000 da ~10⁻¹¹, frente a un
+    estado que está a 10⁻² de θ* y 100 veces afuera de la cuenca. Un error así
+    no cambia de qué lado cae.
+  - Hay un control cruzado. Con ruido 0.05, la misma combinación de simulación
+    completa y continuación vuelve a θ*, con distancia 1.3·10⁻¹². El método no
+    empuja siempre hacia la sincronización.
+
+  Lo honesto es decir que la sincronización con ruido 0.5 es un resultado
+  numérico muy confiable, no probado. La prueba del grafo es otra: que θ* es un
+  mínimo local estricto, y eso no depende de esta simulación.
+
+  Si querés confirmarlo sin la reducción
+
+  1. Correr el grafo completo hasta t ≈ 1500 en el server. Con RK4 y dt = 0.5
+     son unos 3000 pasos, aproximadamente 3 h en la GPU. Se vería el escape
+     directamente.
+  2. Hacer lo mismo con el grafo simétrico (n = 3·10⁵) en esta máquina, en unos
+     15 minutos. Compararía la simulación completa contra la continuación en un
+     grafo de dinámica parecida, así que valida el método aunque no sea el mismo
+     grafo. Además cubriría la simulación pendiente del simétrico.
+
+  Mi recomendación es la 2. También cambiaría la etiqueta "dinámica exacta por
+  clusters" del gráfico por "reducción a clusters (exacta si cada cluster está
+  sincronizado)", para que no se lea como que el resultado es exacto. ¿Hago las
+  dos cosas?
+
+❯ Hace solo la simulacion del simetrico pero extendela para asegurar que los
+  datos no sean "predicciones" sino "reales" provenientes de la simulacion
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● Voy a agregar al script de simulación tres opciones nuevas: --archivo para el
+  grafo simétrico, --continuar-desde para extender la simulación completa más
+  allá del punto de reducción y así comparar, y --fotos.
+
+● Bash(python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated scripts/visualizar_grafo.py (+51 -19)
+      1 -"""Dibuja un grafo certificado (data/grafos_s7.json o data/s7_su
+        -bpiezas.json) y simula Kuramoto sobre él.                       
+      1 +"""Dibuja un grafo certificado (data/grafos_s7.json, data/s7_sub
+        +piezas.json o, con --archivo, otro JSON como                    
+      2 +data/grafo_simetrico_s7.json) y simula Kuramoto sobre él.       
+      3  
+      4  Figuras, en data/figuras/:
+      5    grafo_n<n>_estructura.png
+     ...
+      22  Dinámica (tiempo normalizado): θ̇_u = (1/n) Σ_v W_uv sin(θ_v − θ
+          _u). El grafo completo se integra con
+      23  RK4 y los productos implícitos W·y de src/validacion.py (numpy,
+           o torch en cpu/cuda) hasta --tiempo;
+      24  después cada cluster está concentrado (los modos internos decae
+          n a tasa ~0.22) y se sigue, hasta
+      24 ---tiempo-clusters, con la dinámica exacta de las fases medias d
+         -e los clusters (LSODA, scipy).                                 
+      25 +--tiempo-clusters, con la reducción a las fases medias de los c
+         +lusters (LSODA, scipy), que es exacta                          
+      26 +si cada cluster está sincronizado.                             
+      27 +Con --continuar-desde T (< --tiempo), la reducción arranca en T
+         + y el grafo completo sigue hasta --tiempo:                     
+      28 +la reducción queda como comparación y todo lo que pasa hasta --
+         +tiempo sale de la simulación completa.                         
+      29  
+      30  Comandos:
+      31    .venv/bin/python scripts/visualizar_grafo.py                 
+                              # solo las figuras
+      32    .venv/bin/python scripts/visualizar_grafo.py --simular pertur
+          bado,azar,clusters  # grafo B, CPU, ~minutos
+      33    python scripts/visualizar_grafo.py --n 30000004 --simular per
+          turbado,azar --dispositivo cuda   # server
+      34 +  python scripts/visualizar_grafo.py --archivo grafo_simetrico_
+         +s7.json --simular perturbado \                                 
+      35 +      --tiempo 4000 --continuar-desde 60 --fotos 0,15,60,600,40
+         +00            # simétrico, CPU, ~15 min                        
+      36  """
+      37  import argparse
+      38  import colorsys
+     ...
+      70      return filas
+      71  
+      72  
+      67 -def elegir_grafo(n):                                           
+      73 +def grafos_de_archivo(archivo):                                
+      74 +    """Las descripciones certificadas de un JSON de data/ (una 
+         +lista de filas o un solo grafo): [(origen, fila)]."""          
+      75 +    contenido = cargar_json(archivo)                           
+      76 +    if isinstance(contenido, dict):                            
+      77 +        contenido = [contenido]                                
+      78 +    filas = []                                                 
+      79 +    for fila in contenido:                                     
+      80 +        if fila.get("certificado") and fila["certificado"]["ok"
+         +]:                                                             
+      81 +            filas.append((archivo, fila))                      
+      82 +    return filas                                               
+      83 +                                                               
+      84 +                                                               
+     … 104 more lines (ctrl+o to expand)
+
+● Hago una prueba corta para ver que todo encaja; la corrida larga después la
+  sobrescribe:
+
+● Bash(time python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json
+      --simular perturbado --tiempo 4 --continuar-desde 2 --fotos 0,1,2,4
+      --tiempo-clusters…)
+  ⎿  3 files changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+● La prueba funciona y cada paso es rápido. Ahora lanzo en serie las dos
+  corridas largas hasta t=4000 (~8000 pasos de RK4 cada una), ya que escriben en
+  el mismo JSON: la de ruido 0.5 debería escapar, y la de ruido 0.05 sirve de
+  control y debería volver.
+
+  Read 1 file, ran 2 shell commands (ctrl+o to expand)
+
+● La simulación completa, sin ninguna reducción, ya muestra el escape: en t =
+  454 r sigue en 0.0489 y en t = 848 vale 1.0000. Espero a que terminen las dos
+  corridas.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Background command "Wait for first long simulation to finish" completed (exit
+code 0)
+
+● La corrida de ruido 0.5 ya escapó en la simulación completa (entre t=454 y
+  t=848), mientras que la de ruido 0.05 sigue acercándose lentamente, a 9.9·10⁻⁵
+  de θ*. Sigo esperando a que termine.
+
+  Read 1 file, ran 1 shell command (ctrl+o to expand)
+
+● Falta poco para que termine la corrida de ruido 0.05: va por t ≈ 3200 de 4000.
+
+  - Ruido 0.5 (terminada): la simulación completa del grafo, sin reducción,
+    escapa. Entre t = 454 y t = 848 el parámetro r pasa de 0.0489 a 1, es decir,
+    sincroniza.
+  - Ruido 0.05 (en curso): la distancia a θ* baja de 9.94·10⁻⁵ en t = 60 a
+    9.81·10⁻⁵ en t = 3212. Ese ritmo es justo el del modo más lento, λ/n ≈
+    4.2·10⁻⁶. Pero volver del todo a θ* lleva un tiempo del orden de 10⁶, y eso
+    no se puede simular con dt = 0.5. Cuando termine propongo cómo cubrirlo.
+
+❯ Osea que incluso con 0.05, sincronizaria es lo que decis? solo que tarda
+  muchisimo mas tiempo?
+
+● Bash(L=/tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-t
+      eo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/scratchpad/sim_s
+      imetrico.log;…)
+  ⎿  2 files changed (binary, mode only or too large to show)
+  ⎿  (timeout 6m 40s)
+
+● Background command "Run long full simulations of symmetric graph" completed
+(exit code 0)
+
+● Con ruido 0.05 el grafo no sincroniza y vuelve a caer en la trampa, lo que
+  explica la demora. La simulación completa ya terminó, así que ahora comparo
+  con la reducción a clusters en el tramo donde se superponen.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Background command "Wait for second simulation" completed (exit code 0)
+
+● Background command "Wait for both simulations to finish" completed (exit code
+0)
+
+● No, con ruido 0.05 no sincroniza: vuelve a la trampa, y lo que tarda muchísimo
+  es esa vuelta. La distancia a θ* baja y r se queda fijo en 0.0431. Si fuera a
+  sincronizar, la distancia subiría y r iría hacia 1, como pasa con ruido 0.5.
+
+  ┌───────────────┬────────────────────────┬────────────────────────────────┐
+  │               │       ruido 0.5        │           ruido 0.05           │
+  ├───────────────┼────────────────────────┼────────────────────────────────┤
+  │ distancia en  │ 1.13·10⁻²              │ 9.94·10⁻⁵                      │
+  │ t = 60        │                        │                                │
+  ├───────────────┼────────────────────────┼────────────────────────────────┤
+  │ qué hace      │ crece cada vez más     │ baja despacio y en forma       │
+  │ después       │ rápido                 │ pareja                         │
+  ├───────────────┼────────────────────────┼────────────────────────────────┤
+  │ simulación    │ escapa: r cruza 0.5 en │ en t = 4000 está en 9.78·10⁻⁵, │
+  │ completa      │  t = 786 y llega a 1   │  con r = 0.0431                │
+  ├───────────────┼────────────────────────┼────────────────────────────────┤
+  │               │                        │ vuelve a θ* (según la          │
+  │ final         │ sincroniza             │ reducción, distancia 6·10⁻¹³   │
+  │               │                        │ en t = 10⁷)                    │
+  └───────────────┴────────────────────────┴────────────────────────────────┘
+
+  Por qué tarda tanto en volver. La perturbación quedó casi entera en el modo
+  más lento, cuya tasa es λ/n ≈ 4.2·10⁻⁶. En la simulación completa, entre t =
+  60 y t = 4000 la distancia baja de 9.94·10⁻⁵ a 9.78·10⁻⁵. Eso es exactamente
+  e^(−4.2·10⁻⁶·3940): el decaimiento que predice el autovalor del certificado,
+  medido ahora en el grafo real. Achicar la distancia por un factor e lleva t ≈
+  2.4·10⁵, y bajar hasta 10⁻¹³ lleva unos 10⁶–10⁷.
+
+  La comparación con la reducción a clusters, ahora con datos reales de los dos
+  lados, se ve en las mismas tablas:
+  - Ruido 0.05: coinciden en 4–5 dígitos desde t = 60 hasta t = 4000.
+  - Ruido 0.5: coinciden hasta t ≈ 500 y después se separan un poco. La
+    reducción escapa unas decenas de unidades más tarde, porque cerca del escape
+    cualquier diferencia mínima se amplifica. El resultado final es el mismo:
+    sincroniza.
+
+  La distancia final distinta (3.14 contra 2.46) es solo la forma de restar la
+  rotación global en cada medida; las dos tienen r = 1.
+
+  Por lo tanto, el escape con ruido 0.5 ya es un dato real de la simulación
+  completa. Para ruido 0.05, lo real es la tendencia hasta t = 4000: baja al
+  ritmo correcto y coincide con la reducción. El "vuelve del todo" sigue siendo
+  la predicción de la reducción.
+
+  Para que también la vuelta completa sea real: se puede integrar el grafo
+  completo hasta t ≈ 10⁶ con dt = 5. Es estable, porque los modos rápidos tienen
+  tasa ≈ 0.26 y RK4 lo es mientras dt·0.26 < 2.8, y preciso para los modos
+  lentos. Son unos 2·10⁵ pasos, unas 6 horas en esta máquina en segundo plano.
+  ¿La corro? Después agrego todo al notebook simétrico y al md.
+
+❯ si usara una gpu?
+
+● Con la GPU ayudaría, pero bastante menos de lo que parece: calculo un factor
+  de 3 a 5, es decir, pasar de unas 6 horas a 1.5–2 horas. Es una estimación a
+  partir de las mediciones que ya tenemos; la confirma una prueba corta en el
+  servidor.
+
+  Por qué la ganancia es chica en este grafo:
+  - Una prueba previa: en el grafo de 3·10⁷ vértices la GPU fue unas 6 veces más
+    rápida que la CPU por producto (0.73 s contra 4.5 s). Ahí cada producto
+    mueve vectores de 240 MB y la GPU aprovecha su ancho de banda.
+  - El grafo simétrico es 100 veces más chico (2.4 MB por vector). Cada producto
+    W·y son unas cien operaciones chicas, una por cluster y por par, y en la
+    GPU cada una tiene un costo fijo de lanzamiento de ~10–20 µs que no depende
+    del tamaño. Eso deja un piso de unos 2 ms por producto.
+  - Cuánto da por paso: un paso de RK4 hace 8 productos W·y, más la medición de
+    r y de la distancia. Esa medición obliga a la GPU a esperar a la CPU en cada
+    paso. Estimo 20–40 ms por paso en GPU, contra 108 ms medidos acá en CPU.
+
+  ┌────────────────────────┬──────────┬──────────────────────────────────┐
+  │                        │ por paso │ 2·10⁵ pasos (t = 10⁶ con dt = 5) │
+  ├────────────────────────┼──────────┼──────────────────────────────────┤
+  │ CPU local (medido)     │ 108 ms   │ ~6 h                             │
+  ├────────────────────────┼──────────┼──────────────────────────────────┤
+  │ GPU 1080 Ti (estimado) │ 20–40 ms │ ~1.5–2 h                         │
+  └────────────────────────┴──────────┴──────────────────────────────────┘
+
+  Lo que más rinde es achicar el trabajo por paso, no cambiar de máquina:
+  - Medir cada 10–100 pasos y no en cada uno. Se elimina la espera en la GPU y
+    se ahorra trabajo también en CPU. Para una curva en escala logarítmica de t
+    = 60 a t = 10⁶ sobran unos pocos miles de puntos.
+  - Usar el dt más grande que sea seguro. dt = 5 ya es 10 veces menos pasos que
+    dt = 0.5. Se puede subir hasta ~8 sin perder estabilidad (dt·0.26 ≈ 2 <
+    2.8), pero me quedaría en 5 por precisión en los modos intermedios.
+
+  Propongo agregar una opción --medir-cada N al script, que hoy no la tiene, y
+  correr esto en el servidor:
+
+  python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json --simular
+  perturbado --ruido 0.05 \
+      --dt 5 --tiempo 1000000 --continuar-desde 60 --medir-cada 20 --dispositivo
+  cuda \
+      --fotos 0,60,10000,1000000
+
+  La prueba de un minuto que confirma los tiempos es esa misma línea con
+  --tiempo 2000: con el log se ve cuánto tarda cada paso.
+
+  Hay un detalle: con dt = 5, los primeros pasos desde el ruido inicial son
+  menos precisos, porque los modos rápidos todavía no se apagaron. Para eso está
+  --continuar-desde 60, aunque hoy no cambia el dt. Lo correcto es integrar con
+  dt = 0.5 hasta t = 60 y recién después pasar a dt = 5. Agregaría también ese
+  cambio de paso, como una opción --dt-largo.
+
+  ¿Hago esos dos cambios (--medir-cada y --dt-largo) para que lo corras en el
+  servidor?
+
+❯ Dale
+
+● Bash(python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated scripts/visualizar_grafo.py (+26 -11)
+      32    .venv/bin/python scripts/visualizar_grafo.py --simular pertur
+          bado,azar,clusters  # grafo B, CPU, ~minutos
+      33    python scripts/visualizar_grafo.py --n 30000004 --simular per
+          turbado,azar --dispositivo cuda   # server
+      34    python scripts/visualizar_grafo.py --archivo grafo_simetrico_
+          s7.json --simular perturbado \
+      35 -      --tiempo 4000 --continuar-desde 60 --fotos 0,15,60,600,40
+         -00            # simétrico, CPU, ~15 min                        
+      35 +      --tiempo 4000 --continuar-desde 60 --fotos 0,15,60,1000,4
+         +000            # simétrico, CPU, ~15 min                       
+      36 +  python scripts/visualizar_grafo.py --archivo grafo_simetrico_
+         +s7.json --simular perturbado --ruido 0.05 \                    
+      37 +      --tiempo 1000000 --continuar-desde 60 --dt-largo 5 --medi
+         +r-cada 20 --fotos 0,60,10000,1000000 \                         
+      38 +      --dispositivo cuda                                       
+         +              # vuelta completa, server                        
+      39  """
+      40  import argparse
+      41  import colorsys
+     ...
+      293          envuelta = (diferencia - giro + np.pi) % (2 * np.pi) -
+            np.pi
+      294          return r, float(abs(envuelta).max())
+      295  
+      293 -    def correr(self, theta, tiempo, dt, fotos, t0=0.0):       
+      294 -        """Integra de t0 a `tiempo`; guarda r y la distancia e
+          -n cada paso y las fases de la muestra en `fotos`."""          
+      296 +    def correr(self, theta, tiempo, dt, fotos, t0=0.0, medir_c
+          +ada=1):                                                       
+      297 +        """Integra de t0 a `tiempo`; guarda r y la distancia c
+          +ada `medir_cada` pasos y las fases de la muestra en `fotos`.  
+      298 +                                                              
+      299 +        Medir obliga a traer números a la CPU (en GPU, una esp
+          +era por medición): con pasos chicos y tiempos                 
+      300 +        largos conviene medir cada tanto.                     
+      301 +        """                                                   
+      302          pasos = int(round((tiempo - t0) / dt))
+      303          tiempos_foto = set()
+      304          for t in fotos:
+      305              tiempos_foto.add(int(round((t - t0) / dt)))
+      306 +        aviso = max(1, pasos // 10)                           
+      307          serie = {"t": [], "r": [], "distancia": []}
+      308          instantaneas = []
+      309          inicio = time.time()
+      310          for paso in range(pasos + 1):
+      303 -            r, distancia = self.medir(theta)                  
+      304 -            serie["t"].append(t0 + paso * dt)                 
+      305 -            serie["r"].append(r)                              
+      306 -            serie["distancia"].append(distancia)              
+      311 +            if paso % medir_cada == 0 or paso % aviso == 0 or 
+          +paso == pasos:                                                
+      312 +                r, distancia = self.medir(theta)              
+      313 +                serie["t"].append(t0 + paso * dt)             
+      314 +                serie["r"].append(r)                          
+      315 +                serie["distancia"].append(distancia)          
+     … 37 more lines (ctrl+o to expand)
+
+● Primero respaldo el JSON y la figura de ruido 0.05 para que no se
+  sobrescriban, y luego pruebo los dos cambios con una corrida corta hasta t =
+  2000, comparando dt = 5 contra dt = 0.5.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Las dos opciones funcionan, y con dt = 5 el resultado coincide con el de dt =
+  0.5:
+
+  ┌───────────────────────────────────┬─────────────┬─────────┐
+  │             t = 2000              │  distancia  │    r    │
+  ├───────────────────────────────────┼─────────────┼─────────┤
+  │ dt = 0.5 (corrida anterior)       │ 9.8635·10⁻⁵ │ 0.04306 │
+  ├───────────────────────────────────┼─────────────┼─────────┤
+  │ dt = 0.5 hasta 60, después dt = 5 │ 9.8635·10⁻⁵ │ 0.04306 │
+  └───────────────────────────────────┴─────────────┴─────────┘
+
+  Al terminar la prueba restauré el JSON y la figura de las corridas largas.
+
+  En esta máquina, en CPU, cada paso tarda unos 0.116 s. Hasta t = 10⁶ son unos
+  2·10⁵ pasos, así que serían unas 6.5 h. En la GPU calculo 1.5–2 h; la prueba
+  corta de abajo lo confirma.
+
+  Para correr en el servidor
+
+  1. Llevar el JSON al servidor antes de correr. El script agrega claves a
+     data/simulacion_n299989.json si ya existe; si no existe, crea uno nuevo que
+     solo va a tener la corrida de 0.05. Copialo junto con
+     data/grafo_simetrico_s7.json y el script nuevo, o commiteá y hacé pull.
+  2. Prueba corta (~1 min), para ver cuánto tarda cada paso en la GPU:
+  python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json --simular
+  perturbado --ruido 0.05 \
+      --tiempo 2000 --continuar-desde 60 --dt-largo 5 --medir-cada 20 --fotos
+  0,60,1000,2000 --dispositivo cuda
+  3. Corrida completa, en segundo plano y con log:
+  nohup python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json
+  --simular perturbado --ruido 0.05 \
+      --tiempo 1000000 --continuar-desde 60 --dt-largo 5 --medir-cada 20 --fotos
+  0,60,10000,1000000 \
+      --dispositivo cuda > sim_simetrico_largo.log 2>&1 &
+  4. Traer de vuelta data/simulacion_n299989.json y
+     data/figuras/grafo_n299989_sim_perturbado_ruido0.05.png. La clave
+     perturbado_ruido0.05 va a reemplazar a la corrida hasta t = 4000.
+
+  Si la vuelta completa sale real, la distancia tiene que bajar como
+  e^(−4.2·10⁻⁶·t), unas 70 veces menos que en t = 60. Cuando tengas los datos,
+  agrego las dos simulaciones al notebook simétrico y al md.
+
+  Cambios en visualizar_grafo.py (scripts/visualizar_grafo.py)
+
+  - Nuevas opciones:
+    - --archivo: elige el JSON del grafo; sin la opción, el comportamiento es el
+      de antes;
+    - --continuar-desde T: la reducción a clusters arranca en T y el grafo
+      completo sigue hasta --tiempo, así se comparan las dos;
+    - --dt-largo: el paso que se usa después de T;
+    - --medir-cada N: mide r y la distancia cada N pasos;
+    - --fotos: los tiempos de las fotos de fases.
+  - Cambio de etiqueta: "dinámica exacta por clusters" pasa a decir "reducción a
+    clusters desde t = T". Las figuras del grafo de 3·10⁷ conservan la etiqueta
+    vieja hasta que se regeneren.
+  - Datos nuevos: data/simulacion_n299989.json y las figuras
+    grafo_n299989_sim_perturbado_ruido0.5.png y ..._ruido0.05.png.
+
+❯ Aqui esta la simulacion corta
+
+● La prueba corta salió bien: la GPU da los mismos números que la CPU de esta
+  máquina.
+
+  ┌──────────────────────────────────────┬────────────────────┬──────────────┐
+  │ t = 2000, ruido 0.05, dt = 5 después │     distancia      │      r       │
+  │               de t = 60              │                    │              │
+  ├──────────────────────────────────────┼────────────────────┼──────────────┤
+  │ servidor (tu JSON)                   │ 9.86354551396·10⁻⁵ │ 0.0430624907 │
+  ├──────────────────────────────────────┼────────────────────┼──────────────┤
+  │ esta máquina, CPU                    │ 9.86354551391·10⁻⁵ │ 0.0430624907 │
+  ├──────────────────────────────────────┼────────────────────┼──────────────┤
+  │ esta máquina, dt = 0.5 hasta t =     │ 9.8635·10⁻⁵        │ 0.04306      │
+  │ 4000                                 │                    │              │
+  └──────────────────────────────────────┴────────────────────┴──────────────┘
+
+  Coinciden en 12 dígitos, así que la diferencia es solo redondeo. Con dt = 5 la
+  distancia sigue bajando lento y parejo, como antes. La serie de ruido 0.5 de
+  tu archivo es la de la corrida larga hecha acá (escapa en t ≈ 786), así que el
+  JSON quedó bien combinado.
+
+  Falta un dato: cuánto tardó la prueba en la GPU. En el log aparece al lado de
+  cada t = ... como (N s); si me pasás la última línea, te digo cuánto va a
+  durar la corrida completa. Si te da menos de ~0.1 s por paso (en esta máquina
+  es 0.116 s), conviene correrla en el servidor.
+
+  nohup python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json
+  --simular perturbado --ruido 0.05 \
+      --tiempo 1000000 --continuar-desde 60 --dt-largo 5 --medir-cada 20 --fotos
+  0,60,10000,1000000 \
+      --dispositivo cuda > sim_simetrico_largo.log 2>&1 &
+
+  Esa corrida reemplaza la clave perturbado_ruido0.05 de la prueba corta, y está
+  bien que lo haga. No copio tu JSON al repo local, porque acá la clave 0.05
+  tiene la corrida más larga, hasta t = 4000 con dt = 0.5. Cuando termine la de
+  t = 10⁶, traé el JSON y la figura y agrego todo al notebook y al md.
+
+❯ t =      12.0  r = 0.0431  distancia al estado = 1.59e-02  (1 s)
+    t =      18.0  r = 0.0431  distancia al estado = 4.31e-03  (2 s)
+    t =      24.0  r = 0.0431  distancia al estado = 1.17e-03  (2 s)
+    t =      30.0  r = 0.0431  distancia al estado = 3.17e-04  (3 s)
+    t =      36.0  r = 0.0431  distancia al estado = 1.20e-04  (3 s)
+    t =      42.0  r = 0.0431  distancia al estado = 1.04e-04  (4 s)
+    t =      48.0  r = 0.0431  distancia al estado = 1.00e-04  (4 s)
+    t =      54.0  r = 0.0431  distancia al estado = 9.95e-05  (5 s)
+    t =      60.0  r = 0.0431  distancia al estado = 9.94e-05  (5 s)
+    t =      60.0  r = 0.0431  distancia al estado = 9.94e-05  (0 s)
+    t =     250.0  r = 0.0431  distancia al estado = 9.93e-05  (2 s)
+    t =     440.0  r = 0.0431  distancia al estado = 9.92e-05  (3 s)
+    t =     630.0  r = 0.0431  distancia al estado = 9.92e-05  (5 s)
+    t =     820.0  r = 0.0431  distancia al estado = 9.91e-05  (7 s)
+    t =    1010.0  r = 0.0431  distancia al estado = 9.90e-05  (8 s)
+    t =    1200.0  r = 0.0431  distancia al estado = 9.89e-05  (10 s)
+    t =    1390.0  r = 0.0431  distancia al estado = 9.89e-05  (12 s)
+    t =    1580.0  r = 0.0431  distancia al estado = 9.88e-05  (13 s)
+    t =    1770.0  r = 0.0431  distancia al estado = 9.87e-05  (15 s)
+    t =    1960.0  r = 0.0431  distancia al estado = 9.87e-05  (17 s)
+    fin del grafo completo: r = 0.0431, distancia = 9.86e-05
+    continuación por clusters hasta t = 1e+07: r = 0.0430, distancia = 5.94e-13
+  → /data2/egov/investighaton/investighaton-teo-optimizacion-2026/data/figuras
+  /grafo_n299989_sim_perturbado_ruido0.05.png
+● En el servidor cada paso tarda 0.044 s: 388 pasos (de t = 60 a 2000 con dt =
+  5) en 17 s. Eso es 2.6 veces más rápido que en esta máquina (0.116 s), así que
+  conviene correrla ahí.
+
+  ┌──────────────────────────┬────────┬────────────────────────────────────┐
+  │                          │ pasos  │          tiempo estimado           │
+  ├──────────────────────────┼────────┼────────────────────────────────────┤
+  │ hasta t = 10⁶ con dt = 5 │ ~2·10⁵ │ ~2.5 h en el servidor (~6.5 h acá) │
+  └──────────────────────────┴────────┴────────────────────────────────────┘
+
+  Es un poco más que lo que había estimado (1.5–2 h), pero entra en una tarde.
+  El comando es el mismo:
+
+  nohup python scripts/visualizar_grafo.py --archivo grafo_simetrico_s7.json
+  --simular perturbado --ruido 0.05 \
+      --tiempo 1000000 --continuar-desde 60 --dt-largo 5 --medir-cada 20 --fotos
+  0,60,10000,1000000 \
+      --dispositivo cuda > sim_simetrico_largo.log 2>&1 &
+
+  En el log aparecen 10 avisos, uno cada ~10⁵ de tiempo. Si la trampa realmente
+  atrapa, la distancia debería ir más o menos así:
+
+  ┌───────┬────────────────────┐
+  │   t   │ distancia esperada │
+  ├───────┼────────────────────┤
+  │ 10⁵   │ ~6.5·10⁻⁵          │
+  ├───────┼────────────────────┤
+  │ 3·10⁵ │ ~3·10⁻⁵            │
+  ├───────┼────────────────────┤
+  │ 6·10⁵ │ ~8·10⁻⁶            │
+  ├───────┼────────────────────┤
+  │ 10⁶   │ ~1.5·10⁻⁶          │
+  └───────┴────────────────────┘
+
+  r tiene que quedarse en ≈ 0.043 todo el tiempo. Si en algún momento la
+  distancia sube o r se acerca a 1, el estado escapó y la reducción a clusters
+  estaba equivocada.
+
+  Con medir cada 20 pasos, el JSON va a tener unos 10⁴ puntos por serie, unos
+  pocos MB. Cuando termine, traé el JSON y la figura de
+  data/figuras/grafo_n299989_sim_perturbado_ruido0.05.png, y agrego las dos
+  simulaciones al notebook simétrico y al md.
+
+❯ nohup: ignoring input
+  mkdir -p failed for path /home/nicoyaniez/.cache/matplotlib: [Errno 122] Disk
+  quota exceeded: '/home/nicoyaniez/.cache/matplotlib'
+  Matplotlib created a temporary cache directory at /tmp/matplotlib-0r_cug_3
+  because there was an issue with the default path
+  (/home/nicoyaniez/.cache/matplotlib); it is highly recommended to set the
+  MPLCONFIGDIR environment variable to a writable directory, in particular to
+  speed up the import of Matplotlib and to better support multiprocessing.
+  grafo de grafo_simetrico_s7.json: n = 299,989, k = [3, 3, 3, 3, 3, 3, 5], g =
+  13,043, μ = 206565/299989
+  estructura: /data2/egov/investighaton/investighaton-teo-optimizacion-2026/dat
+  a/figuras/grafo_n299989_estructura.png
+  simulación 'perturbado' (grafo completo, cuda):
+    t =       0.0  r = 0.0430  distancia al estado = 2.36e-01  (0 s)
+    t =       6.0  r = 0.0431  distancia al estado = 5.88e-02  (1 s)
+    t =      12.0  r = 0.0431  distancia al estado = 1.59e-02  (1 s)
+    t =      18.0  r = 0.0431  distancia al estado = 4.31e-03  (2 s)
+    t =      24.0  r = 0.0431  distancia al estado = 1.17e-03  (2 s)
+    t =      30.0  r = 0.0431  distancia al estado = 3.17e-04  (3 s)
+    t =      36.0  r = 0.0431  distancia al estado = 1.20e-04  (3 s)
+    t =      42.0  r = 0.0431  distancia al estado = 1.04e-04  (4 s)
+    t =      48.0  r = 0.0431  distancia al estado = 1.00e-04  (5 s)
+    t =      54.0  r = 0.0431  distancia al estado = 9.95e-05  (5 s)
+    t =      60.0  r = 0.0431  distancia al estado = 9.94e-05  (6 s)
+    t =      60.0  r = 0.0431  distancia al estado = 9.94e-05  (0 s)
+  Parece colgarse, esta biene esto?
+
+● No está colgado. El script imprime una línea cada décimo de la corrida, y
+  ahora cada décimo son unos 20 000 pasos. A 0.044 s por paso, eso es unos 15
+  minutos entre línea y línea. La próxima tendría que aparecer en t ≈ 100 000,
+  unos 15 minutos después de la última. En total son 10 líneas en unas 2.5 h.
+
+  Para confirmar mientras tanto que está trabajando:
+
+  nvidia-smi                      # el proceso python debería usar la GPU
+  ps aux | grep visualizar_grafo  # debería figurar, con CPU > 0
+
+  El aviso de matplotlib no afecta la corrida. Tu home en el servidor está lleno
+  ("Disk quota exceeded"), así que matplotlib no puede guardar su caché ahí y
+  usa una carpeta en /tmp. El JSON y la figura se guardan en /data2/..., no en
+  el home, así que no hay problema. Para que no vuelva a salir en próximas
+  corridas, podés agregar delante del comando:
+
+  MPLCONFIGDIR=/tmp/mpl_nico python scripts/visualizar_grafo.py ...
+
+  Igual conviene liberar espacio en el home cuando puedas, porque otros
+  programas (pip, caches de torch) también pueden fallar por la cuota.
+
+❯ t =      60.0  r = 0.0431  distancia al estado = 9.94e-05  (6 s)
+    t =      60.0  r = 0.0431  distancia al estado = 9.94e-05  (0 s)
+    t =  100050.0  r = 0.0430  distancia al estado = 6.53e-05  (930 s)
+    t =  200040.0  r = 0.0430  distancia al estado = 4.29e-05  (1858 s)
+    t =  300030.0  r = 0.0430  distancia al estado = 2.83e-05  (2786 s)
+    t =  400020.0  r = 0.0430  distancia al estado = 1.86e-05  (3716 s)
+  Por ahora llego hasta aca
+
+● Comparo esos cuatro puntos del servidor con la reducción a clusters y con la
+  tasa del certificado:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Va bien: la simulación completa está volviendo a la trampa, y lo hace tal como
+  predecían la reducción a clusters y el certificado.
+
+  ┌───────┬───────────────────┬─────────────────┬───────────────────────────┐
+  │   t   │ servidor (grafo   │  reducción a    │ e^(−λt) con λ = 1.2506/n  │
+  │       │     completo)     │    clusters     │      del certificado      │
+  ├───────┼───────────────────┼─────────────────┼───────────────────────────┤
+  │ 100   │ 6.53·10⁻⁵         │ 6.524·10⁻⁵      │ 6.55·10⁻⁵                 │
+  │ 050   │                   │                 │                           │
+  ├───────┼───────────────────┼─────────────────┼───────────────────────────┤
+  │ 200   │ 4.29·10⁻⁵         │ 4.286·10⁻⁵      │ 4.32·10⁻⁵                 │
+  │ 040   │                   │                 │                           │
+  ├───────┼───────────────────┼─────────────────┼───────────────────────────┤
+  │ 300   │ 2.83·10⁻⁵         │ 2.816·10⁻⁵      │ 2.85·10⁻⁵                 │
+  │ 030   │                   │                 │                           │
+  ├───────┼───────────────────┼─────────────────┼───────────────────────────┤
+  │ 400   │ 1.86·10⁻⁵         │ 1.854·10⁻⁵      │ 1.88·10⁻⁵                 │
+  │ 020   │                   │                 │                           │
+  └───────┴───────────────────┴─────────────────┴───────────────────────────┘
+
+  - Contra la reducción: coinciden en 3 dígitos, que es todo lo que muestra el
+    log.
+  - Contra el autovalor del certificado: la distancia baja como una exponencial
+    con ese autovalor, con menos de 1% de diferencia. Es decir, el autovalor más
+    chico del Hessiano (1.2506) se ve directamente en la dinámica del grafo
+    real.
+  - r: se queda en 0.0430 todo el tiempo, no se acerca a 1.
+
+  Para lo que falta, la reducción predice estos valores:
+
+  ┌───────────┬────────────────────┐
+  │     t     │ distancia esperada │
+  ├───────────┼────────────────────┤
+  │ 500 000   │ 1.22·10⁻⁵          │
+  ├───────────┼────────────────────┤
+  │ 600 000   │ 8.0·10⁻⁶           │
+  ├───────────┼────────────────────┤
+  │ 800 000   │ 3.5·10⁻⁶           │
+  ├───────────┼────────────────────┤
+  │ 1 000 000 │ 1.5·10⁻⁶           │
+  └───────────┴────────────────────┘
+
+  Vale corregir un número de un mensaje anterior: para t = 6·10⁵ había anotado
+  ~8·10⁻⁶, y es justo lo que predice la reducción; los demás valores de aquella
+  tabla también estaban bien.
+
+  Faltan unos 6 avisos, aproximadamente 1.5 h. Cuando termine, traé
+  data/simulacion_n299989.json y
+  data/figuras/grafo_n299989_sim_perturbado_ruido0.05.png y armo la sección del
+  notebook y del md con las dos corridas.

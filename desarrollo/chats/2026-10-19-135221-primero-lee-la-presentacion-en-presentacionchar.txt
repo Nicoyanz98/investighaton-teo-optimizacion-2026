@@ -1,0 +1,1792 @@
+
+❯ Primero lee la presentacion en @presentacion/charla_kuramoto_mc.pdf  y luego
+  los archivos en @notes/ . La idea escrita en @notes/idea.md se le ocurrio a
+  un integrante de nuestro grupo. Queriamos saber que tan plausible sería y
+  cómo podríamos encarar la búsqueda para la dirección A de la competencia
+  ⎿  Referenced PDF presentacion/charla_kuramoto_mc.pdf (77 pages)
+  ⎿  Listed directory notes/
+  ⎿  Read notes/idea.md (6 lines)
+
+  Read 3 files, listed 1 directory (ctrl+o to expand)
+
+● Bash((ls .venv/bin/python >/dev/null 2>&1 && P=.venv/bin/python || P=python3;
+      $P -c "
+      import numpy as np…)
+  ⎿  (No output)
+
+● Updated plan
+  ⎿  /plan to preview
+
+● La idea de stackeo funciona parcialmente pero diluye μ al crecer n; el arreglo
+  correcto es el blow-up lexicográfico (que preserva μ y la trampa) y, más
+  prometedor aún, usar clusters de tamaños distintos para convertir la búsqueda
+  en un problema continuo chico sobre (H, p, θ), explorable con nauty. Antes de
+  proponerlo como nuevo, voy a revisar Canale 2022 para confirmar que no esté ya
+  en la literatura.
+  ⎿  Error: The user doesn't want to proceed with this tool use. The tool use
+     was rejected (eg. if it was a file edit, the new_string was NOT written to
+     the file). The user provided the following reason for the rejection:  No se
+     si el veredicto sea necesario en el plan, separalo en otro archivo en
+     notes o a continuacion de idea.md. Solamente menciona lo necesario en el
+     plan.
+
+● Como estoy en modo plan, por ahora no puedo escribir en notes/. Dejo el
+  veredicto como el primer paso del plan: agregarlo a continuación de
+  notes/idea.md. El plan queda solo con lo necesario.
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  User rejected Claude's plan:
+     ╭─────────────────────────────────────────────────────────────────────────╮
+     │ Plan: evaluar la idea del "stackeo" y usarla para la dirección A        │
+     │                                                                         │
+     │ Contexto                                                                │
+     │                                                                         │
+     │ La dirección A pide un grafo G con μ(G) = (δ+1)/n > 11/16 y un mínimo   │
+     │ local no sincronizado,                                                  │
+     │ certificado por el Hessiano (definido positivo en el ortogonal a        │
+     │ (1,…,1)). La idea de                                                    │
+     │ notes/idea.md propone tomar un mínimo espurio y "stackear" copias de    │
+     │ cada nodo en la misma fase,                                             │
+     │ uniendo las copias entre sí.                                            │
+     │                                                                         │
+     │ Veredicto sobre la idea                                                 │
+     │                                                                         │
+     │ La intuición física es correcta. Los resortes entre nodos en la misma   │
+     │ fase no cambian la                                                      │
+     │ energía, no generan fuerza y suman curvatura positiva. Por eso el       │
+     │ mínimo espurio sobrevive.                                               │
+     │                                                                         │
+     │ Pero como está escrita, baja μ. "El grado crece en 1 por cada stackeo", │
+     │ y n crece en |V| por                                                    │
+     │ cada stackeo. Con m copias de G (producto cartesiano G □ K_m):          │
+     │ μ = (δ + m)/(mn) → 1/n. Numéricamente, sobre C_{20,6} con q = 1, μ pasa │
+     │ de 0.65 a 0.35 (m = 2) y a                                              │
+     │ 0.25 (m = 3), y el mínimo sigue siendo estricto.                        │
+     │                                                                         │
+     │ Arreglo: blow-up lexicográfico G[K_m]. Cada vértice v pasa a ser un     │
+     │ clique de m copias en la                                                │
+     │ fase θ_v, y cada copia de v se une con todas las copias de cada vecino  │
+     │ u.                                                                      │
+     │ - grado = m·deg(v) + (m−1), n' = mn ⇒ μ(G[K_m]) = (δ+1)/n = μ(G)        │
+     │   exactamente. Ese es el                                                │
+     │   sentido del "+1" en la definición de μ: es el self-loop del clique.   │
+     │ - Sigue siendo punto crítico: el gradiente es m veces el original.      │
+     │ - Hessiano (cuenta hecha, chequeada numéricamente):                     │
+     │   - modos constantes por cluster: m·H_G, definido positivo en ⊥1 si θ   │
+     │     era mínimo estricto;                                                │
+     │   - modos de media cero dentro del cluster v: autovalor m·(1 + Σ_{u~v}  │
+     │     cos(θ_u − θ_v)) > 0, que                                            │
+     │     vale automáticamente porque H_G tiene diagonal positiva.            │
+     │ - Conclusión: con pesos iguales, stackear preserva trampa y μ, pero no  │
+     │   puede superar 11/16 si                                                │
+     │   la base no lo supera. Por sí sola no mejora la cota.                  │
+     │                                                                         │
+     │ Lo valioso es la versión con pesos desiguales. Si el cluster de v tiene │
+     │ tamaño                                                                  │
+     │ m_v = N·p_v, con p en el símplex, entonces:                             │
+     │ - μ(p) = min_v p(N[v]), es decir p_v + Σ_{u~v} p_u (lineal en p);       │
+     │ - punto crítico: Σ_{u~v} p_u sin(θ_u − θ_v) = 0 para todo v (lineal en  │
+     │   p con θ fijo);                                                        │
+     │ - estabilidad entre clusters: el Laplaciano con pesos p_u p_v cos(θ_u − │
+     │   θ_v) es ≻ 0 en ⊥1;                                                    │
+     │ - estabilidad dentro de cada cluster: p_v + Σ_{u~v} p_u cos(θ_u − θ_v)  │
+     │   > 0 (lineal).                                                         │
+     │                                                                         │
+     │ Así, la búsqueda sobre grafos de n grande se reduce a un problema       │
+     │ continuo sobre una                                                      │
+     │ plantilla chica H (k ≈ 5–10 vértices) con pesos p y fases θ. Los pesos  │
+     │ permiten "balancear" el                                                 │
+     │ vértice cuello de botella del mínimo grado, cosa que un grafo con pesos │
+     │ iguales no puede hacer.                                                 │
+     │ Es pariente directo de la dirección D (pesos de Canale), pero da grafos │
+     │ simples genuinos y con μ                                                │
+     │ racional exacto. Probablemente ya esté implícito en la literatura (el   │
+     │ "+1" lo sugiere), así que hay                                           │
+     │ que revisar Canale 2022 y Yoneda–Tatsukawa–Teramae 2021 antes de        │
+     │ reclamar novedad.                                                       │
+     │                                                                         │
+     │ Plausibilidad de superar 11/16: baja, como cualquier mejora de cota en  │
+     │ 3 semanas. Sin embargo,                                                 │
+     │ el marco da una búsqueda sistemática, barata y certificable, que es el  │
+     │ nivel "esperado" aunque el                                              │
+     │ resultado sea negativo.                                                 │
+     │                                                                         │
+     │ Pasos de trabajo                                                        │
+     │                                                                         │
+     │ 1. Lema del blow-up (1–2 días). Escribir la prueba de arriba con pesos  │
+     │    generales p y                                                        │
+     │    verificarla en el notebook reutilizando hessian, classify,           │
+     │    circulant_graph,                                                     │
+     │    twisted_state y simulate de notebooks/Calentamientos.ipynb. Todas    │
+     │    reciben una matriz W, así                                            │
+     │    que sirven tanto para la plantilla con pesos como para el grafo      │
+     │    expandido. Caso test:                                                │
+     │    C_{n,k_max} con q = 1 y sus blow-ups.                                │
+     │ 2. Reproducir lo conocido. Llevar C_{n,k} (≈0.681) y la construcción de │
+     │    Canale (11/16, hay que                                               │
+     │    leer el paper) al lenguaje de plantillas con pesos. Es el nivel      │
+     │    "básico" del rúbrica y valida el                                     │
+     │    pipeline.                                                            │
+     │ 3. Optimizador por plantilla. Para una H fija, maximizar t sobre (θ, p, │
+     │    t) con:                                                              │
+     │    - p(N[v]) ≥ t;                                                       │
+     │    - gradiente nulo;                                                    │
+     │    - λ_min del Hessiano entre clusters en ⊥1 ≥ ε;                       │
+     │    - condición intra-cluster ≥ ε;                                       │
+     │    - θ no sincronizado.                                                 │
+     │      Usar SLSQP o penalización con scipy y muchos arranques, incluidos  │
+     │      arranques "twisted" (fases                                         │
+     │      2πqv/k sobre un ciclo hamiltoniano de H) y arranques de 4 clusters │
+     │      cerca de                                                           │
+     │      {0, π/2, π, 3π/2} (Lepsveridze–Zhang). Una alternativa más robusta │
+     │      es alternar: con θ fijo, el                                        │
+     │      problema en p es un LP más una restricción de autovalor.           │
+     │ 4. Barrido de plantillas. Recorrer grafos conexos con nauty geng -c k   │
+     │    (k ≤ 9, unos 260k                                                    │
+     │    grafos) con prefiltros baratos:                                      │
+     │    - H no completo;                                                     │
+     │    - existe un ciclo de longitud ≥ 5;                                   │
+     │    - el máximo de μ sin restricciones de estabilidad ya supera 11/16.   │
+     │      Registrar el mejor t por H.                                        │
+     │ 5. Certificar candidatos. Redondear p a racionales m_v/N. Re-resolver θ │
+     │    por Newton (el                                                       │
+     │    equilibrio es no degenerado). Verificar con un margen explícito, por │
+     │    ejemplo con                                                          │
+     │    aritmética de intervalos (mpmath.iv) o una cota tipo Kantorovich,    │
+     │    que hay un equilibrio exacto                                         │
+     │    cerca y que el Hessiano es ≻ 0 en ⊥1. Construir el grafo explícito G │
+     │    y chequear                                                           │
+     │    classify + simulate desde perturbaciones.                            │
+     │ 6. Extensiones, si sobra tiempo:                                        │
+     │    - blow-ups parciales con bipartitos regulares entre clusters (pesos  │
+     │      w_uv ∈ (0,1), como Canale).                                        │
+     │      Ojo: ahí la estabilidad intra-cluster depende del espectro del     │
+     │      bipartito;                                                         │
+     │    - productos (lex, strong) entre plantillas.                          │
+     │                                                                         │
+     │ Archivos                                                                │
+     │                                                                         │
+     │ - Nuevo notebooks/02_blowup.ipynb (o una sección 4 en                   │
+     │   Calentamientos.ipynb): lema y                                         │
+     │   verificación.                                                         │
+     │ - Nuevo módulo src/templates.py: plantilla → W expandido, μ(p),         │
+     │   condiciones de estabilidad y                                          │
+     │   optimizador. Reusa las funciones del notebook (conviene extraerlas a  │
+     │   src/kuramoto.py).                                                     │
+     │ - Agregar scipy, networkx y mpmath a notebooks/requirements.txt; nauty  │
+     │   como dependencia                                                      │
+     │   del sistema.                                                          │
+     │ - notes/idea.md: anotar el veredicto (producto cartesiano frente a      │
+     │   lexicográfico) para el informe.                                       │
+     │                                                                         │
+     │ Verificación                                                            │
+     │                                                                         │
+     │ - Blow-up de C_{20,6}, q = 1, con m = 2 y 3: μ = 0.65 constante,        │
+     │   gradiente ~1e-15 y segundo                                            │
+     │   autovalor 0.50·m. Ya chequeado en esta sesión.                        │
+     │ - Para pesos desiguales, comparar la fórmula de la plantilla con el     │
+     │   Hessiano del grafo expandido                                          │
+     │   (autovalores de ambos tipos de modos).                                │
+     │ - Todo candidato final: grafo explícito, μ exacto racional, certificado │
+     │   de Hessiano y simulación que                                          │
+     │   se queda atrapada en el mínimo partiendo de perturbaciones chicas.    │
+     ╰─────────────────────────────────────────────────────────────────────────╯
+
+❯ <ide_opened_file>The user opened the file /home/imagenes/nicoyanez/investigha
+  ton/investighaton-teo-optimizacion-2026/notes/idea.md in the IDE. This may or
+  may not be related to the current task.</ide_opened_file>
+
+❯ Antes de ejecutar el plan quiero consultar algo: note que mencionas modos (y
+  por contexto pareciera ser modulo pero no estoy seguro). Chequea eso en
+  notebook por las dudas
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Bash(python3 -c "
+      import json,re…)
+  ⎿  (No output)
+
+● En el plan, "modos" no quiere decir "módulo". Quiere decir direcciones de
+  perturbación, es decir, grupos de autovectores del Hessiano. Es la jerga
+  física de "modos normales de vibración".
+
+  Qué hay en el notebook:
+  - "módulo" aparece solo en el sentido de índices: v±1 (módulo n) en
+    cycle_graph y circulant_graph, y en el markdown de las secciones 2 y 3.
+  - La palabra "modo" no aparece nunca. Para este concepto el notebook dice
+    autovectores: (1,…,1) en la sección 1, y las ondas e^{2πikv/n} en C_n y
+    C_{n,k}.
+
+  Qué significaba en el plan. En el blow-up, cualquier perturbación x se separa
+  en dos subespacios ortogonales que el Hessiano no mezcla:
+  1. Constantes por cluster: todas las copias de v se mueven igual. Ahí el
+     Hessiano actúa como m·H_G, que es definido positivo en ⊥1 porque θ era un
+     mínimo estricto de G.
+  2. De media cero dentro de cada cluster: las copias de un mismo v se separan
+     entre sí. Ahí los términos entre clusters se cancelan y queda el autovalor
+     m·(1 + Σ_{u~v} cos(θ_u − θ_v)). Es positivo porque la diagonal de H_G es
+     positiva.
+
+  Para que el texto coincida con el notebook, conviene cambiar "modos" por
+  "autovectores constantes por cluster" y "autovectores de media cero dentro de
+  cada cluster" en el plan y en la sección de análisis de notes/idea.md. Si les
+  parece bien, empiezo a ejecutar el plan con ese vocabulario.
+
+❯ Note que mencionaste nauty como dependencia del sistema. Esta instalada? Si
+  no lo esta puede instalarse solamente en el enviroment local?
+
+● Bash(cd /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-
+      2026; which geng nauty-geng 2>&1; dpkg -l | grep -i nauty; ls -d .venv
+      2>&1; .venv/bin/…)
+  ⎿  Error: Exit code 1
+     .venv
+     Python 3.13.12
+     /home/imagenes/miniconda3/bin/conda
+     /usr/bin/gcc
+     /usr/bin/make
+
+● nauty no está instalado: no aparecen geng ni nauty-geng en el PATH, y tampoco
+  está como paquete del sistema. Sí, se puede instalar solo para este proyecto,
+  sin sudo y sin tocar el sistema. La máquina tiene gcc y make, y el proyecto
+  usa .venv con Python 3.13.
+
+  Estas son las opciones, de la que más recomiendo a la que menos:
+
+  1. Compilar nauty desde el código fuente dentro del repo. Se baja el tarball
+     oficial en tools/nauty/, se corre ./configure && make y se usa
+     tools/nauty/geng por su ruta. No se instala nada global. Se agrega tools/
+     al .gitignore y un script corto tools/install_nauty.sh para que el resto
+     del grupo lo reproduzca (eso suma reproducibilidad, que la rúbrica valora).
+     Es la opción más flexible, porque geng filtra por grado mínimo, conexidad
+     y otras condiciones al generar.
+  2. No instalar nada y bajar listas ya generadas. Brendan McKay, el autor de
+     nauty, publica los grafos conexos hasta 10 vértices en formato graph6 (por
+     ejemplo, el archivo de grafos conexos de 9 vértices). Se leen con
+     networkx.read_graph6 en el .venv. Alcanza para el barrido con k ≤ 9, aunque
+     no permite filtrar al generar.
+  3. conda install -c conda-forge nauty en un entorno conda aparte. Funciona,
+     porque miniconda está instalado, pero mezcla conda con el .venv y es más
+     incómodo para el resto del grupo.
+
+  No conviene pip install pynauty: trae nauty adentro para isomorfismos y
+  automorfismos, pero no incluye geng, que es lo que necesitamos para enumerar
+  grafos.
+
+  ¿Avanzo con la opción 1 (compilar en tools/nauty + script + .gitignore)?
+
+❯ agrega al plan compilar nauty de manera local sin instalar como dependencia
+  de sistema
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Agregué al plan compilar nauty de forma local (en
+  primero-lee-la-presentacion-floating-wadler.md (/home/imagenes/.claude/plans/p
+  rimero-lee-la-presentacion-floating-wadler.md)). Todavía no lo instalé ni
+  ejecuté nada.
+
+  - Paso 4 (Barrido): ahora empieza con un script tools/install_nauty.sh. Baja
+    el código fuente oficial de nauty y lo compila con ./configure && make
+    dentro de tools/nauty/. Después el barrido llama al programa por su ruta,
+    tools/nauty/geng, sin sudo y sin tocar el PATH del sistema.
+  - Archivos: se suman tools/install_nauty.sh, que se sube al repo para que el
+    resto del grupo pueda repetir la instalación, y una línea en .gitignore para
+    que los binarios de tools/nauty/ no se suban.
+  - Verificación: tools/nauty/geng -c 5 | wc -l tiene que dar 21, que es la
+    cantidad de grafos conexos con 5 vértices.
+
+  ¿Quieren algún otro cambio al plan, o arranco por el paso 0 (agregar el
+  análisis a notes/idea.md)?
+
+❯ Este plan no modificara el notebook mio correcto?
+● Correcto: el plan no modifica notebooks/Calentamientos.ipynb. Las funciones se
+  copian a src/kuramoto.py y todo lo nuevo va en notebooks/02_blowup.ipynb. El
+  paso 1 decía "verificarla en el notebook" y se podía leer como que era el
+  suyo, así que lo aclaro en el plan:
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Listo, ahora el plan lo dice explícitamente. En Archivos figura que
+  notebooks/Calentamientos.ipynb no se modifica y solo se lee para copiar sus
+  funciones. El paso 1 dice que la verificación se hace en
+  notebooks/02_blowup.ipynb, no en su notebook.
+
+  El único archivo existente que el plan sí cambia es notes/idea.md: en el paso
+  0 se agrega una sección "Análisis" al final, sin tocar lo que escribió su
+  compañero. Si prefieren no tocarlo, puedo poner el análisis en un archivo
+  aparte, por ejemplo notes/idea_analisis.md.
+
+❯ Ok podes comenzar el plan
+
+● Bash(python3 -c "
+      import json…)
+  ⎿  (No output)
+
+● Hay una carpeta papers/. Me fijo qué tiene, por si está Canale:
+
+● Bash(ls -la papers .venv/bin | head -40; cat .gitignore; .venv/bin/pip list
+      2>/dev/null)
+  ⎿  (No output)
+
+● Ya tengo las funciones. Arranco por el paso 0: agregar el análisis al final de
+  notes/idea.md, sin tocar lo que escribió su compañero.
+
+● Bash(cat >> notes/idea.md <<'EOF'…)
+  ⎿  Updated notes/idea.md (+46 -0)
+       3  La idea es que los theta ya estan en la misma posicion entonces
+           no puede ser mas chico. Por lo tanto la energia no deberia cam
+          biar
+       4  El grado de los nodos solo crece en 1 por cada stackeo entre lo
+          s que se conectan
+       5  Como los resortes se conectan entre puntos que estan en la mism
+          a fase, estos no se desestabilizan y por lo tanto ahora deberia
+           ser mas estables
+       6 +                                                               
+       7 +---                                                            
+       8 +                                                               
+       9 +## Análisis (19/10/2026, con Claude)                           
+      10 +                                                               
+      11 +### Dos formas de "stackear"                                   
+      12 +                                                               
+      13 +Sea θ* un mínimo local estricto no sincronizado de G (n vértice
+         +s, grado mínimo δ). Se hacen m copias                          
+      14 +de cada vértice, todas en la misma fase.                       
+      15 +                                                               
+      16 +**(a) Cartesiano, G □ K_m (la idea tal como está escrita).** Ha
+         +y m copias de G, y las copias de un                            
+      17 +mismo vértice forman un clique. θ* sigue siendo mínimo estricto
+         +. El Hessiano es H_G ⊗ I + I ⊗ L_{K_m}                         
+      18 +y sus autovalores son λ_i(H_G) + λ_j(K_m), todos > 0 salvo el 0
+         + de la rotación. **Pero μ baja:**                              
+      19 +                                                               
+      20 +  μ = (δ + (m − 1) + 1) / (mn) = (δ + m)/(mn) → 1/n.           
+      21 +                                                               
+      22 +El grado crece en m − 1 y n crece en un factor m. Ejemplo: en C
+         +_{20,6} con q = 1, μ pasa de 0.65 a                            
+      23 +0.35 (m = 2) y a 0.25 (m = 3).                                 
+      24 +                                                               
+      25 +**(b) Lexicográfico, G[K_m] (blow-up).** Cada copia de v se une
+         + además con **todas** las copias de                            
+      26 +cada vecino u de v.                                            
+      27 +- grado = m·deg(v) + (m − 1) y n' = mn, así que **μ(G[K_m]) = (
+         +δ + 1)/n = μ(G) exactamente**. Para                            
+      28 +  esto sirve el "+1" de la definición de μ: es el self-loop que
+         + representa al clique.                                         
+      29 +- Sigue siendo equilibrio: la velocidad de cada copia es m vece
+         +s la del vértice original.                                     
+      30 +- Sigue siendo mínimo estricto. Toda perturbación se descompone
+         + en dos subespacios ortogonales que el                         
+      31 +  Hessiano no mezcla:                                          
+      32 +  1. **constantes por cluster** (todas las copias de v se mueve
+         +n igual): ahí el Hessiano actúa como                           
+      33 +     m·H_G, que es > 0 en ⊥1;                                  
+      34 +  2. **de media cero dentro de cada cluster**: los términos ent
+         +re clusters se cancelan y queda el                             
+      35 +     autovalor m·(1 + Σ_{u~v} cos(θ_u − θ_v)), que es > 0 porqu
+         +e la diagonal de H_G es positiva.                              
+      36 +                                                               
+      37 +Conclusión: el blow-up con m iguales **preserva** la trampa y μ
+         +, pero no puede superar 11/16 si G                             
+      38 +no lo supera.                                                  
+      39 +                                                               
+      40 +### Lo aprovechable: clusters de tamaños distintos             
+      41 +                                                               
+      42 +Cada vértice v de una plantilla chica H pasa a ser un clique de
+         + m_v = N·p_v vértices, con                                     
+     … 9 more lines (ctrl+o to expand)
+
+● Paso 0 listo. Ahora compilo nauty localmente en tools/nauty/:
+
+● Bash(mkdir -p tools && cat > tools/install_nauty.sh <<'EOF'
+      #!/usr/bin/env bash…)
+  ⎿  Created tools/install_nauty.sh (+18 -0)
+       1 +#!/usr/bin/env bash                                            
+       2 +# Compila nauty localmente en tools/nauty/ (sin sudo ni instala
+         +ción en el sistema).                                           
+       3 +# Uso: bash tools/install_nauty.sh      Después: tools/nauty/ge
+         +ng -c 5                                                        
+       4 +set -euo pipefail                                              
+       5 +VERSION="2_8_9"                                                
+       6 +DIR="$(cd "$(dirname "$0")" && pwd)"                           
+       7 +URL="https://pallini.di.uniroma1.it/nauty${VERSION}.tar.gz"    
+       8 +cd "$DIR"                                                      
+       9 +if [ -x nauty/geng ]; then echo "nauty ya está compilado en $DI
+         +R/nauty"; exit 0; fi                                           
+      10 +curl -fL -o "nauty${VERSION}.tar.gz" "$URL"                    
+      11 +rm -rf nauty "nauty${VERSION}"                                 
+      12 +tar xzf "nauty${VERSION}.tar.gz"                               
+      13 +mv "nauty${VERSION}" nauty                                     
+      14 +rm "nauty${VERSION}.tar.gz"                                    
+      15 +cd nauty                                                       
+      16 +./configure > /dev/null                                        
+      17 +make -j"$(nproc)" geng showg countg > /dev/null                
+      18 +echo "Listo: $DIR/nauty/geng"                                  
+  ⎿  Updated .gitignore (+2 -1)
+      1 -.*/                                                             
+      1   No newline at end of file
+      2 +.*/                                                             
+      3 +tools/nauty/                                                    
+
+● Bash(which wget; sed -i 's|^curl -fL -o "nauty${VERSION}.tar.gz" "$URL"|if
+      command -v curl >/dev/null; then curl -fL -o "nauty${VERSION}.tar.gz"
+      "$URL"; else wget -q…)
+  ⎿  Created tools/nauty2_8_9.tar.gz (+0 -0)
+  ⎿  Updated tools/install_nauty.sh (+1 -1)
+       7  URL="https://pallini.di.uniroma1.it/nauty${VERSION}.tar.gz"
+       8  cd "$DIR"
+       9  if [ -x nauty/geng ]; then echo "nauty ya está compilado en $DI
+          R/nauty"; exit 0; fi
+      10 -curl -fL -o "nauty${VERSION}.tar.gz" "$URL"                    
+      10 +if command -v curl >/dev/null; then curl -fL -o "nauty${VERSION
+         +}.tar.gz" "$URL"; else wget -q -O "nauty${VERSION}.tar.gz" "$UR
+         +L"; fi                                                         
+      11  rm -rf nauty "nauty${VERSION}"
+      12  tar xzf "nauty${VERSION}.tar.gz"
+      13  mv "nauty${VERSION}" nauty
+
+● Bash(bash -x tools/install_nauty.sh 2>&1 | tail -8; ls tools)
+  ⎿  (No output)
+
+● Bash(cd /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-
+      2026/tools && ls -la; rm -f nauty2_8_9.tar.gz; wget -S --spider
+      https://pallini.di.unir…)
+  ⎿  Deleted tools/nauty2_8_9.tar.gz (+0 -0)
+
+● Se usa el mirror de ANU, que tiene un certificado válido; en el script
+  principal queda el de pallini como alternativa.
+
+● Bash(cd
+      /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026
+      && sed -i
+      's|^URL=.*|URL="https://users.cecs.anu.edu.au/~bdm/nauty/nauty${VERSION}…)
+  ⎿  Updated tools/install_nauty.sh (+1 -1)
+       4  set -euo pipefail
+       5  VERSION="2_8_9"
+       6  DIR="$(cd "$(dirname "$0")" && pwd)"
+       7 -URL="https://pallini.di.uniroma1.it/nauty${VERSION}.tar.gz"    
+       7 +URL="https://users.cecs.anu.edu.au/~bdm/nauty/nauty${VERSION}.t
+         +ar.gz"   # mirror: https://pallini.di.uniroma1.it/             
+       8  cd "$DIR"
+       9  if [ -x nauty/geng ]; then echo "nauty ya está compilado en $DI
+          R/nauty"; exit 0; fi
+      10  if command -v curl >/dev/null; then curl -fL -o "nauty${VERSION
+          }.tar.gz" "$URL"; else wget -q -O "nauty${VERSION}.tar.gz" "$UR
+          L"; fi
+  ⎿  (timeout 10m)
+
+● nauty compilado: geng -c 5 da 21 y hay 261.080 grafos conexos de 9 vértices.
+  Instalo las dependencias de Python en el .venv:
+
+● Bash(.venv/bin/pip install -q scipy networkx mpmath 2>&1 | tail -2;
+      .venv/bin/python -c "import
+      scipy,networkx,mpmath;print(scipy.__version__,networkx.__version__,mp…)
+  ⎿  Updated notebooks/requirements.txt (+3 -1)
+      1  numpy
+      2  matplotlib
+      3 -ipykernel                                                       
+      3   No newline at end of file
+      4 +ipykernelscipy                                                  
+      5 +networkx                                                        
+      6 +mpmath                                                          
+  ⎿  (timeout 5m)
+
+● The file had no trailing newline. I'll fix it:
+
+● Bash(printf 'numpy\nmatplotlib\nipykernel\nscipy\nnetworkx\nmpmath\n' >
+      notebooks/requirements.txt && cat notebooks/requirements.txt; which
+      pdftotext; ls ~/miniconda…)
+  ⎿  Updated notebooks/requirements.txt (+2 -1)
+      1  numpy
+      2  matplotlib
+      3 -ipykernelscipy                                                  
+      3 +ipykernel                                                       
+      4 +scipy                                                           
+      5  networkx
+      6  mpmath
+
+● Ahora la literatura. Reviso qué contienen los papers de papers/:
+
+● Bash(cd /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-
+      2026/papers && for f in *.pdf; do echo "=== $f"; pdftotext -l 1 "$f" - |
+      head -25; done)
+  ⎿  (No output)
+
+● Encontré que 2610.21271 (O'Keeffe, "Beyond 11/16", 15/10/2026) mejora la cota
+  a 0.6929 usando un modelo de clusters y blow-up similar a nuestra idea con
+  pesos. Voy a leerlo completo antes de continuar.
+
+● Bash(pdftotext -layout 2610.21271v1.pdf - 2>/dev/null | wc -l; pdftotext
+      2610.21271v1.pdf - 2>/dev/null | sed -n '25,400p')
+  ⎿  (No output)
+
+● Bash(pdftotext 2610.21271v1.pdf - 2>/dev/null | sed -n '400,1400p')  ⎿  (No output)
+
+● Bash(pdftotext 2610.21271v1.pdf - 2>/dev/null | grep -n -iE
+      'VI\.|DISCUSSION|missed|open|future|we
+      conjecture|question|Supplementary|METHODS|margin' | head -40)
+  ⎿  (No output)
+
+● Bash(pdftotext 2610.21271v1.pdf - 2>/dev/null | sed -n '855,1030p')
+  ⎿  (No output)
+
+  Wrote 1 memory (ctrl+o to expand)
+
+● Bash(cd /home/imagenes/.claude/projects/-home-imagenes-nicoyanez-investighaton
+      -investighaton-teo-optimizacion-2026/memory && echo "- [O'Keeffe 0.6929
+      supera 11/16](o…)
+  ⎿  (No output)
+
+● Agrego la referencia a O'Keeffe en el análisis de notes/idea.md, para que
+  nadie del grupo lo presente como idea nueva:
+
+● Bash(cat >> notes/idea.md <<'EOF'…)
+  ⎿  Updated notes/idea.md (+59 -0)
+       3  La idea es que los theta ya estan en la misma posicion entonces
+           no puede ser mas chico. Por lo tanto la energia no deberia cam
+          biar
+       4  El grado de los nodos solo crece en 1 por cada stackeo entre lo
+          s que se conectan
+       5  Como los resortes se conectan entre puntos que estan en la mism
+          a fase, estos no se desestabilizan y por lo tanto ahora deberia
+           ser mas estables
+       6 +                                                               
+       7 +---                                                            
+       8 +                                                               
+       9 +## Análisis (19/10/2026, con Claude)                           
+      10 +                                                               
+      11 +### Dos formas de "stackear"                                   
+      12 +                                                               
+      13 +Sea θ* un mínimo local estricto no sincronizado de G (n vértice
+         +s, grado mínimo δ). Se hacen m copias                          
+      14 +de cada vértice, todas en la misma fase.                       
+      15 +                                                               
+      16 +**(a) Cartesiano, G □ K_m (la idea tal como está escrita).** Ha
+         +y m copias de G, y las copias de un                            
+      17 +mismo vértice forman un clique. θ* sigue siendo mínimo estricto
+         +. El Hessiano es H_G ⊗ I + I ⊗ L_{K_m}                         
+      18 +y sus autovalores son λ_i(H_G) + λ_j(K_m), todos > 0 salvo el 0
+         + de la rotación. **Pero μ baja:**                              
+      19 +                                                               
+      20 +  μ = (δ + (m − 1) + 1) / (mn) = (δ + m)/(mn) → 1/n.           
+      21 +                                                               
+      22 +El grado crece en m − 1 y n crece en un factor m. Ejemplo: en C
+         +_{20,6} con q = 1, μ pasa de 0.65 a                            
+      23 +0.35 (m = 2) y a 0.25 (m = 3).                                 
+      24 +                                                               
+      25 +**(b) Lexicográfico, G[K_m] (blow-up).** Cada copia de v se une
+         + además con **todas** las copias de                            
+      26 +cada vecino u de v.                                            
+      27 +- grado = m·deg(v) + (m − 1) y n' = mn, así que **μ(G[K_m]) = (
+         +δ + 1)/n = μ(G) exactamente**. Para                            
+      28 +  esto sirve el "+1" de la definición de μ: es el self-loop que
+         + representa al clique.                                         
+      29 +- Sigue siendo equilibrio: la velocidad de cada copia es m vece
+         +s la del vértice original.                                     
+      30 +- Sigue siendo mínimo estricto. Toda perturbación se descompone
+         + en dos subespacios ortogonales que el                         
+      31 +  Hessiano no mezcla:                                          
+      32 +  1. **constantes por cluster** (todas las copias de v se mueve
+         +n igual): ahí el Hessiano actúa como                           
+      33 +     m·H_G, que es > 0 en ⊥1;                                  
+      34 +  2. **de media cero dentro de cada cluster**: los términos ent
+         +re clusters se cancelan y queda el                             
+      35 +     autovalor m·(1 + Σ_{u~v} cos(θ_u − θ_v)), que es > 0 porqu
+         +e la diagonal de H_G es positiva.                              
+      36 +                                                               
+      37 +Conclusión: el blow-up con m iguales **preserva** la trampa y μ
+         +, pero no puede superar 11/16 si G                             
+      38 +no lo supera.                                                  
+      39 +                                                               
+      40 +### Lo aprovechable: clusters de tamaños distintos             
+      41 +                                                               
+      42 +Cada vértice v de una plantilla chica H pasa a ser un clique de
+         + m_v = N·p_v vértices, con                                     
+     … 22 more lines (ctrl+o to expand)
+
+● Encontré un paper reciente (O'Keeffe, arXiv 2610.21271) que ya resuelve
+  nuestra idea de forma más general, probando μ_c ≥ 0.6929 y dejando obsoleto el
+  11/16 que íbamos a redescubrir. Freno el plan actual: ya instalé nauty,
+  scipy/networkx/mpmath y agregué el análisis a idea.md, pero hay que decidir
+  cómo reorientar el trabajo antes de seguir.
+
+● User answered Claude's questions:
+  ⎿  · Como O'Keeffe ya usa plantillas con blow-up y llega a 0.6929, ¿hacia
+     dónde reorientamos el trabajo de la dirección A? → Reproducir y explorar
+     (Recomendado)
+
+● Vamos por la reproducción. Primero leo en detalle las secciones IV y V del
+  paper (Tabla II y el certificado):
+
+● Bash(cd /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-
+      2026/papers && pdftotext 2610.21271v1.pdf - 2>/dev/null | sed -n
+      '400,855p')
+  ⎿  (No output)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ <ide_opened_file>The user opened the file /home/imagenes/nicoyanez/investigha
+  ton/investighaton-teo-optimizacion-2026/notes/idea.md in the IDE. This may or
+  may not be related to the current task.</ide_opened_file>
+
+❯ Modifica el plan para seguir este nuevo rumbo
+
+  Read 1 file (ctrl+o to expand)
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  Error: The user doesn't want to proceed with this tool use. The tool use
+     was rejected (eg. if it was a file edit, the new_string was NOT written to
+     the file). The user provided the following reason for the rejection:  Ahi
+     te agregue el paper de Canale
+
+● Bash(ls -la; for f in *.pdf; do pdftotext -l 1 "$f" - 2>/dev/null | head -3;
+      done)
+  ⎿  (No output)
+
+● Bash(pdftotext 2209.06362v3.pdf - 2>/dev/null | wc -l; pdftotext
+      2209.06362v3.pdf - 2>/dev/null | head -400)
+  ⎿  (No output)
+
+● Bash(pdftotext 2209.06362v3.pdf - 2>/dev/null | grep -n -iE
+      'arctan|11/16|0\.6875|Theorem|Table|weights|figure 2|FIG' | head -40)
+  ⎿  (No output)
+
+● Bash(pdftotext 2209.06362v3.pdf - 2>/dev/null | sed -n '470,560p;940,1000p')
+  ⎿  (No output)
+
+● Leí la sección V de Canale (2209.06362). Su construcción entra directo como
+  plantilla, así que actualizo el plan:
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Updated plan
+  ⎿  /plan to preview
+
+● User approved Claude's plan
+  ⎿  Plan saved to:
+     ~/.claude/plans/primero-lee-la-presentacion-floating-wadler.md · /plan to
+     edit
+     Plan: dirección A, reproducir y explorar plantillas de clusters (después de
+     O'Keeffe)
+
+     Contexto
+
+     La idea del "stackeo" llevó al marco de plantillas (x, φ, P): tamaños de
+     cluster, fases y
+     densidades de links, que después se pasan a grafos por blow-up. O'Keeffe
+     (papers/2610.21271v1.pdf,
+     15/10/2026) ya usa ese marco y prueba μ_c ≥ 0.6929. Su estado S7 parte tres
+     clusters vecinos
+     del estado de 4 clusters C4 y adelgaza los links "cruzados" a densidad q* ≈
+     0.65. Sus scripts no
+     son públicos ("on request"). El nuevo rumbo, elegido por el grupo, tiene
+     dos partes:
+     1. reproducción independiente y abierta de Canale (11/16) y de S7 (0.6929),
+        con certificado
+        propio;
+     2. exploración de deformaciones de C4 que el paper no cubre.
+
+     Ya hecho
+
+     - notes/idea.md: sección de análisis (cartesiano frente a lexicográfico,
+       pesos) y nota sobre
+       O'Keeffe.
+     - tools/install_nauty.sh + nauty compilado en tools/nauty/, que está en el
+       .gitignore.
+     - scipy, networkx y mpmath en .venv y notebooks/requirements.txt.
+
+     Pasos
+
+     1. Base de código.
+        - src/kuramoto.py: copia de velocity, energy, hessian, classify,
+          simulate,
+          circulant_graph, twisted_state y wrap de
+          notebooks/Calentamientos.ipynb (que no se
+          modifica).
+        - src/templates.py, clase plantilla (x, φ, P) con:
+          - d_a, μ(T) = min_a d_a;
+          - F_a (equilibrio, ec. 6);
+          - c_a (estabilidad contra splitting, ec. 7);
+          - la matriz de L(y) (modos de cluster, ec. 8);
+          - is_strict en float y en mpmath con precisión alta.
+        - realize(T, g): blow-up chico con anillos Z_g y shift sets (Lema 2).
+          Sirve para contrastar
+          la plantilla contra hessian, classify y simulate sobre el grafo real.
+     2. Reproducir lo conocido en notebooks/02_plantillas.ipynb:
+        - C4: μ = 3/4 y L ≡ 0 (degenerado);
+        - twisted como plantilla: el LP en densidades debería acercarse a
+          0.6838;
+        - Canale (11/16), según papers/2209.06362v3.pdf, sección V:
+          - grafo ponderado G_p sobre Z_8, con aristas E_a = {2i,2i+1}, E_b =
+            {i,i+2},
+            E_c = {2i,2i+2}, E_d = {2i,2i+4};
+          - fases θ_{2i+s} = πi/2 + sβ/2, con tan α = c/(a − d) y β = π/2 − α;
+          - estable si c² > 2ad (Lema 1);
+          - como plantilla: x_a = 1/8, densidades a = b = c = 1 y d → 1/2⁻, μ =
+            5.5/8 = 11/16;
+          - su k-spinning S_k (shifts cíclicos) es un caso particular del
+            realize con anillos Z_g.
+            Chequear el Lema 1 numéricamente con autovalores de L, y verificar
+            el borde c² = 2ad.
+        - S7 límite (Tabla II): resolver el polinomio (3) y la ec. (11) para
+          obtener q*, w* y
+          μ0 = 0.6929077;
+        - S7 finito (h ≈ 0.002): armar P = p + h·p′ + Δ con el p′ del Apéndice A
+          y resolver Δ sobre el
+          camino Am–Bm–Cm–W–Cp–Bp–Ap para que el equilibrio sea exacto (mínimos
+          cuadrados o Newton en
+          mpmath). Objetivo: μ ≈ 0.6927 y L ≻ 0.
+        - Intentar bajar el Supplementary Material de arXiv (certificate.json)
+          para comparar.
+     3. Certificado propio, en src/certify.py:
+        - redondear (x, P) a racionales;
+        - test de Krawczyk con mpmath.iv para la existencia del equilibrio;
+        - Cholesky por intervalos para L ≻ 0 en el complemento de la rotación y
+          c_a > 0.
+
+        Es la verificación independiente que el paper no publica.
+     4. Exploración cerca de C4, en src/search.py. El problema interno, con x y
+        φ fijos, es un
+        SDP en P (agregar cvxpy al .venv); el externo mueve x y φ. Se trabaja en
+        variables
+        reescaladas φ = jπ/2 + h·s, porque el paper advierte que los márgenes ε
+        matan estos estados.
+        Variantes a probar:
+        - partir 2 o 4 clusters (no solo 3), o partir en 3 piezas;
+        - mitades desiguales;
+        - el estado "satélite" (0.69155);
+        - análogos con ℓ = 5, 6 clusters (cruza con la dirección C).
+
+        Se reporta μ en función del margen ε y de h. Un resultado negativo bien
+        documentado también
+        vale.
+     5. Caso 0/1 (la idea original): el mejor μ con P ∈ {0,1} y clusters
+        completos (blow-up exacto,
+        sin densidades intermedias). Es un resultado chico y comparativo.
+
+     Archivos
+
+     - notebooks/Calentamientos.ipynb: no se modifica.
+     - Nuevos: src/kuramoto.py, src/templates.py, src/certify.py, src/search.py,
+       notebooks/02_plantillas.ipynb.
+     - notebooks/requirements.txt: agregar cvxpy.
+     - Datos: data/ (plantillas en JSON con racionales exactos).
+
+     Verificación
+
+     - C4: L ≡ 0. Twisted LP: ≈ 0.6838. S7 límite: μ0 = 0.6929077063.
+     - Canale: el S_k(G_{p_k}) explícito con k chico (p_k = (k, k, k, ⌈k/2⌉
+       − 1)) da mínimo estricto con
+       classify y μ = (4k + ⌈k/2⌉ − 1 + k − 1)/(8k).
+     - Para plantillas chicas, realize + classify sobre el grafo real coincide
+       con is_strict, y
+       simulate desde perturbaciones chicas queda atrapado.
+     - Certificado de S7 finito: el Krawczyk contiene la caja y el Cholesky por
+       intervalos tiene pivotes
+       positivos. Control negativo: con q > q* el certificado tiene que fallar.
+● Arranco con el paso 1. Primero src/kuramoto.py, copiando las funciones del
+  notebook sin modificarlo:
+
+● Bash(cd
+      /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026
+      && mkdir -p src data && .venv/bin/python - <<'EOF'
+      import json…)
+  ⎿  Created src/kuramoto.py (+123 -0)
+        1 +"""Funciones básicas de Kuramoto homogéneo.                   
+        2 +                                                              
+        3 +Copiadas de notebooks/Calentamientos.ipynb (secciones 1–3) par
+          +a reusarlas desde módulos y otros                             
+        4 +notebooks. El notebook original no se modifica.               
+        5 +"""                                                           
+        6 +import numpy as np                                            
+        7 +                                                              
+        8 +                                                              
+        9 +def complete_graph(n):                                        
+       10 +    # K_n: todos con todos, sin self-loops                    
+       11 +    return np.ones((n, n)) - np.eye(n)                        
+       12 +                                                              
+       13 +                                                              
+       14 +def phase_diff(theta):                                        
+       15 +    # D[v, u] = θ_u − θ_v                                     
+       16 +    return theta[None, :] - theta[:, None]                    
+       17 +                                                              
+       18 +                                                              
+       19 +def velocity(theta, W):                                       
+       20 +    # θ̇_v = Σ_u w_uv sin(θ_u − θ_v)   ( = −∇E )               
+       21 +    return (W * np.sin(phase_diff(theta))).sum(axis=1)        
+       22 +                                                              
+       23 +                                                              
+       24 +def energy(theta, W):                                         
+       25 +    # E = ½ Σ_{u,v} w_uv (1 − cos(θ_u − θ_v))                 
+       26 +    return 0.5 * (W * (1 - np.cos(phase_diff(theta)))).sum()  
+       27 +                                                              
+       28 +                                                              
+       29 +def order_parameter(theta):                                   
+       30 +    # r = (1/n) Σ e^{iθ_v};  |r| = cuán agrupadas,  ψ = arg r 
+          += hacia dónde                                                 
+       31 +    return np.exp(1j * theta).mean()                          
+       32 +                                                              
+       33 +                                                              
+       34 +def hessian(theta, W):                                        
+       35 +    # Laplaciano con pesos w_uv cos(θ_u − θ_v)                
+       36 +    C = W * np.cos(phase_diff(theta))                         
+       37 +    return np.diag(C.sum(axis=1)) - C                         
+       38 +                                                              
+       39 +                                                              
+       40 +def wrap(x):                                                  
+     … 83 more lines (ctrl+o to expand)
+  ⎿  Created src/__init__.py (+0 -0)
+  ⎿  … 2 more files changed
+
+● Ahora src/templates.py, con las plantillas (x, φ, P) y su realización como
+  grafo:
+
+● Write(src/templates.py)
+  ⎿  Wrote 181 lines to src/templates.py
+       1 """Plantillas de clusters (x, φ, P) para estados de Kuramoto no
+         sincronizados.
+       3 Notación de O'Keeffe (arXiv 2610.21271, sec. III):
+       4   x_a    fracción de osciladores en el cluster a (Σ x_a = 1)
+       5   φ_a    fase común del cluster a
+         o del cluster)
+       7
+       8 Condiciones (límite de red grande):
+         (T) = min_a d_a
+      10   F_a = Σ_b P_ab x_b sin(φ_a − φ_b) = 0         equilibrio
+     … +213 lines (ctrl+o to expand)
+
+● Detecto que las aristas E_b y E_c y la indexación θ_{2i+s} quedaron ambiguas
+  al extraer el PDF, así que en vez de asumir una asignación probaré por fuerza
+  bruta qué correspondencia de vértices a fases cumple las condiciones del
+  paper: equilibrio exacto con (a−d)·tan α = c y cambio de estabilidad en c² =
+  2ad.
+
+● Bash(.venv/bin/python - <<'EOF'
+      import numpy as np, itertools…)
+  ⎿  (No output)
+
+● La transcripción tiene superposiciones (b y c en el mismo par, d duplicado).
+  Miro la figura 2 del PDF directamente:
+
+● Bash(cd /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-
+      2026/papers && for p in 10 11 12; do pdftotext -f $p -l $p
+      2209.06362v3.pdf - 2>/dev/nu…)
+  ⎿  (No output)
+
+  Read 1 file (ctrl+o to expand)
+
+● La figura y el Hessiano del Lema 1 confirman las diferencias de fase por tipo
+  de arista (c: β, a: α, b: π/2, d: α+2β) pese a las erratas de notación del
+  paper. Ahora corrijo la plantilla de Canale con esa geometría.
+
+● Update(src/templates.py)
+  ⎿  Added 19 lines, removed 12 lines
+      159  
+      160  
+      161  def canale_template(a=1.0, b=1.0, c=1.0, d=0.5, internal=1.0):
+      162 -    """Plantilla de Canale (arXiv 2209.06362, sec. V): G_p sob
+          -re Z_8 con densidades (a, b, c, d).                           
+      162 +    """Plantilla de Canale (arXiv 2209.06362, sec. V): G_p con
+          + 8 vértices y pesos (a, b, c, d).                             
+      163  
+      164 -    Aristas: E_a = {2i, 2i+1}, E_b = {i, i+2}, E_c = {2i, 2i+2
+          -}, E_d = {2i, 2i+4}  (i ∈ N_4).                               
+      165 -    Fases θ_{2i+s} = πi/2 + sβ/2 (s = ±1) con tan α = c/(a − d
+          -), β = π/2 − α; sobre Z_8 se                                  
+      166 -    toma el vértice 2i → πi/2 − β/2 y 2i+1 → πi/2 + β/2, que e
+          -s la lectura de la Fig. 2.                                    
+      167 -    Estable si c² > 2ad (Lema 1). Con a = b = c = 1 y d → 1/2⁻
+          -, μ → 11/16.                                                  
+      164 +    Hay 4 pares de clusters, uno por cuarto de vuelta: el clus
+          +ter (i, s), i ∈ Z_4, s = ±1, está en                          
+      165 +    la fase πi/2 + sβ/2. Los conjuntos de índices E_t del pape
+          +r tienen erratas; usamos la geometría                         
+      166 +    de la Fig. 2 y del Hessiano del Lema 1, que fija la difere
+          +ncia de fase de cada tipo de arista:                          
+      167 +      c: (i,+)–(i,−)                  diferencia β        (den
+          +tro del par)                                                  
+      168 +      a: (i,+)–(i+1,−)                diferencia α        (mie
+          +mbros cercanos de pares vecinos)                              
+      169 +      b: (i,s)–(i+1,s)                diferencia π/2      (se 
+          +compensan entre sí)                                           
+      170 +      d: (i,−)–(i+1,+)                diferencia α + 2β   (mie
+          +mbros lejanos)                                                
+      171 +    con α + β = π/2 y equilibrio (a − d) tan α = c. Estable si
+          + c² > 2ad (Lema 1).                                           
+      172 +    Con a = b = c = 1 y d → 1/2⁻, μ → (a + 2b + c + d + 1)/8 =
+          + 11/16.                                                       
+      173 +    Índice del cluster (i, s): 2i + (s == +1).                
+      174      """
+      175 +    v = lambda i, s: 2 * (i % 4) + (s == 1)                   
+      176      P = np.zeros((8, 8))
+      177      for i in range(4):
+      171 -        P[2 * i, 2 * i + 1] = a                      # E_a    
+      172 -        P[(2 * i) % 8, (2 * i + 2) % 8] = c          # E_c    
+      173 -        P[2 * i, (2 * i + 4) % 8] = d                # E_d    
+      174 -    for i in range(8):                                        
+      175 -        P[i, (i + 2) % 8] = b                        # E_b    
+      176 -    P = np.maximum(P, P.T)                                    
+      178 +        P[v(i, 1), v(i, -1)] = c                              
+      179 +        P[v(i, 1), v(i + 1, -1)] = a                          
+      180 +        P[v(i, 1), v(i + 1, 1)] = b                           
+      181 +        P[v(i, -1), v(i + 1, -1)] = b                         
+      182 +        P[v(i, -1), v(i + 1, 1)] = d                          
+      183 +    P = P + P.T                                               
+      184      np.fill_diagonal(P, internal)
+      185      alpha = np.arctan2(c, a - d)
+      186      beta = np.pi / 2 - alpha
+      180 -    phi = np.array([np.pi * (v // 2) / 2 + (beta / 2 if v % 2 
+          -else -beta / 2) for v in range(8)])                           
+      187 +    phi = np.array([np.pi * (k // 2) / 2 + (beta / 2 if k % 2 
+          +else -beta / 2) for k in range(8)])                           
+      188      return Template(np.full(8, 1 / 8), phi, P, f"Canale (a,b,c
+           ,d)=({a},{b},{c},{d})")
+
+● Bash(cd
+      /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026
+      && .venv/bin/python - <<'EOF'
+      import sys; sys.path.insert(0, '.')…)
+  ⎿  Error: Exit code 1
+     C4 {'mu': np.float64(0.75), 'max|F|': np.float64(0.0), 'min c':
+     np.float64(0.24999999999999997), 'min eig L':
+     np.float64(-1.9606234081582708e-17)}
+     Canale d=0.4: mu=0.67500 |F|=1.4e-17 min c=0.271 min eig L=+7.24e-04
+     strict=True  c²-2ad=+0.20
+     Canale d=0.49: mu=0.68625 |F|=2.1e-17 min c=0.265 min eig L=+5.76e-05
+     strict=True  c²-2ad=+0.02
+     Canale d=0.5: mu=0.68750 |F|=1.4e-16 min c=0.265 min eig L=-7.31e-18
+     strict=False  c²-2ad=+0.00
+     Canale d=0.51: mu=0.68875 |F|=1.3e-16 min c=0.264 min eig L=-5.42e-05
+     strict=False  c²-2ad=-0.02
+     Traceback (most recent call last):
+       File "<stdin>", line 14, in <module>
+       File "/home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizaci
+     on-2026/src/templates.py", line 125, in realize
+         S = _symmetric_set(g, k, rng, kind)
+     … +4 lines (ctrl+o to expand)
+
+● Confirmado: la plantilla de Canale coincide con el paper (estricta si c² >
+  2ad, degenerada/inestable en el borde con μ → 11/16), pero C4 da L ≡ 0 por un
+  error en el clique interno (con P_aa = 1 hay g−1 vecinos, no g). Voy a
+  corregirlo.
+
+● Update(src/templates.py)
+  ⎿  Added 1 line
+      122              assert abs(k - round(k)) < 1e-9, f"P[{a},{b}]·g = 
+           {k} no es entero"
+      123              k = int(round(k))
+      124              if a == b:
+      125 +                k = min(k, g - 1)  # P_aa = 1: clique, g − 1 v
+          +ecinos (sin self-loop)                                        
+      126                  S = _symmetric_set(g, k, rng, kind)
+      127              elif kind == "interval":
+      128                  S = list(range(k))
+
+● Bash(cd
+      /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026
+      && .venv/bin/python - <<'EOF'
+      import sys; sys.path.insert(0, '.')…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+
+● Confirmo que la canalización se reproduce bien en grafos reales: los
+  k-spinnings son regulares, tienen mínimo estricto según classify, y la
+  simulación vuelve al estado tras perturbarlo, con δ coincidiendo con la
+  fórmula del paper salvo por la normalización (8k vs n−1). Ahora probaré el LP
+  de twisted states como plantilla, esperando un valor cercano a 0.6838.
+
+● Bash(.venv/bin/python - <<'EOF'
+      import numpy as np…)
+  ⎿  (No output)
+
+● Interesante: m = 16 da 0.68385, por encima de lo que da m grande (0.6809, el
+  valor de Wiley–Strogatz–Girvan). Hago un barrido de m y del número de vueltas
+  q:
+
+● Bash(.venv/bin/python - <<'EOF'
+      import numpy as np…)
+  ⎿  (No output)
+
+● Descarto los múltiplos de 4 (caso C4 degenerado) y confirmo que el mejor valor
+  es m = 19 con μ = 0.683876, coincidiendo con el 0.6838 de Yoneda et al.;
+  Twisted queda validado. Ahora paso a S7 y leeré el Apéndice A completo para
+  obtener la corrección p′ y los demás parámetros.
+
+● Bash(cd /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-
+      2026/papers && pdftotext 2610.21271v1.pdf - 2>/dev/null | sed -n
+      '1030,1400p')
+  ⎿  (No output)
+
+● Implementaré el ansatz para S7 (P = p + h·p′ + Δ, κ=19/10, u=u13) en mpmath,
+  verificando que q* y w* anulen f y e, que F(p+h·p′) sea O(h²), y que con Δ el
+  equilibrio sea exacto con L≻0.
+
+● Write(src/s7.py)
+  ⎿  Wrote 133 lines to src/s7.py
+       1 """Reconstrucción independiente del estado S7 de O'Keeffe (arXiv
+       2
+       3 Clusters en el orden (Am, Ap, Bm, Bp, Cm, Cp, W):
+       4   tamaños  x = (a, a, a, a, a, a, 1 − 6a),  a = 1/(7 + q)
+         , 1, −w, w, −1, 1, 0)
+       6   densidades P(h) = p + h p′ + Δ(h)
+          en el camino
+       8 Am–Bm–Cm–W–Cp–Bp–Ap y se elige para que el equilibrio sea exacto
+          (F es afín en P).
+      10 import mpmath as mp
+     … +149 lines (ctrl+o to expand)
+
+● Bash(cd
+      /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026
+      && .venv/bin/python - <<'EOF'
+      import sys; sys.path.insert(0, '.')…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+
+● Confirmé que q*, w* y μ0 coinciden con el paper hasta 20 dígitos, que q*
+  satisface el polinomio (3) y la ec. (11), y que F(p + h·p′) escala
+  correctamente como h². Ahora resolveré Δ y analizaré la estabilidad para
+  distintos pares (t, h).
+
+● Bash(.venv/bin/python - <<'EOF'
+      import sys; sys.path.insert(0, '.')…)
+  ⎿  (No output)
+● Confirmé que con (t,h)=(10⁻⁵,10⁻⁶) se obtiene μ = 0.6929050246, coincidiendo
+  exactamente con μ* del paper, con equilibrio exacto, L ≻ 0 y cota |Δ| dentro
+  de lo esperado; el control negativo con t<0 también se comporta correctamente.
+  Ahora paso al certificado propio con Krawczyk y Cholesky por intervalos sobre
+  datos racionales.
+
+● Write(src/certify.py)
+  ⎿  Wrote 152 lines to src/certify.py
+       1 """Certificado riguroso de que una plantilla racional (x, P) tie
+       2
+         ffe (arXiv 2610.21271):
+       4   1. Datos racionales exactos: x_a = X_a/D, P_ab = Q_ab/D (fract
+       5   2. Krawczyk (mpmath.iv, redondeo hacia afuera): existe una úni
+       6      con φ_1 fijo, en una caja explícita. F_1 = 0 sigue de Σ x_a
+       7   3. Sobre toda la caja: c_a > 0 y la matriz de L sin la fila/co
+         lumna 1 (gauge y_1 = 0) admite
+         lvo rotaciones.
+      10   5. Las fases son dis
+     … +173 lines (ctrl+o to expand)
+
+● Bash(time .venv/bin/python - <<'EOF'
+      import sys; sys.path.insert(0, '.')…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+
+● El certificado valida correctamente los casos positivos y rechaza los
+  negativos, reproduciendo la Proposición 1 de O'Keeffe con 13 dígitos de
+  coincidencia en el caso S7 (10⁻⁵, 10⁻⁶). Ahora ajusto el formato de impresión
+  de las cotas inferiores.
+
+● Bash(.venv/bin/python -c "
+      from mpmath import iv, mp…)
+  ⎿  (No output)
+
+● Bash(.venv/bin/python - <<'EOF'
+      import re…)
+  ⎿  Updated src/certify.py (+8 -3)
+      69          return phi
+      70  
+      71  
+      72 +def _lo(v):                                                    
+      73 +    # cota inferior de un intervalo como mpf                   
+      74 +    return mp.mpf(v.a.a)                                       
+      75 +                                                               
+      76 +                                                               
+      77  def _to_iv(fr):
+      78      return iv.mpf(fr.numerator) / fr.denominator
+      79  
+     ...
+      113      # --- c_a > 0 sobre la caja
+      114      cs = [sum(P[a][b] * x[b] * iv.cos(box[a] - box[b]) for b i
+           n range(m) if b != a) + P[a][a] * x[a]
+      115            for a in range(m)]
+      111 -    out["min c (cota inf)"] = min(cv.a for cv in cs)          
+      116 +    out["min c (cota inf)"] = min(_lo(cv) for cv in cs)       
+      117      out["c>0"] = all(cv.a > 0 for cv in cs)
+      118  
+      119      # --- Cholesky por intervalos de L sin fila/columna 0
+     ...
+      137          for i in range(j + 1, n):
+      138              Lc[i][j] = (A[i][j] - sum(Lc[i][k] * Lc[j][k] for 
+           k in range(j))) / Lc[j][j]
+      139      out["cholesky"] = chol_ok
+      135 -    out["min pivote (cota inf)"] = min(p.a for p in pivots)   
+      140 +    out["min pivote (cota inf)"] = min(_lo(p) for p in pivots)
+      141  
+      142      # --- grados exactos
+      143      d = [sum(Pq[a][b] * xq[b] for b in range(m)) for a in rang
+           e(m)]
+      144      out["mu"] = min(d)
+      145  
+      146      # --- fases distintas
+      142 -    sep = min(abs(iv.sin((box[a] - box[b]) / 2)).a for a in ra
+          -nge(m) for b in range(a + 1, m))                              
+      147 +    sep = min(_lo(abs(iv.sin((box[a] - box[b]) / 2))) for a in
+          + range(m) for b in range(a + 1, m))                           
+      148      out["min |sin(Δφ/2)| (cota inf)"] = sep
+      149      out["distinct"] = sep > 0
+      150  
+
+● Guardo después los datos certificados en data/. Sigo con el paso 4, la
+  exploración. Instalo cvxpy para el SDP interno:
+
+● Bash(.venv/bin/pip install -q cvxpy 2>&1 | grep -v notice; .venv/bin/python -c
+      "import cvxpy as cp; print(cp.__version__, cp.installed_solvers())" &&
+      echo cvxpy >> n…)
+  ⎿  Updated notebooks/requirements.txt (+1 -0)
+      4  scipy
+      5  networkx
+      6  mpmath
+      7 +cvxpy                                                           
+  ⎿  (timeout 10m)
+
+● Ahora src/search.py: el SDP interno sobre P con x y φ fijos, y un optimizador
+  externo sobre tamaños y desplazamientos cerca de C4.
+
+● Write(src/search.py)
+  ⎿  Wrote 107 lines to src/search.py
+       1 """Búsqueda de plantillas densas cerca del estado de 4 clusters
+       2
+       3 Problema interno (convexo, O'Keeffe sec. III): con tamaños x y f
+         ases φ fijos,
+       5                   d_a = Σ_b P_ab x_b ≥ t
+       6                   F_a = Σ_b P_ab x_b sin(φ_a − φ_b) = 0
+       8                   Qᵀ L(P) Q / scale ⪰ eps · I        (L ≻ 0 fuer
+         a de la rotación)
+       9 es un SDP. Cerca de C4 los modos de cluster son de orden h², así
+      10 (si no, el margen mata los estados; ver O'Keeffe sec. VI).
+     … +115 lines (ctrl+o to expand)
+
+● Bash(.venv/bin/python - <<'EOF'
+      import sys, time; sys.path.insert(0, '.')…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+
+● El SDP interno funciona correctamente: con x y φ del ansatz ya mejora el μ al
+  optimizar densidades, en ~10 ms por llamada. Ahora probaré si la búsqueda con
+  piezas (2,2,2,1) reencuentra los valores de referencia del paper (μ=0.6918
+  para h=0.01, 0.6906 para h=0.02).
+
+● Bash(.venv/bin/python - <<'EOF' 2>&1 | grep -v Warn | grep -v prob.solve
+      import sys, time; sys.path.insert(0, '.')…)
+  ⎿  (No output)
+  ⎿  (timeout 10m)
+
+● Reproduzco los números del paper (0.69185 vs 0.6918 publicado con h=0.01, y
+  0.69104 vs 0.6906 con h=0.02), incluyendo la razón w≈1.40. Ahora exploraré
+  otros patrones de partición con el mismo h para comparabilidad, armando un
+  script que correré en paralelo.
+
+● Bash(nproc; free -g | head -2)
+  ⎿  (No output)
+
+● Write(scripts/explore_splits.py)
+  ⎿  Wrote 70 lines to scripts/explore_splits.py
+       1 """Exploración: ¿qué patrón de partición de los 4 clusters de C4
+       2
+       3 Para cada patrón pieces = (k0, k1, k2, k3) (cuántas piezas tiene
+       4 corre varias optimizaciones (Nelder–Mead sobre tamaños y desplaz
+         amientos, SDP interno en las
+         .
+       6
+          [maxiter]
+       8 """
+      10 import os
+     … +71 lines (ctrl+o to expand)
+
+● Bash(OMP_NUM_THREADS=1 .venv/bin/python scripts/explore_splits.py 0.02 8 1000
+      2>&1 | grep -v -iE 'warn|prob.solve')
+  ⎿  Running in the background (↓ to manage)
+
+● Mientras corre la exploración, guardo el certificado de S7 como script
+  reproducible, con sus datos racionales en data/:
+
+● Write(scripts/certify_s7.py)
+  ⎿  Wrote 43 lines to scripts/certify_s7.py
+       1 """Construye y certifica un miembro de la familia S7 (O'Keeffe,
+       2
+       3 Uso:  .venv/bin/python scripts/certify_s7.py t h log10D
+       4 Ejemplo (Proposición 1 del paper):  scripts/certify_s7.py 1e-5 1
+       5
+       6 Guarda data/s7_t{t}_h{h}.json con los datos racionales exactos (
+       7 caja de fases, su radio y el resultado de cada paso del certific
+         ado.
+       8 """
+      10 import os
+     … +42 lines (ctrl+o to expand)
+
+● Bash(.venv/bin/python scripts/certify_s7.py 1e-5 1e-6 42 && .venv/bin/python
+      scripts/certify_s7.py 1e-3 1e-4 30 | tail -3; .venv/bin/python
+      scripts/certify_s7.py -0.…)
+  ⎿  Created data/s7_t1e-5_h1e-6.json (+111 -0)
+        1 +{                                                             
+        2 + "source": "Reconstrucci\u00f3n de S7 (O'Keeffe 2026, Tabla II
+          + + Ap\u00e9ndice A), certificado propio",                     
+        3 + "t": "1e-5",                                                 
+        4 + "h": "1e-6",                                                 
+        5 + "D": "2000000000000000000000000000000000000000000",          
+        6 + "clusters": [                                                
+        7 +  "Am",                                                       
+        8 +  "Ap",                                                       
+        9 +  "Bm",                                                       
+       10 +  "Bp",                                                       
+       11 +  "Cm",                                                       
+       12 +  "Cp",                                                       
+       13 +  "W"                                                         
+       14 + ],                                                           
+       15 + "X": [                                                       
+       16 +  "261418800424582186210041980744517009014784",               
+       17 +  "261418800424582186210041980744517009014784",               
+       18 +  "261418800424582186210041980744517009014784",               
+       19 +  "261418800424582186210041980744517009014784",               
+       20 +  "261418800424582186210041980744517009014784",               
+       21 +  "261418800424582186210041980744517009014784",               
+       22 +  "431487197452506882739748115532897945911296"                
+       23 + ],                                                           
+       24 + "Q": [                                                       
+       25 +  [                                                           
+       26 +   "1999999999999999999999999999999999999999999",             
+       27 +   "2000000000000000000000000000000000000000000",             
+       28 +   "1999999638852235131910818173124266566877184",             
+       29 +   "1301114533889597584743244877581187563913216",             
+       30 +   "0",                                                       
+       31 +   "0",                                                       
+       32 +   "1999999902366411538005510013511876309155840"              
+       33 +  ],                                                          
+       34 +  [                                                           
+       35 +   "2000000000000000000000000000000000000000000",             
+       36 +   "1999999999999999999999999999999999999999999",             
+       37 +   "1301116688152148323339606590280469667905536",             
+       38 +   "1999996200002249917048470256963826311233536",             
+       39 +   "0",                                                       
+       40 +   "0",                                                       
+     … 72 more lines (ctrl+o to expand)
+  ⎿  Created data/s7_t-0.01_h1e-4.json (+111 -0)
+        1 +{                                                             
+        2 + "source": "Reconstrucci\u00f3n de S7 (O'Keeffe 2026, Tabla II
+          + + Ap\u00e9ndice A), certificado propio",                     
+        3 + "t": "-0.01",                                                
+        4 + "h": "1e-4",                                                 
+        5 + "D": "2000000000000000000000000000000",                      
+        6 + "clusters": [                                                
+        7 +  "Am",                                                       
+        8 +  "Ap",                                                       
+        9 +  "Bm",                                                       
+       10 +  "Bp",                                                       
+       11 +  "Cm",                                                       
+       12 +  "Cp",                                                       
+       13 +  "W"                                                         
+       14 + ],                                                           
+       15 + "X": [                                                       
+       16 +  "261077206721134959805832626176",                           
+       17 +  "261077206721134959805832626176",                           
+       18 +  "261077206721134959805832626176",                           
+       19 +  "261077206721134959805832626176",                           
+       20 +  "261077206721134959805832626176",                           
+       21 +  "261077206721134959805832626176",                           
+       22 +  "433536759673190241165004242944"                            
+       23 + ],                                                           
+       24 + "Q": [                                                       
+       25 +  [                                                           
+       26 +   "1999999999999999999999999999999",                         
+       27 +   "2000000000000000000000000000000",                         
+       28 +   "1999963165971754852731647426560",                         
+       29 +   "1320758333889597710009209192448",                         
+       30 +   "0",                                                       
+       31 +   "0",                                                       
+       32 +   "1999989848664454987763383533568"                          
+       33 +  ],                                                          
+       34 +  [                                                           
+       35 +   "2000000000000000000000000000000",                         
+       36 +   "1999999999999999999999999999999",                         
+       37 +   "1320974502138015154561926299648",                         
+       38 +   "1999620022971810202052808671232",                         
+       39 +   "0",                                                       
+       40 +   "0",                                                       
+     … 72 more lines (ctrl+o to expand)
+  ⎿  … 1 more file changed
+
+● Falló por un bug mío: rationalize redondea x·D con la precisión global de
+  mpmath, que quedó en 15 dígitos, y con D ~ 10⁴² eso arruina los datos. Voy a
+  corregirlo para que rationalize use su propia precisión.
+
+● Bash(.venv/bin/python - <<'EOF'
+      p = 'src/certify.py'…)
+  ⎿  Updated src/certify.py (+11 -10)
+      22      """
+      23      assert D % 2 == 0
+      24      m = len(x)
+      25 -    X = [int(mp.nint(xa * D)) for xa in x[:-1]]                
+      26 -    X.append(D - sum(X))                                       
+      27 -    Q = [[0] * m for _ in range(m)]                            
+      28 -    for a in range(m):                                         
+      29 -        for b in range(a, m):                                  
+      30 -            v = int(mp.floor(P[a, b] * D)) if a == b else int(m
+         -p.nint(P[a, b] * D))                                           
+      31 -            if a == b and diag_max:                            
+      32 -                v = D - 1                                      
+      33 -            v = max(0, min(D - (a == b), v))                   
+      34 -            Q[a][b] = Q[b][a] = v                              
+      25 +    with mp.workdps(len(str(D)) + 30):  # precisión suficiente 
+         +para redondear a 1/D                                           
+      26 +        X = [int(mp.nint(xa * D)) for xa in x[:-1]]            
+      27 +        X.append(D - sum(X))                                   
+      28 +        Q = [[0] * m for _ in range(m)]                        
+      29 +        for a in range(m):                                     
+      30 +            for b in range(a, m):                              
+      31 +                v = int(mp.floor(P[a, b] * D)) if a == b else i
+         +nt(mp.nint(P[a, b] * D))                                       
+      32 +                if a == b and diag_max:                        
+      33 +                    v = D - 1                                  
+      34 +                v = max(0, min(D - (a == b), v))               
+      35 +                Q[a][b] = Q[b][a] = v                          
+      36      return [Fraction(Xa, D) for Xa in X], [[Fraction(Q[a][b], D
+          ) for b in range(m)] for a in range(m)]
+      37  
+      38  
+  ⎿  Updated data/s7_t1e-5_h1e-6.json (+44 -44)
+       13    "W"
+       14   ],
+       15   "X": [
+       16 -  "261418800424582186210041980744517009014784",               
+       17 -  "261418800424582186210041980744517009014784",               
+       18 -  "261418800424582186210041980744517009014784",               
+       19 -  "261418800424582186210041980744517009014784",               
+       20 -  "261418800424582186210041980744517009014784",               
+       21 -  "261418800424582186210041980744517009014784",               
+       22 -  "431487197452506882739748115532897945911296"                
+       16 +  "261418800424582172348195269501476786319713",               
+       17 +  "261418800424582172348195269501476786319713",               
+       18 +  "261418800424582172348195269501476786319713",               
+       19 +  "261418800424582172348195269501476786319713",               
+       20 +  "261418800424582172348195269501476786319713",               
+       21 +  "261418800424582172348195269501476786319713",               
+       22 +  "431487197452506965910828382991139282081722"                
+       23   ],
+       24   "Q": [
+       25    [
+       26     "1999999999999999999999999999999999999999999",
+       27     "2000000000000000000000000000000000000000000",
+       28 -   "1999999638852235131910818173124266566877184",             
+       29 -   "1301114533889597584743244877581187563913216",             
+       28 +   "1999999638852235235891393034776633099628868",             
+       29 +   "1301114533889597605223506710048922546985481",             
+       30     "0",
+       31     "0",
+       32 -   "1999999902366411538005510013511876309155840"              
+       32 +   "1999999902366411398398324580132057199567714"              
+       33    ],
+       34    [
+       35     "2000000000000000000000000000000000000000000",
+       36     "1999999999999999999999999999999999999999999",
+       37 -   "1301116688152148323339606590280469667905536",             
+       38 -   "1999996200002249917048470256963826311233536",             
+       37 +   "1301116688152148355159445827895821847924324",             
+       38 +   "1999996200002249909214206236006056121768229",             
+       39     "0",
+       40     "0",
+     … 104 more lines (ctrl+o to expand)
+  ⎿  Created data/s7_t1e-3_h1e-4.json (+111 -0)
+        1 +{                                                             
+        2 + "source": "Reconstrucci\u00f3n de S7 (O'Keeffe 2026, Tabla II
+          + + Ap\u00e9ndice A), certificado propio",                     
+        3 + "t": "1e-3",                                                 
+        4 + "h": "1e-4",                                                 
+        5 + "D": "2000000000000000000000000000000",                      
+        6 + "clusters": [                                                
+        7 +  "Am",                                                       
+        8 +  "Ap",                                                       
+        9 +  "Bm",                                                       
+       10 +  "Bp",                                                       
+       11 +  "Cm",                                                       
+       12 +  "Cp",                                                       
+       13 +  "W"                                                         
+       14 + ],                                                           
+       15 + "X": [                                                       
+       16 +  "261452632998256867503638431673",                           
+       17 +  "261452632998256867503638431673",                           
+       18 +  "261452632998256867503638431673",                           
+       19 +  "261452632998256867503638431673",                           
+       20 +  "261452632998256867503638431673",                           
+       21 +  "261452632998256867503638431673",                           
+       22 +  "431284202010458794978169409962"                            
+       23 + ],                                                           
+       24 + "Q": [                                                       
+       25 +  [                                                           
+       26 +   "1999999999999999999999999999999",                         
+       27 +   "2000000000000000000000000000000",                         
+       28 +   "1999963977718941919894747656992",                         
+       29 +   "1298758333889597605241092642759",                         
+       30 +   "0",                                                       
+       31 +   "0",                                                       
+       32 +   "1999990273384560549033256187386"                          
+       33 +  ],                                                          
+       34 +  [                                                           
+       35 +   "2000000000000000000000000000000",                         
+       36 +   "1999999999999999999999999999999",                         
+       37 +   "1298973689868133437297809500255",                         
+       38 +   "1999620022449099786106010376743",                         
+       39 +   "0",                                                       
+       40 +   "0",                                                       
+     … 72 more lines (ctrl+o to expand)
+  ⎿  Updated data/s7_t-0.01_h1e-4.json (+41 -41)
+       13    "W"
+       14   ],
+       15   "X": [
+       16 -  "261077206721134959805832626176",                           
+       17 -  "261077206721134959805832626176",                           
+       18 -  "261077206721134959805832626176",                           
+       19 -  "261077206721134959805832626176",                           
+       20 -  "261077206721134959805832626176",                           
+       21 -  "261077206721134959805832626176",                           
+       22 -  "433536759673190241165004242944"                            
+       16 +  "261077206721134977309422762614",                           
+       17 +  "261077206721134977309422762614",                           
+       18 +  "261077206721134977309422762614",                           
+       19 +  "261077206721134977309422762614",                           
+       20 +  "261077206721134977309422762614",                           
+       21 +  "261077206721134977309422762614",                           
+       22 +  "433536759673190136143463424316"                            
+       23   ],
+       24   "Q": [
+       25    [
+       26     "1999999999999999999999999999999",
+       27     "2000000000000000000000000000000",
+       28 -   "1999963165971754852731647426560",                         
+       29 -   "1320758333889597710009209192448",                         
+       28 +   "1999963165971754713469227154273",                         
+       29 +   "1320758333889597605241092642759",                         
+       30     "0",
+       31     "0",
+       32 -   "1999989848664454987763383533568"                          
+       32 +   "1999989848664454932744389535417"                          
+       33    ],
+       34    [
+       35     "2000000000000000000000000000000",
+       36     "1999999999999999999999999999999",
+       37 -   "1320974502138015154561926299648",                         
+       38 -   "1999620022971810202052808671232",                         
+       37 +   "1320974502138015239206210224909",                         
+       38 +   "1999620022971810262941207070299",                         
+       39     "0",
+       40     "0",
+     … 99 more lines (ctrl+o to expand)
+  ⎿  … 1 more file changed
+
+● Listo: el miembro de la Proposición 1 queda certificado y el control negativo
+  falla correctamente con código 1. Ahora armo el notebook 02_plantillas.ipynb
+  con lo reproducido y reviso el entorno disponible para ejecutarlo.
+
+● Bash(.venv/bin/python -c "import nbformat, nbclient;
+      print(nbformat.__version__, nbclient.__version__)" 2>&1; ls .venv/bin |
+      grep -i nbconvert)
+  ⎿  No matches found
+
+● Bash(.venv/bin/pip install -q nbformat nbclient 2>&1 | grep -v notice;
+      .venv/bin/python -c "import nbformat, nbclient; print('ok')")  ⎿  (No output)
+
+● Mientras termina la exploración, voy escribiendo el generador del notebook,
+  siguiendo el estilo de Calentamientos.ipynb: markdown en español y gráficos
+  con nombres de variables en los ejes, sin títulos redundantes.
+
+  Made 1 scratchpad edit +257 (ctrl+o to expand)
+
+● Bash(.venv/bin/python
+      /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-teo-
+      optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/scratchpad/bui…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+● El notebook corre completo en ~15 s reproduciendo todo. Mientras la
+  exploración sigue en segundo plano, preparo el paso 5 (caso 0/1 con blow-ups
+  completos), empezando por un prefiltro barato con nauty basado en el LP del μ
+  máximo, quedándome solo con los H cuyo LP supera 11/16.
+
+● Bash(cd
+      /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026
+      && .venv/bin/python - <<'EOF'
+      import subprocess, networkx as nx, numpy as np, time…)
+  ⎿  Running in the background (↓ to manage)
+  ⎿  (timeout 10m)
+
+  Read 2 files (ctrl+o to expand)
+
+● Con arranques aleatorios el propio patrón S7 solo alcanza 0.587 (vs 0.691
+  partiendo del ansatz), confirmando que las cuencas son angostas y los
+  arranques genéricos fallan, tal como advertía O'Keeffe. Por eso la comparación
+  con arranques aleatorios no sirve: ahora agregaré arranques estructurados
+  derivados del ansatz S7, partidos o fusionados como en el paper.
+
+● Update(src/search.py)
+  ⎿  Added 17 lines
+       97      return best
+       98  
+       99  
+      100 +def s7_like_start(fam, rng=None, noise=0.0, w=1.39827813402046
+          +12, q=0.6505691669447988):                                    
+      101 +    """Arranque "estilo S7" para cualquier patrón: tamaños por
+          + cuarto como en S7 (2a, 2a, 2a, 1 − 6a),                      
+      102 +    repartidos en partes iguales entre las piezas, y desplazam
+          +ientos equiespaciados en [−r, r], con                         
+      103 +    r = w en el cuarto 1 y r = 1 en los demás. Con noise > 0 a
+          +grega ruido gaussiano (reinicios)."""                         
+      104 +    rng = np.random.default_rng(rng)                          
+      105 +    a = 1 / (7 + q)                                           
+      106 +    totals = np.array([2 * a, 2 * a, 2 * a, 1 - 6 * a])       
+      107 +    x = np.repeat(totals / np.array(fam.pieces), fam.pieces)  
+      108 +    s = []                                                    
+      109 +    for j, k in enumerate(fam.pieces):                        
+      110 +        if k > 1:                                             
+      111 +            r = w if j == 1 else 1.0                          
+      112 +            s.extend(np.linspace(-r, r, k))                   
+      113 +    z = np.concatenate([np.log(x), np.array(s)])              
+      114 +    return z + noise * rng.standard_normal(len(z))            
+      115 +                                                              
+      116 +                                                              
+      117  def random_start(fam, rng):
+      118      # tamaños parecidos a C4 repartidos entre las piezas + des
+           plazamientos simétricos alrededor de 0
+      119      logits = np.log(np.repeat(0.25 / np.array(fam.pieces), fam
+           .pieces)) + 0.1 * rng.standard_normal(fam.m)
+
+● Bash(cd
+      /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026
+      && .venv/bin/python - <<'EOF'
+      p = 'scripts/explore_splits.py'…)
+  ⎿  Updated scripts/explore_splits.py (+13 -7)
+       4  corre varias optimizaciones (Nelder–Mead sobre tamaños y despla
+          zamientos, SDP interno en las
+       5  densidades) y guarda el mejor μ en data/explore_splits_h{h}.jso
+          n.
+       6  
+       7 -Uso:  .venv/bin/python scripts/explore_splits.py 0.02 [restarts
+         -] [maxiter]                                                    
+       7 +Uso:  .venv/bin/python scripts/explore_splits.py 0.02 [restarts
+         +] [maxiter] [s7|mixed]                                         
+       8 +                                                               
+       9 +Con arranques al azar ni siquiera se reencuentra S7 (cuencas an
+         +gostas, O'Keeffe sec. VI), así que                             
+      10 +el modo por defecto arranca desde un estado "estilo S7" adaptad
+         +o a cada patrón.                                               
+      11  """
+      12  import json
+      13  import os
+     ...
+      19  import numpy as np
+      20  
+      21  sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."
+          ))
+      19 -from src.search import SplitFamily, optimize_family, random_sta
+         -rt  # noqa: E402                                               
+      22 +from src.search import SplitFamily, optimize_family, random_sta
+         +rt, s7_like_start  # noqa: E402                                
+      23  
+      24  PATTERNS = [
+      25      (2, 2, 2, 1),  # S7 (O'Keeffe)
+     ...
+      38  
+      39  
+      40  def run(args):
+      38 -    pieces, h, restarts, maxiter, seed = args                  
+      41 +    pieces, h, restarts, maxiter, seed, mode = args            
+      42      warnings.filterwarnings("ignore")
+      43      fam = SplitFamily(pieces, h)
+      44      rng = np.random.default_rng(seed)
+      45      t0 = time.time()
+      46      results = []
+      44 -    for _ in range(restarts):                                  
+      45 -        mu, z = optimize_family(fam, random_start(fam, rng), ma
+         -xiter=maxiter)                                                 
+      47 +    for r in range(restarts):                                  
+      48 +        # mitad de los reinicios desde el arranque estilo S7 (c
+         +on ruido creciente), mitad al azar                             
+      49 +        z0 = s7_like_start(fam, rng, noise=0.05 * r) if (mode =
+         += "s7" or r % 2 == 0) else random_start(fam, rng)              
+      50 +        mu, z = optimize_family(fam, z0, maxiter=maxiter)      
+      51          results.append(mu)
+      52          if mu >= max(results):
+      53              zbest = z
+     ...
+      63      h = float(sys.argv[1])
+      64      restarts = int(sys.argv[2]) if len(sys.argv) > 2 else 8
+     … 14 more lines (ctrl+o to expand)
+
+● Lanzo la nueva corrida con arranques estructurados. La corrida vieja, con
+  arranques al azar, termina sola y queda como control:
+
+● Bash(OMP_NUM_THREADS=1 .venv/bin/python scripts/explore_splits.py 0.02 8 1500
+      s7 2>&1 | grep -v -iE 'warn|prob.solve')
+  ⎿  Running in the background (↓ to manage)
+
+● Quedan tres corridas en segundo plano: la exploración con arranques aleatorios
+  (el control), la nueva con arranques estilo S7 y el prefiltro LP de nauty.
+  Espero a que terminen para analizar los resultados.
+
+● Background command "Count base graphs passing the LP degree prefilter"
+completed (exit code 0)
+
+  Read 1 file (ctrl+o to expand)
+
+● El prefiltro LP deja pasar muchos grafos (1517 con k=8 y 19.929 con k=9),
+  mayormente porque tienen un vértice universal que hace trivial el LP (μ=1); la
+  estabilidad es la que realmente decide. Ahora escribiré la búsqueda del caso
+  0/1, optimizando tamaños x y fases φ con P = A + I fija, empezando por k ≤ 8.
+
+● Write(scripts/explore_01.py)
+  ⎿  Wrote 124 lines to scripts/explore_01.py
+       1 """Caso 0/1 (la idea original del "stackeo"): blow-ups completos
+       2
+       3 Cada vértice de H es un clique y cada arista de H un bipartito c
+       4 densidades intermedias. Para cada H conexo con k vértices (gener
+         ado por nauty) se busca
+       6     s.t. F = 0,  c_a ≥ eps,  λ_min(L en ⊥1) ≥ eps,  fases no tod
+         as iguales
+          min_a x(N[a]) tiene que superar
+       8 `floor` (ignorar estabilidad solo puede dar más).
+      10 Uso:  .venv/bin/python scripts/explore_01.py k [starts] [floor]
+     … +133 lines (ctrl+o to expand)
+
+● Bash(for k in 5 6 7; do OMP_NUM_THREADS=1 .venv/bin/python
+      scripts/explore_01.py $k 20 0.6 2>&1 | grep -v -i warn; done)
+  ⎿  Running in the background (↓ to manage)
+  ⎿  (timeout 10m)
+
+  Read 1 file (ctrl+o to expand)
+
+● Primeros datos del caso 0/1: con k ≤ 6, el mejor blow-up completo llega a μ ≈
+  0.600, compatible con el blow-up de C5 (twisted q = 1, μ = 3/5). Muy lejos de
+  11/16, como se esperaba. Sigue corriendo k = 7; espero las notificaciones.
+
+● Background command "Run split-pattern exploration at h=0.02" completed (exit
+code 0)
+
+● Bash(tail -4 /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investigh
+      aton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/tasks/bmnb
+      4qnk2.output;…)
+  ⎿  2 files changed (binary, mode only or too large to show)
+
+● Terminó la corrida con arranques aleatorios. La renombré a
+  explore_splits_h0.02_random.json para que quede como control. Espero la
+  corrida con arranques estilo S7.
+
+● Background command "Run 0/1 blow-up search for k=5..7" completed (exit code 0)
+
+● Bash(tail -8 /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investigh
+      aton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/tasks/bhqh
+      346lw.output;…)
+  ⎿  (No output)
+
+● Bash(sed -n 1,20p /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-inve
+      stighaton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/tasks
+      /bhqh346lw.ou…)
+  ⎿  (No output)
+
+● Caso 0/1 con k = 7: 32 de 853 grafos tienen un estado estricto no
+  sincronizado, y el mejor da μ ≈ 0.6056. La tendencia (0.600 → 0.606) confirma
+  que los blow-ups completos de grafos chicos quedan muy lejos de 11/16, porque
+  hacen falta densidades intermedias. Con k = 8 serían unas 2–3 horas; lo dejo
+  para después. Sigo esperando la exploración de particiones.
+
+❯ Hay algo corriendo de fondo?
+
+● Bash(cat /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton
+      -teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/tasks/b86o0u1n
+      q.output; ps…)
+  ⎿  (No output)
+● Sí, queda una sola tarea en segundo plano: la exploración de patrones de
+  partición con arranques estilo S7 (h = 0.02). Lleva unos 40 minutos y le
+  faltan 3 de los 12 patrones: (3,3,3,3), (2,1,1,1) y (3,1,1,1). Las otras
+  corridas (prefiltro LP con nauty, caso 0/1 con k ≤ 7 y exploración con
+  arranques aleatorios) ya terminaron.
+
+  Resultados parciales con h = 0.02 (son evidencia numérica del SDP, no están
+  certificados):
+
+  ┌────────────────┬─────────┐
+  │     patrón     │    μ    │
+  ├────────────────┼─────────┤
+  │ (3,3,3,1)      │ 0.69138 │
+  ├────────────────┼─────────┤
+  │ (2,2,2,1) = S7 │ 0.69106 │
+  ├────────────────┼─────────┤
+  │ (3,2,2,1)      │ 0.68922 │
+  ├────────────────┼─────────┤
+  │ (2,3,2,1)      │ 0.68778 │
+  ├────────────────┼─────────┤
+  │ (2,2,3,2)      │ 0.68434 │
+  ├────────────────┼─────────┤
+  │ (2,2,2,2)      │ 0.68083 │
+  ├────────────────┼─────────┤
+  │ (2,1,2,1)      │ 0.66238 │
+  ├────────────────┼─────────┤
+  │ (3,3,1,1)      │ 0.65297 │
+  ├────────────────┼─────────┤
+  │ (2,2,1,1)      │ 0.64348 │
+  └────────────────┴─────────┘
+
+  - Partir el cuarto cluster (el ancla) empeora el resultado, como dice el
+    paper.
+  - Partir en 3 piezas los mismos tres clusters de S7 da apenas más que S7 con
+    el mismo h, pero la diferencia es chica (0.0003). Puede ser solo el efecto
+    de tener más grados de libertad con h fijo. O'Keeffe dice que en el límite h
+    → 0 "más piezas no mejoran μ0". El paso siguiente es repetir (3,3,3,1) y S7
+    con h = 0.01 y 0.005, para ver si la ventaja se mantiene o desaparece
+    cuando h → 0.
+
+❯ okay cuanto supones que le queda en tiempo para que termine?
+
+● No lo puedo saber con precisión, porque el script no muestra el progreso
+  dentro de cada patrón. Estimo que le quedan entre 5 y 20 minutos.
+
+  Hice la cuenta así:
+  - Los 3 patrones que faltan ya están corriendo. Hay 6 procesos en paralelo, y
+    según los tiempos de finalización, (3,3,3,3), (2,1,1,1) y (3,1,1,1)
+    arrancaron hace unos 23–27 minutos.
+  - Ya superaron lo que tardaron patrones parecidos. En esta corrida, (3,3,3,1)
+    tardó ~20 minutos (1233 s), y en la corrida con arranques aleatorios
+    (3,1,1,1) tardó ~19 minutos. Los tres que faltan llevan más que eso, así que
+    deberían estar cerca del final.
+  - Por qué los patrones con pocas piezas pueden tardar más: si se parte un solo
+    cluster, el SDP queda muchas veces infactible o casi, y en esos casos el
+    solver tarda más en responder.
+
+  Si en ~20 minutos no terminó, conviene revisar si alguno quedó trabado y, en
+  ese caso, cortarlo. Los 9 resultados que ya están alcanzan para la conclusión
+  principal.
+
+● Background command "Run split exploration with S7-like starts at h=0.02"
+completed (exit code 0)
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Terminé: los tres patrones restantes quedaron por debajo de S7, así que
+  (3,3,3,1) es el único que lo supera con h = 0.02. Ahora compararé (2,2,2,1) y
+  (3,3,3,1) con h = 0.01 y 0.005 para ver si esa ventaja se mantiene cuando h →
+  0.
+
+● Bash(.venv/bin/python - <<'EOF'
+      p = 'scripts/explore_splits.py'…)
+  ⎿  Running in the background (↓ to manage)
+
+● Lancé la comparación en segundo plano: (2,2,2,1) contra (3,3,3,1), primero con
+  h = 0.01 y después con h = 0.005. Debería tardar unos 40–50 minutos, unos
+  20–25 por cada h, porque los dos patrones corren en paralelo y los valores de
+  h van uno después del otro.
+
+  Cómo leer el resultado:
+  - Si la ventaja de (3,3,3,1) sobre S7 se achica a cero cuando baja h, es un
+    efecto de tener más grados de libertad con h fijo. Eso coincide con lo que
+    dice O'Keeffe: más piezas no mejoran μ0.
+  - Si se mantiene o crece, vale la pena estudiar el límite h → 0 de (3,3,3,1)
+    con un modelo reducido como el del Apéndice A. Ese sería un resultado nuevo,
+    y habría que certificarlo con src/certify.py.

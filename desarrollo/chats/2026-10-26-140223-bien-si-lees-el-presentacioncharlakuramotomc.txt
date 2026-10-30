@@ -1,0 +1,375 @@
+
+❯ Bien si lees el @presentacion/charla_kuramoto_mc.pdf para ponerte en
+  contexto, y luego @notes/explicacion_completa_S7.md para entender lo
+  realizado, quiero juntar todo lo realizado en un solo notebook para que corra
+  todos los resultados en colab. Los notebooks en cuestien son
+  @notebooks/Grafo_explicito_S7.ipynb  y @notebooks/Grafo_simetrico_S7.ipynb .
+  Tene en cuenta que mucho del codigo se encuentra en @scripts/ y @src/ . El
+  notebook final deberia poder contener todo lo necesario para obtener los
+  resultados desde 0, no importa si llega a tardar demasiado, en esos casos
+  indicar una estimacion de tiempo y proveer la celda con el codigo que debería
+  ser corrido en un script por fuera si se quiere evitar correrlo en el
+  notebook. A su vez, a nivel de redacción buscaría que sea al estilo informe,
+  pero que sea lo bastante detallado para que una persona cualquiera pueda
+  leerlo y entenderlo (el md de la explicación sirve como buena base y modelo
+  de secciones, pero se podría mejorar la redaccion)
+  ⎿  Referenced PDF presentacion/charla_kuramoto_mc.pdf (77 pages)
+  ⎿  Read notes/explicacion_completa_S7.md (839 lines)
+  ⎿  Listed directory scripts/
+  ⎿  Listed directory src/
+
+● Voy a revisar los notebooks, scripts y módulos para armar el plan.
+
+  Read 2 files, ran 4 shell commands (ctrl+o to expand)
+
+● Ya leí los dos notebooks y los scripts de las fases; ahora miro src/ y las
+  simulaciones para decidir qué se copia y qué se importa.
+
+  Read 1 file, ran 1 shell command (ctrl+o to expand)
+
+● Ya tengo el panorama. Antes de escribir el plan necesito definir tres cosas
+  que cambian bastante el notebook:
+
+● User answered Claude's questions:
+  ⎿  · ¿El notebook tiene que ser autocontenido de verdad (todo el código de
+     src/ y scripts/ copiado adentro, sin clonar el repo privado ni leer data/),
+     o puede seguir clonando el repo con el token y hacer `import src`? →
+     Autocontenido (Recommended)
+     · ¿Qué partes entran en el notebook unificado? → Construcción general
+     (n=3·10⁷), Grafo simétrico (n=299 989), Simulaciones del simétrico, Las
+     explicaciones previas, experimentos y scripts para llegar a la construccion
+     general como tambien la busqueda que se realizo para encontrar al general
+     y al simetrico
+     · ¿Dónde va el notebook y qué pasa con los dos actuales? → El notebook
+     final deberia llamarse exploracion_s7_final.py
+
+  Read 1 file, ran 3 shell commands (ctrl+o to expand)
+
+● User answered Claude's questions:
+  ⎿  · Pusiste "exploracion_s7_final.py". Para Colab el formato natural es
+     .ipynb. ¿Qué querés? → exploracion_s7_final.ipynb (Recommended)
+     · Además de lo de Implementacion_papers (blow-up, C4, twisted LP, Canale,
+     S7 certificado, particiones, caso 0/1, semillas), ¿entran estas dos partes?
+     → Ninguna
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● Tengo todo lo necesario. Escribo el plan.
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  Error: User chose to stay in plan mode and continue planning
+
+     Comments on the plan:
+     [Re: "con sus docstrings, para que un test pueda comparar copias con
+     originales, como ya hace tests/test_notebook_sincronizado.py con
+     Calentamientos)"] No es necesario contener los docstrings iniciales, pero
+     si los de las funciones internas. Clases, funciones externas, etc deberian
+     copiarse como estan. (Considerar si deberia realizarse refacotrizacion o
+     eliminacion de codigo inutil considerando que hay cosas que no seran
+     ejecutadas como la exploracion de la familia aurea y el camino B)
+     [Re: "Correr también los pasos pesados en local (8 núcleos, sin GPU) al
+     menos una vez, con las banderas activas o por los scripts exportados, y
+     medir los tiempos reales para la tabla."] Correlo una vez este en
+     @notebooks/ asi puede revisarlo mientras corre
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  Error: The user doesn't want to proceed with this tool use. The tool use
+     was rejected (eg. if it was a file edit, the new_string was NOT written to
+     the file). The user provided the following reason for the rejection:  Con
+     respecto a la forma de mostrar los resultados, considerar que si se quieren
+     imprimir valores sueltos sin relacion hacerlo por consola, mientras que
+     datos en forma de matrices, o comparaciones utilizar tablas de matplotlib.
+     (Hay resultado en @notebooks/Grafo_explicito_S7.ipynb que estan en tablas y
+     podrían ir como resultado de consola mientras otros estan bien como
+     tablas)
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  Error: User chose to stay in plan mode and continue planning
+
+     Comments on the plan:
+     [Re: "Valores sueltos, sin relación entre sí (un μ, un tiempo, "grados
+     exactos: sí", el resultado del ejemplo de juguete, la esquina q*, w*, μ0),
+     van por consola con print, uno por línea y con etiqueta."] Que se impriman
+     uno abajo del otro, no seguido si es posible
+
+● Updated plan
+  ⎿  /plan to preview
+
+● User approved Claude's plan
+  ⎿  Plan saved to: ~/.claude/plans/bien-si-lees-el-playful-dewdrop.md · /plan
+     to edit
+     Plan: notebook único notebooks/exploracion_s7_final.ipynb
+
+     Contexto
+
+     Hoy el trabajo de la dirección A está repartido en tres notebooks
+     (Implementacion_papers,
+     Grafo_explicito_S7, Grafo_simetrico_S7) que clonan el repo privado con un
+     token, importan src/ y
+     leen resultados ya calculados de data/. El usuario quiere un solo notebook
+     autocontenido que corra
+     en Colab sin el repo y regenere desde cero todos los resultados: los
+     antecedentes (blow-up, C4, twisted
+     LP, Canale, S7 de O'Keeffe con certificado propio), la búsqueda
+     (particiones, caso 0/1, semillas), la
+     construcción general (n = 30 000 004) y la simétrica (n = 299 989), con
+     validación, espectro y
+     simulaciones de los dos. Tiene que leerse como un informe, autocontenido
+     para un lector cualquiera,
+     con notes/explicacion_completa_S7.md como base de las secciones y una
+     redacción mejorada.
+     Quedan fuera: el camino B (sub-piezas), la familia áurea y los
+     calentamientos (se mencionan en el
+     texto, sin código). Los tres notebooks viejos no se tocan.
+
+     Decisiones de diseño
+
+     - Autocontenido. El código necesario se copia tal cual de src/ y scripts/ a
+       celdas:
+       funciones y clases con sus docstrings (de la función, de la clase y de
+       sus métodos). Los docstrings de
+       módulo (el encabezado de cada archivo) no se copian; su contenido pasa al
+       markdown. Las funciones
+       nuevas de Grafo_simetrico_S7 se copian de ese notebook. Respetar
+       [estilo-codigo]: español, sin
+       for de una línea, sin ;, docstrings cortos.
+     - Solo lo que se ejecuta. No se copia código que el notebook no usa:
+       familia áurea (src/aurea.py,
+       red_aurea), camino B (subdividir, scripts/s7_subpiezas.py), twisted_lp si
+       no hace falta más
+       que mejor_twisted, la parte de Plantilla/realizar que no se llama, las
+       opciones de CLI de los
+       scripts que no se usan, etc. Antes de copiar cada módulo se revisa qué
+       funciones alcanza el notebook
+       (grafo de llamadas) y se descarta el resto. src/ no se modifica (los
+       otros notebooks y el camino B
+       lo siguen usando); si al copiar aparece una simplificación clara
+       (parámetros o ramas que solo servían
+       a áurea/camino B), se aplica en la copia y se anota, y el test de
+       sincronización la exceptúa.
+     - Sin data/. Los resultados se guardan en resultados/ (junto al notebook;
+       en Colab, /content)
+       con guardar_json/cargar_json adaptados. Cada paso pesado mira primero si
+       su JSON ya existe; si
+       no, corre (si su bandera está activa) o avisa cómo correrlo afuera.
+     - Pasos pesados. Arriba del notebook, una celda de configuración con
+       banderas (CORRER["curva"],
+       CORRER["particiones"], CORRER["validacion_n3e7"],
+       CORRER["simulaciones_completas"], …), el
+       número de procesos y el dispositivo (numpy, o torch/cuda si Colab tiene
+       GPU). Una tabla al inicio
+       resume tiempo estimado por sección en Colab gratis (2 núcleos) y en una
+       máquina de 8 núcleos.
+     - Scripts para correr afuera, sin duplicar código. Las celdas de funciones
+       empiezan con el
+       marcador # biblioteca. Un helper exportar_biblioteca() junta esas celdas
+       (del historial In de
+       IPython) en externos/biblioteca_s7.py. Cada paso pesado tiene una celda
+       %%writefile externos/<paso>.py (hace from biblioteca_s7 import *, corre y
+       guarda el JSON en resultados/) y
+       un recuadro HTML ([notebooks-codigo-y-tablas]) con máquina, tiempo,
+       salida y el comando
+       (!python externos/<paso>.py --procesos N o nohup …). En el notebook el
+       mismo archivo se corre con
+       %run, así hay una sola fuente. Se aclara que con el repo también sirven
+       los scripts de scripts/.
+     - Valores de referencia. Los números del repo (μ = 206565/299989,
+       10327019/15000002, λ_min = 1.2506,
+       157.5, …) quedan como constantes, y cada resultado regenerado se compara
+       con ellos e informa si
+       coincide. Se avisa que Nelder–Mead/CLARABEL pueden dar una plantilla
+       apenas distinta (en el md: con
+       otra opción el n mínimo simétrico pasó de 3·10⁵ a 10⁶).
+     - nauty → networkx. El caso 0/1 usa nx.graph_atlas_g() (todos los grafos de
+       ≤ 7 vértices),
+       filtrando conexos, en lugar de geng; así no hace falta instalar nauty.
+     - Cómo se muestran los resultados.
+       - Valores sueltos, sin relación entre sí (un μ, un tiempo, "grados
+         exactos: sí", el resultado del
+         ejemplo de juguete, la esquina q*, w*, μ0), van por consola con print:
+         un valor por línea,
+         uno abajo del otro, cada uno con su etiqueta (nunca varios valores en
+         la misma línea separados
+         por comas o ;). Por ejemplo:
+     q*  = 0.650569…
+     w*  = 1.398278…
+     μ0  = 0.692907…
+       - Matrices (P de 7×7, grados d_ab, tablas t) y comparaciones (ingenuo
+         contra reticulado por n,
+         variantes del SDP, certificado contra control negativo, espectro contra
+         cotas, construcciones
+         finales) van en tablas de matplotlib (mostrar_tabla).
+       - Revisar caso por caso lo que hoy está en tabla en Grafo_explicito_S7 y
+         Grafo_simetrico_S7: por
+         ejemplo, "La esquina de S7" (una fila), "Plantilla S7 con h = 0.03"
+         (cantidades sueltas) y
+         "Redondeo por reticulado, n = 3·10⁷" (una fila) pasan a consola; el
+         patrón límite, los grados, las
+         tablas de transporte, las grillas en n y el certificado con su control
+         siguen como tablas.
+     - Pseudocódigo solo donde algo no corre en el notebook (casi nunca, porque
+       ahora todo corre).
+     - Dependencias en Colab: pip install cvxpy clarabel mpmath (numpy, scipy,
+       matplotlib, networkx y
+       torch ya están).
+
+     Estructura del notebook (secciones del informe)
+
+     0. Portada y resumen: resultado principal, tabla comparativa, cómo usar el
+        notebook (banderas,
+        tiempos, GPU opcional), instalación, imports, utilidades (mostrar_tabla,
+        JSON, paralelo,
+        exportar_biblioteca).
+     1. El problema: Kuramoto homogéneo, energía (imagen de resortes de la
+        presentación), equilibrio,
+        Hessiano, trampa, μ y μ_c, tabla de cotas conocidas.
+     2. Herramientas: Kuramoto en grafos chicos (src/kuramoto.py, src/grafos.py:
+        simular,
+        clasificar, Hessiano, twisted, circulantes, blow-ups) y plantillas
+        (src/plantillas.py: d, F, c, L,
+        J con lib = numpy/mpmath/intervalos; analizar, Plantilla, realizar).
+     3. Antecedentes reproducidos (de Implementacion_papers): lema del blow-up;
+        C4; twisted como LP
+        (src/twisted_lp.py, 0.6838); Canale (Lema 1, k-spinning real y
+        simulación); S7 de O'Keeffe
+        (src/s7.py: esquina, patrón límite, p′, construir) y certificado propio
+        de su Proposición 1
+        (src/certificado.py completo: racionalizar, Newton, Krawczyk, Cholesky
+        por intervalos).
+     4. La búsqueda: SDP interno y FamiliaParticiones (src/busqueda.py);
+        patrones de partición de C4
+        (versión reducida en vivo; completo afuera, ~3.4 h CPU); caso 0/1
+        (scripts/explorar_01.py,
+        k ≤ 7); semillas (scripts/barrer_semillas.py). Conclusión: S7 es lo
+        mejor, pero el grafo de
+        O'Keeffe tiene n > 9·10⁸⁴ → objetivo.
+     5. Objetivo y plan por fases (tabla causa → solución, diagrama de fases).
+     6. Fase 0: SDP con margen ε, optimizar_s7 (Nelder–Mead), curva μ vs ε
+        (reducida en vivo con
+        tamaños (3,5); completa afuera, ~80 min CPU), plantilla h = 0.03.
+     7. Fase 1: datos enteros, redondeo ingenuo, pliegue (forma normal),
+        Lyapunov–Schmidt, Newton
+        entero, reticulado (Kannan + LLL + Babai, ejemplo de juguete), grilla de
+        n (scripts/s7_entero.py,
+        ~4 min CPU, en vivo).
+     8. Fase 2: blow-up circulante (src/blowup.py), ejemplo chico con adyacencia
+        densa, el grafo real,
+        figura de estructura (dibujar_estructura y auxiliares de
+        scripts/visualizar_grafo.py).
+     9. Fase 3: certificado del blow-up (Fourier, cociente 7×7, Gershgorin),
+        control negativo, todos
+        los grafos (scripts/certificar_grafo_s7.py, segundos).
+     10. Fase 4: validación ciega (src/validacion.py: Arreglos con numpy o
+         torch, GrafoImplicito,
+         Lanczos) sobre un análogo chico y sobre n = 3·10⁷ (bandera; CPU ~10 min
+         y ~3 GB, GPU ~1.5 min);
+         espectro completo por Fourier (src/espectro.py, ~2 min, ~4 GB).
+     11. Dinámica del grafo general: reducción exacta a clusters (en vivo) y
+         simulación del grafo
+         completo (bandera; GPU ~6 min por corrida, CPU ~30+ min).
+     12. Las densidades "casi 1" y la simetría de S7: reflejo, cruzados
+         lejano/cercano, SDP con
+         restricciones (4 variantes, ~1.5 min).
+     13. El grafo simétrico: paridad de las direcciones blandas, sistema
+         reducido, pulido simétrico,
+         forma normal, Newton entero exhaustivo, barrido en n, certificado, los
+         cuatro enteros, figura,
+         validación ciega y espectro (segundos), simulaciones (reducción a
+         clusters en vivo; grafo completo
+         con bandera, ~15 min CPU hasta t = 4000).
+     14. Comparación final, lo logrado, lo no logrado y lo abierto (O2, O3;
+         camino B y familia áurea
+         mencionados como trabajo aparte).
+     15. Glosario y apéndice de tiempos (tabla de pasos pesados con su script
+         externo).
+
+     Cómo se construye
+
+     - Un script generador en el scratchpad arma el .ipynb con nbformat: las
+       celdas de markdown se
+       escriben a mano; las de funciones copiadas se extraen de src//scripts/
+       con ast (copia textual
+       garantizada), más las celdas de ejecución y resultados.
+     - Se agrega tests/test_notebook_final_sincronizado.py (mismo esquema que el
+       de Calentamientos, sobre
+       todos los módulos copiados).
+
+     Verificación
+
+     1. Prueba rápida: ejecutar una copia del notebook en un directorio temporal
+        vacío (sin el repo en
+        sys.path) con las banderas pesadas apagadas, para confirmar que corre de
+        punta a punta solo.
+     2. Corrida completa en notebooks/, una vez, con todas las banderas pesadas
+        activas (8 núcleos,
+        sin GPU), en segundo plano. Se usa un pequeño runner con nbclient
+        (scratchpad) que guarda el
+        .ipynb después de cada celda, así el usuario puede abrir
+        notebooks/exploracion_s7_final.ipynb
+        y ver las salidas a medida que avanzan; el log va a un archivo para
+        seguirlo. Los resultados quedan
+        en notebooks/resultados/ y los scripts exportados en notebooks/externos/
+        (agregar ambos a
+        .gitignore si el usuario no los quiere versionar). Con los tiempos
+        medidos se completa la tabla de
+        tiempos del notebook.
+     3. Comparar los valores regenerados con los de referencia (μ exactos,
+        certificados ok, λ_min) y reportar
+        cualquier diferencia.
+     4. .venv/bin/python -m pytest tests (incluido el test de sincronización
+        nuevo).
+
+● Primero guardo la preferencia sobre cómo mostrar resultados, después arranco.
+
+  Read 1 file, ran 1 shell command (ctrl+o to expand)
+● Sigo leyendo el código que voy a copiar (faltan visualizar_grafo.py,
+  explorar_01.py y barrer_semillas.py); después armo el generador del notebook.
+
+  Ran 2 shell commands (ctrl+o to expand)
+  ⎿  Interrupted · What should Claude do instead?
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ /compact
+  ⎿  Compacted
+  ⎿  Referenced file ../../../.claude/projects/-home-imagenes-nicoyanez-investig
+     haton-investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75faa877
+     752/tool-results/bi6ypwduc.txt
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75f
+     aa877752/scratchpad/impl.txt
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75f
+     aa877752/scratchpad/Grafo_simetrico_S7.txt
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75f
+     aa877752/scratchpad/Grafo_explicito_S7.txt
+  ⎿  Referenced file scripts/visualizar_grafo.py
+  ⎿  Plan file referenced (~/.claude/plans/bien-si-lees-el-playful-dewdrop.md)
+
+❯ Podes continuar
+
+  Read 1 file, ran 2 shell commands (ctrl+o to expand)
+
+● Now the explicit S7 notebook text.
+
+  Read 4 files, ran 2 shell commands (ctrl+o to expand)
+
+● Reading the remaining src/ modules so I can copy them into the notebook.
+
+  Read 3 files, ran 3 shell commands (ctrl+o to expand)
+
+● Now checking a few runtime facts (0/1 data, Python version, how long one Phase
+  0 optimization takes) before writing the generator.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Writing the notebook generator now. It goes in the scratchpad and is split
+  into a few files by section.
+
+  Made 2 scratchpad edits +360 (ctrl+o to expand)

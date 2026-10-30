@@ -1,0 +1,3541 @@
+
+● Está todo implementado: el barrido completo tardó 146 s, el notebook se
+  ejecutó sin errores y pasan los 21 tests. No hice commit.
+
+  Resultado: la familia girasol no supera las cotas conocidas, pero casi todo
+  tiene explicación demostrada.
+
+  variante: 1. Circulantes con distancias de Fibonacci
+  resultado: Demostrado: equivalen a twisted states q = 1 en otro circulante,
+  así
+  que μ ≤ 0.6838. En la práctica el óptimo es "todas las distancias de
+  Fibonacci salvo la 1" y μ = (2k − 7)/F_k → 0: la familia es rala.
+  ────────────────────────────────────────
+  variante: 2. Grafo geométrico áureo, n = 8..200
+  resultado: Con n de Fibonacci es exactamente el anillo C_{n,ρ}; la diferencia
+  de μ es 0, como dice la Proposición B. Con n no Fibonacci nunca supera al
+  anillo: 185 casos peores y 1 empate (n = 68). Los huecos desiguales empeoran
+  la trampa.
+  ────────────────────────────────────────
+  variante: 3. Plantillas en las fases áureas, m ≤ 40
+  resultado: El máximo es 0.6788 (pesos "arcos", m = 40), por debajo del mejor
+  twisted (0.6838) y de 11/16. Solo le gana a la red equiespaciada del mismo m
+  cuando ese m es malo para twisted (m = 14, 15).
+
+  Por qué no alcanza: el ángulo áureo reparte los puntos lo más parejo posible,
+  y eso tiende al mismo límite que los anillos (μ → 0.681). Los récords hacen lo
+  contrario: concentran los osciladores en pocos clusters desparejos.
+
+  Archivos nuevos:
+  - notes/familia_aurea.md: las pruebas completas (Lemas 1–3, Proposiciones A y
+    B, el corolario), la observación de que el grafo es Toeplitz, las tablas y
+    lo que queda abierto.
+  - notebooks/Familia_aurea.ipynb: ya ejecutado, en el mismo estilo que
+    Implementacion_papers, con la celda de Colab, las figuras del girasol, cada
+    afirmación verificada y los gráficos de las variantes 2 y 3.
+  - scripts/explorar_aurea.py, src/aurea.py y tests/test_aurea.py, con 8 tests
+    que verifican cada lema y proposición.
+  - Los datos en data/aurea_fibonacci.json, data/aurea_geometrico.json y
+    data/aurea_plantillas.json.
+
+  Cambios en archivos existentes:
+  - red_aurea en src/busqueda.py.
+  - grafo_circulante_conjunto, distancias_circulares y grafo_geometrico_circular
+    en src/grafos.py.
+  - autovalores_twisted_conjunto en src/kuramoto.py.
+  - notes/conclusiones_y_siguientes_pasos.md suma el logro 5 y
+    notes/direccion_A.md actualiza el mapa del código.
+
+  Correcciones respecto del plan aprobado:
+  - La prueba de la Proposición B tenía un paso que fallaba para k impar. Lo
+    corregí usando que el índice v llega como mucho a n − 1; la afirmación sigue
+    valiendo y el test lo confirma.
+  - Con los pesos geométricos, en m = 39 y 40 el solver no converge porque los
+    clusters chicos pesan ~10⁻⁸. Esas dos filas dan μ = 0, y en las notas
+    figuran como falla numérica.
+
+  Dos archivos de datos ya aparecen en el stage de git (aurea_fibonacci.json y
+  aurea_geometrico.json). Yo no ejecuté git add, así que supongo que lo hiciste
+  vos.
+
+❯ /compact
+  ⎿  Compacted
+  ⎿  Read ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-
+     investighaton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/ta
+     sks/bcch4e1bt.output (17 lines)
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f906
+     1fb90e2d/scratchpad/crear_notebook_aurea.py
+  ⎿  Referenced file notes/familia_aurea.md
+  ⎿  Read tests/test_aurea.py (101 lines)
+  ⎿  Read scripts/explorar_aurea.py (109 lines)
+  ⎿  Plan file referenced
+     (~/.claude/plans/primero-lee-la-presentacion-floating-wadler.md)
+
+❯ <ide_selection>The user selected the lines 16 to 16 from
+  /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-2026/no
+  tebooks/Implementacion_papers.ipynb:
+  3,3,3,1
+
+  This may or may not be related to the current task.</ide_selection>
+
+❯ En el paper de Okeefe cuanto es el valor de q que encuentra?
+
+  Listed 1 directory, ran 2 shell commands (ctrl+o to expand)
+
+● O'Keeffe obtiene q* = 0.6505691669… (ecuación (3) de papers/2610.21271v1.pdf).
+  Es la única raíz en (0, 1) de este polinomio:
+
+  9q⁸ + 72q⁷ + 288q⁶ + 448q⁵ + 470q⁴ + 88q³ − 208q² − 128q − 15 = 0
+
+  Con ese valor la cota queda así:
+
+  μ₀ = (4 + 2q*)/(7 + q*) = 0.6929077063…
+
+  Qué es q en el paper: es una densidad de links, no el número de vueltas q de
+  los twisted states del resto del repo.
+  - El estado: el estado de 4 clusters C4, con tres clusters vecinos partidos en
+    mitades.
+  - Dónde está q: entre dos clusters partidos vecinos, los dos links "cruzados"
+    quedan con densidad q en lugar de 1. Uno une las mitades más cercanas y el
+    otro las más lejanas.
+  - Por qué ese valor: subir q sube la conectividad, pero ablanda dos modos
+    dipolares. q* es justo el valor en que los dos quedan exactamente neutros.
+  - La ecuación (11): expresa esas dos condiciones de neutralidad. Las dos
+    incógnitas son q y el cociente de desplazamientos w del cluster del medio.
+    Si se elimina w, sale el polinomio de arriba, con w* = 1.3982781340….
+
+❯ Por que el metodo de Oḱeeffe utiliza tantos nodos para llegar a la solucion
+  cuando Canale llega a una cota similar solo con 10000 nodos?
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● La diferencia no es de método sino de qué tan cerca del borde de estabilidad
+  está cada estado. Además, las dos cifras no miden lo mismo: Canale no necesita
+  10 000 nodos para llegar a 11/16. Con 10 000 nodos llega a 0.6874, que
+  todavía está por debajo de 11/16 = 0.6875.
+
+  Canale: un estado robusto con datos "redondos"
+
+  - El grafo: el "k-spinning graph" tiene 8 clusters de k nodos, n = 8k, y
+    conexiones completas, vacías o circulantes. Las fases son múltiplos de π/2 y
+    quedan fijadas por simetría, así que no hay que aproximar nada irracional.
+  - La condición de estabilidad: es c² > 2ad, con a = c = k y d = ⌈k/2⌉ − 1. El
+    margen es de orden k, o sea que el estado está a distancia O(1) del borde.
+  - Cómo llega a 11/16: μ_k = 11/16 − O(1/k), así que la cota es un límite. Para
+    ganarle a 0.6838 alcanza con k = 34 (272 nodos). Para pasar 0.6874, k =
+    1250 (10 000 nodos).
+  - El grafo es explícito: el espectro se calcula a mano gracias a la estructura
+    circulante.
+
+  O'Keeffe: un estado al filo de la neutralidad
+
+  1. La fragilidad. S7 está pegado al estado C4, que es degenerado (tiene tres
+     modos neutros). El modo más débil está a ~h²(t + h) de ser neutro. Para el
+     miembro de la Proposición 1, con (t, h) = (10⁻⁵, 10⁻⁶), eso da ~6 × 10⁻¹⁹.
+     El mismo paper lo cuantifica (sec. VI):
+     - en Canale, el costo de exigir un margen ε es lineal: 11/16 − μ ≈ 2.8ε;
+     - en S7, el déficit crece como ε^{1/3}.
+  2. La racionalización. Para convertir la plantilla en un grafo, los tamaños y
+     las densidades tienen que ser racionales, X_a/D y Q_ab/D (Lema 4). El error
+     de redondeo, ~1/D, tiene que ser mucho menor que ese margen de 10⁻¹⁹. Con
+     eso sale D ≈ 3 × 10⁴².
+  3. Un blow-up genérico y caro. El Lema 2 no usa la estructura particular de
+     S7: construye el grafo con conjuntos de desplazamientos aleatorios,
+     controlados por la desigualdad de Hoeffding. Ese grafo tiene n = D²ℓ nodos,
+     así que el tamaño cuesta D² y no D. Con D ≈ 3 × 10⁴² da n > 9 × 10⁸⁴. El
+     paper lo admite: "We show that these networks exist, but we do not write
+     one down."
+
+  Lo que esto implica para nosotros
+
+  El tamaño gigante viene de una elección: certificar un miembro muy cercano a
+  μ₀ (0.6929050) con un lema de blow-up general. No es inherente a superar
+  11/16.
+  - Un miembro más modesto ya alcanza. Con h = 0.01, S7 da μ ≈ 0.6918 (el número
+    de O'Keeffe, que reprodujimos en Implementacion_papers). Eso ya supera
+    11/16 y tiene un margen mucho mayor, así que D sería bastante más chico.
+  - Un blow-up explícito ahorraría el D². Si se construyera como el de Canale,
+    determinístico y circulante, haría falta n ~ D en lugar de D².
+
+  Combinar las dos cosas podría dar un grafo explícito y de tamaño razonable con
+  μ > 11/16. O'Keeffe no lo hace: su certificado es solo de existencia. Sería
+  un aporte concreto para la competencia, y ya tenemos el certificador de
+  intervalos (scripts/certificar_s7.py) como punto de partida.
+
+❯ Con respecto a la construccion de Okeefe, se puede obtener una construcción
+  similar o pasaje a grafos no pesados como logra Canale? Esto podría ayudar a
+  reducir la cantidad de nodos que necesita el grafo para obtener una cota
+  cercana a la de Okeefe?ç
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ Con respecto a la construccion de Okeefe, se puede obtener una construcción
+  similar o pasaje a grafos no pesados como logra Canale? Esto podría ayudar a
+  reducir la cantidad de nodos que necesita el grafo para obtener una cota
+  cercana a la de Okeefe?
+
+● Sí, se puede, y probablemente baje el tamaño en muchos órdenes de magnitud. Lo
+  que sigue es un análisis teórico; no corrí cálculos nuevos.
+
+  O'Keeffe ya llega a grafos no pesados
+
+  Las "densidades" de su plantilla son conteos de vecinos. El Lema 2 produce
+  grafos simples en los que cada nodo del cluster a tiene exactamente P_ab·n_b
+  vecinos en el cluster b. Con eso el estado de clusters es un equilibrio
+  exacto. El paso a grafos no pesados existe; lo que lo hace gigante (n >
+  9·10⁸⁴) son dos causas que se pueden separar.
+
+  causa: (a) D ≈ 3·10⁴²
+  de dónde sale: Racionalizar un miembro cuyo modo más débil está a 6·10⁻¹⁹ de
+  ser neutro.
+  ¿se puede evitar?: Es un compromiso entre μ y n: se elige un miembro menos
+  extremo.
+  ────────────────────────────────────────
+  causa: (b) n = D²ℓ, con conjuntos de desplazamientos aleatorios
+  de dónde sale: El Lema 2 es genérico: usa Hoeffding para acotar los
+  coeficientes de Fourier y pide g múltiplo de D.
+  ¿se puede evitar?: Sí, con una construcción circulante explícita al estilo
+  Canale.
+
+  La construcción al estilo Canale para S7
+
+  1. Las piezas. Cada uno de los 7 clusters (3 partidos en mitades, más el
+     entero) se arma con X_a copias de Z_g. Entre dos copias se usan conexiones
+     circulantes: el nodo j se une a j + N. Hay que elegir los tamaños |N| para
+     que cada nodo tenga el número entero correcto de vecinos en cada cluster.
+     Esto ya no obliga a que g sea múltiplo de D.
+  2. El equilibrio es exacto. La partición es equitativa, así que las fases
+     resuelven Σ_b d_ab sin(φ_b − φ_a) = 0, con d_ab entero. Esas fases son
+     irracionales, pero el Krawczyk de certificar_s7.py ya las certifica.
+  3. El Hessiano se parte en dos. Conmuta con la acción de Z_g, así que se
+     diagonaliza en g matrices hermíticas chicas, una por cada modo de Fourier
+     m:
+     - m = 0: son los modos de cluster, es decir, exactamente la matriz L de la
+       plantilla. Ahí está el margen frágil, pero no lo afecta el blow-up.
+     - m ≠ 0: son los modos internos. Su margen es el splitting c_a, que es
+       O(1): O'Keeffe da c_min ≈ 0.216. Solo hace falta que los coeficientes de
+       Fourier de los conjuntos N sean chicos frente a c_a·n. Canale lo resuelve
+       con una cota a mano, y acá hay dos opciones:
+       - usar conjuntos con Fourier ≲ √g, como residuos cuadráticos o conjuntos
+         de diferencias de Singer;
+       - verificar directamente las g matrices chicas.
+         Así, certificar un grafo de 10⁶ nodos cuesta unas g diagonalizaciones
+         de matrices de ~ΣX_a × ΣX_a.
+
+  Con esto la causa (b) desaparece: n ~ D en lugar de D².
+
+  Cuánto se ganaría (estimación heurística, sin verificar)
+
+  Lo que queda es la causa (a): cuánto aguanta la plantilla que se redondeen sus
+  datos.
+  - El costo del redondeo. Con datos enteros de denominador ~n, el error en los
+    modos de cluster es ~1/n. El modo más débil está a ~h²(t + h) de ser neutro,
+    así que hace falta h³ ≳ 1/n.
+  - El déficit resultante. Si se toma t chico, el déficit μ₀ − μ crece como t +
+    h, y eso da:
+
+    μ(n) ≈ μ₀ − C·n^{−1/3}
+
+    Para comparar, Canale tiene μ(n) ≈ 11/16 − C′/n. Converge más rápido, pero
+    hacia un límite menor.
+  - Los números orientativos.
+    - Con h = 0.01, S7 da μ ≈ 0.6918 (O'Keeffe lo reporta y lo reprodujimos). El
+      margen queda en ~10⁻⁶, lo que sugiere n ~ 10⁶–10⁷ para un grafo explícito
+      con μ ≈ 0.691–0.692. Eso está muy por encima de 11/16 y de los 10 000
+      nodos de Canale (0.6874).
+    - Para μ ≈ 0.690 alcanzaría con h ~ 0.03, es decir, n ~ 10⁵.
+    - Una búsqueda directa sobre los datos enteros podría mejorar estas cifras,
+      porque elegiría la dirección del redondeo en lugar de redondear a ciegas.
+
+  Riesgos
+
+  - El exponente −1/3 es una estimación de peor caso. El tamaño real hay que
+    medirlo.
+  - Los modos internos podrían no alcanzar con intervalos simples. Un intervalo
+    de densidad 0.65 tiene su primer armónico en ≈ 0.28g, que es comparable a
+    c_min ≈ 0.216. Entonces puede hacer falta usar conjuntos pseudoaleatorios
+    explícitos en lugar de intervalos.
+  - Los tamaños desiguales de los clusters obligan a resolver un pequeño
+    problema de realización entera: encontrar los tamaños |N| entre copias que
+    sumen los grados correctos.
+
+  Si te interesa, el siguiente paso concreto sería un prototipo con tres partes:
+  - elegir h = 0.01 y redondear la plantilla a enteros con un n_a dado;
+  - armar los bloques circulantes;
+  - certificar los modos de cluster con el Krawczyk y los modos internos con las
+    g matrices de Fourier.
+
+  Eso nos daría un grafo explícito con μ > 11/16 y un n concreto. Tal como está,
+  O'Keeffe solo demuestra que el grafo existe, así que esto sería un aporte
+  original para la competencia.
+
+❯ Okay planifica esto, avisame si hay algun codigo de exploracion o calculos
+  que pueda ser acelerado con GPU (tengo acceso a un server asi que puedo
+  correr algun comando si te sirve el computo)
+
+  Searched for 1 pattern, read 1 file, ran 3 shell commands (ctrl+o to expand)
+
+● Estoy midiendo cuánto aguanta S7 el redondeo a datos enteros según n, para que
+  el plan tenga números reales en lugar de estimaciones.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Entered plan mode
+  Claude is now exploring and designing an implementation approach.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Updated plan
+  ⎿  /plan to preview
+
+● Ya escribí el plan en el archivo y te lo presento para que lo apruebes. Antes
+  corregí una estimación: redondear S7 de forma ingenua da un denominador D ~
+  1/λ², peor de lo que había supuesto (1/λ).
+  ⎿  Error: The user doesn't want to proceed with this tool use. The tool use
+     was rejected (eg. if it was a file edit, the new_string was NOT written to
+     the file). The user provided the following reason for the rejection:
+     Agrega que el notebook deberia tener toda la explicacion teorica necesaria
+     para entender los experimentos, scripts que se corran y como correr los
+     scripts que no aparecen en el notebook en si antes de mostrar resultados. A
+     su vez, considera espacios donde correr /compact antes de continuar. Te
+     paso el output de lo que pediste que corra en el server: Thu Oct 22
+     11:38:56 2026
+     +--------------------------------------------------------------------------
+     ---------------+
+     | NVIDIA-SMI 580.95.05              Driver Version: 580.95.05      CUDA
+     Version: 13.0     |
+     +-----------------------------------------+------------------------+-------
+     ---------------+
+     | GPU  Name                 Persistence-M | Bus-Id          Disp.A |
+     Volatile Uncorr. ECC |
+     | Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage |
+     GPU-Util  Compute M. |
+     |                                         |                        |
+            MIG M. |
+     |=========================================+========================+=======
+     ===============|
+     |   0  NVIDIA GeForce GTX 1080 Ti     On  |   00000000:09:00.0 Off |
+               N/A |
+     |  0%   24C    P8              7W /  250W |       3MiB /  11264MiB |
+     0%      Default |
+     … +15 lines (ctrl+o to expand)
+
+● Updated plan
+  ⎿  /plan to preview
+  ⎿  Error: The user doesn't want to proceed with this tool use. The tool use
+     was rejected (eg. if it was a file edit, the new_string was NOT written to
+     the file). The user provided the following reason for the rejection:  En el
+     notebook cualquier resultado o referencia a codigo de otras notebooks
+     previos, debe aparecer de manera completa y explicado de forma que el
+     notebook sea completo por si mismo. Si se utilizan scripts externos, seguir
+     las mismas reglas de explicar el codigo y como correrlo antes de los
+     resultados
+
+● Updated plan  ⎿  /plan to preview
+
+● User approved Claude's plan
+  ⎿  Plan saved to:
+     ~/.claude/plans/primero-lee-la-presentacion-floating-wadler.md · /plan to
+     edit
+     Plan: grafo explícito tipo S7 (O'Keeffe) con n "chico" y μ > 11/16
+
+     Contexto
+
+     O'Keeffe prueba μ_c ≥ 0.6929 con plantillas S7, pero el grafo que certifica
+     tiene n > 9·10⁸⁴ y nunca
+     lo escribe: n = D²ℓ, con D ≈ 3·10⁴² por racionalizar un miembro a 6·10⁻¹⁹
+     de la neutralidad, y D² por
+     el blow-up aleatorio genérico (Lema 2). Canale, en cambio, da un grafo
+     explícito (k-spinning, n = 8k)
+     que con n = 10⁴ llega a 0.6874. Objetivo: un grafo no pesado, explícito y
+     certificado, con μ > 11/16
+     y n lo más chico posible, más la curva μ(n) de lo que se puede lograr.
+     Sería un aporte original:
+     O'Keeffe solo prueba existencia.
+
+     Lo que ya medimos (sonda en el scratchpad, sin escribir en el repo)
+
+     Redondeo ingenuo de S7 (s7.construir → racionalizar → fases_newton →
+     analizar):
+
+     ┌──────────────┬────────┬──────────┬─────────────────────────────┐
+     │    (t, h)    │   μ    │ λ_min(L) │ D mínimo que mantiene L ≻ 0 │
+     ├──────────────┼────────┼──────────┼─────────────────────────────┤
+     │ (1e-3, 0.01) │ 0.6830 │ 1.9e-6   │ ~2·10¹⁰                     │
+     ├──────────────┼────────┼──────────┼─────────────────────────────┤
+     │ (1e-2, 0.03) │ 0.6620 │ 5.8e-5   │ ~2·10⁷                      │
+     ├──────────────┼────────┼──────────┼─────────────────────────────┤
+     │ (1e-3, 1e-3) │ 0.6918 │ 3.0e-9   │ > 2·10¹⁰                    │
+     └──────────────┴────────┴──────────┴─────────────────────────────┘
+
+     Dos conclusiones que corrigen mi estimación anterior:
+     1. El redondeo ingenuo cuesta D ~ 1/λ², no 1/λ. El Jacobiano del equilibrio
+        es L, casi singular:
+        un error 1/D en los datos mueve las fases ~1/(Dλ) a lo largo del modo
+        blando (vimos |Δφ| ≫ h), y eso
+        rompe la estabilidad. Así μ₀ − μ ~ n^{-1/6}.
+     2. La fórmula perturbativa de s7.construir pierde mucho a h finito (0.683
+        con h = 0.01). A h fijo
+        hay que usar las densidades optimizadas por el SDP (sdp_interno), que
+        con h = 0.01 dan 0.6918.
+
+     La salida es un redondeo inteligente: elegir los enteros para que el
+     residuo del equilibrio no tenga
+     componente en los modos blandos (problema de reticulado). Con eso el costo
+     baja a D ~ 1/λ, y como el
+     SDP da μ₀ − μ ∝ ε^{1/3} con margen ε, queda μ₀ − μ ~ n^{-1/3}. Estimación a
+     confirmar en la Fase 0:
+     μ ≈ 0.688–0.690 con n ~ 10⁵–10⁶.
+
+     Fases
+
+     Fase 0 — Curva de la plantilla: μ contra margen (CPU)
+
+     - Script scripts/curva_s7.py: con FamiliaParticiones(base_c4(), (2,2,2,1),
+       h) y
+       arranque_estructurado + optimizar_familia (src/busqueda.py), barrer h ∈
+       {0.005, …, 0.05} y el
+       margen ε del SDP ∈ {1e-7, …, 1e-3}. Guardar por punto: μ, λ_min de L, los
+       3 autovalores más chicos
+       (los modos heredados de C4), min c y el número de condición del Jacobiano
+       de fuerzas.
+     - Para cada punto, el n mínimo con redondeo ingenuo (repite la sonda) como
+       línea base.
+     - Salida data/s7_curva.json. En paralelo con correr_en_paralelo
+       (src/experimentos.py).
+
+     Fase 1 — Datos enteros con redondeo inteligente (CPU; GPU opcional)
+
+     Módulo nuevo src/enteros.py:
+     - Estructura entera. Seis mitades de tamaño n_A = k_A·g y W de tamaño n_W =
+       k_W·g (k_W/k_A ≈
+       (1 − 6a)/a ≈ 1.62, cocientes de Fibonacci). Variables: grados d_ab
+       (vecinos de un nodo de a en b),
+       con n_a d_ab = n_b d_ba; diagonal d_aa = n_a − 1 (clique).
+     - plantilla_entera(n, d) → (x, P) como Fraction, compatible con
+       certificado.certificar.
+     - redondeo_ingenuo(x, P, n) y redondeo_reticulado(x, P, phi, n): base de
+       los modos blandos de L
+       (autovectores con λ < umbral), y búsqueda entera (LLL vía fpylll si está
+       disponible, si no,
+       búsqueda local ±1 por coordenada) que minimiza la componente del residuo
+       F(φ_plantilla) en esos
+       modos, sin bajar el grado mínimo.
+     - Criterio de aceptación en float64 (rápido) y después certificado exacto:
+       Krawczyk + Cholesky por
+       intervalos reutilizando certificar (src/certificado.py) con x_a = n_a/n y
+       P_ab = d_ab/n_b.
+     - Script scripts/s7_entero.py: para cada plantilla de la Fase 0 y n en una
+       grilla logarítmica, el
+       mejor μ certificado. Salida data/s7_enteros.json con la curva μ(n).
+
+     Fase 2 — Blow-up explícito circulante (estilo Canale)
+
+     Módulo nuevo src/blowup.py, generalizando realizar (src/plantillas.py, hoy
+     solo tamaños iguales):
+     - Cada cluster a = k_a bloques Z_g. Entre bloques (a,i) y (b,j), conexión
+       circulante j' = j + s con
+       s ∈ N_{ai,bj}, N_{bj,ai} = −N_{ai,bj}. Dentro de un bloque: Z_g ∖ {0};
+       entre bloques del mismo
+       cluster: Z_g completo.
+     - Problema de transporte: repartir d_ab en una matriz k_a × k_b de tamaños
+       |N| ≤ g con filas d_ab y
+       columnas d_ba (esquina noroeste; siempre factible si n_a d_ab = n_b
+       d_ba). No hace falta g múltiplo
+       de D: ahí se ahorra el D² de O'Keeffe.
+     - Conjuntos N: intervalos (como Canale) por defecto; reutilizar
+       _conjunto_simetrico para los
+       simétricos.
+     - adyacencia_densa(...) solo para n chico (tests y validación), y una
+       representación compacta
+       (k_a, g, tamaños, fases) para n grande, que es lo que se publica.
+
+     Fase 3 — Certificado del grafo completo
+
+     El Hessiano conmuta con Z_g, así que se parte en g matrices hermíticas K ×
+     K (K = Σ k_a):
+       H_m = diag(n·c) − [cos(φ_a − φ_b) · N̂_{ai,bj}(m)],   N̂(m) = Σ_{s∈N}
+     e^{2πi m s/g}.
+     - m = 0 contiene los modos de cluster = L de la plantilla (ya certificado
+       en la Fase 1) más modos
+       entre bloques del mismo cluster: Cholesky por intervalos de la matriz K ×
+       K.
+     - m ≠ 0: el margen es n·c_min ≈ 0.21 n, grande. Además las densidades
+       intermedias están entre
+       clusters a π/2 (cos ≈ O(h)) o son ≈ 0 o ≈ 1, así que N̂(m) pesa O(h g).
+       Cota rigurosa tipo
+       Gershgorin/Weyl con cos en intervalos sobre la caja de Krawczyk; si no
+       alcanza, autovalores en
+       float con cota de error de Rump.
+     - Script scripts/certificar_grafo_s7.py: arma el grafo de la Fase 2 a
+       partir de data/s7_enteros.json,
+       corre ambas partes y guarda data/grafo_s7_n<n>.json (descripción compacta
+       + certificado).
+
+     Fase 4 — Validación independiente (aquí sirve la GPU)
+
+     Script scripts/validar_grafo.py con --dispositivo cpu|cuda (torch si está,
+     si no numpy):
+     - Denso (n ≤ ~3·10⁴): armar W real, Hessiano real en las fases
+       certificadas, eigvalsh →
+       λ₂ > 0 y |velocidad| ≈ 0. No usa la teoría de Fourier: es un chequeo
+       ciego.
+     - Grande (n hasta 10⁶–10⁷): producto Hessiano·vector por FFT en bloques,
+       Lanczos para los menores
+       autovalores, y simulación de la dinámica desde el estado perturbado (debe
+       volver).
+
+     Fase 5 — Notas y notebook
+
+     - notes/blowup_explicito.md: construcción, las dos escalas (D ~ 1/λ² contra
+       1/λ) con la prueba del
+       costo del redondeo, curva μ(n), comparación con Canale y O'Keeffe.
+       Actualizar direccion_A.md y
+       conclusiones_y_siguientes_pasos.md.
+     - Notebook propio notebooks/Grafo_explicito_S7.ipynb, autocontenido en la
+       teoría, con el mismo
+       estilo que Implementacion_papers.ipynb (celda de Colab incluida). Para
+       cada experimento, antes de
+       mostrar resultados:
+       a. la teoría necesaria para entenderlo (plantilla, equilibrio, por qué el
+          Jacobiano casi singular
+          hace caro el redondeo, reticulado, blow-up circulante, descomposición
+          de Fourier del Hessiano,
+          qué certifica cada paso);
+       b. qué script lo produce, qué hace y el comando exacto para correrlo (y
+          en qué máquina:
+          CPU local, server con 12 núcleos o GPU), cuando el script es demasiado
+          largo para el notebook;
+       c. recién después, la carga del JSON y las figuras/tablas.
+          Lo que es rápido (sondas, un certificado chico, el chequeo denso con g
+          chico) corre en vivo en el
+          notebook.
+     - Autocontenido respecto de otros notebooks: no se dice "como vimos en
+       Implementacion_papers".
+       Todo resultado previo que se use (S7 y sus fórmulas, q*, w*, μ₀, el SDP
+       interno, el certificado de
+       Krawczyk + Cholesky, los valores 0.6918 con h = 0.01, el k-spinning de
+       Canale) se vuelve a enunciar,
+       explicar y, si es un número, recalcular o cargar con su origen explicado.
+     - Código externo explicado: cada función de src/ que el notebook usa
+       (construir, sdp_interno,
+       certificar, realizar, las nuevas de enteros.py y blowup.py) se presenta
+       con qué hace, qué
+       recibe y qué devuelve, y se muestra su código cuando es corto o la parte
+       clave cuando es largo.
+       Los scripts externos siguen la misma regla: qué calculan, cómo funcionan
+       por dentro, el comando
+       exacto y dónde correrlo, y recién después los resultados.
+     - Se genera con un script en el scratchpad y se ejecuta con nbclient, como
+       Familia_aurea.ipynb.
+
+     Puntos para /compact
+
+     El trabajo es largo; propongo pausar y que corras /compact en estos puntos
+     (dejo cada uno con los
+     JSON guardados y un resumen en las notas, así nada depende del contexto):
+     1. Después de la Fase 0 (curva de la plantilla guardada en
+        data/s7_curva.json).
+     2. Después de la Fase 1 (data/s7_enteros.json): es el punto de decisión,
+        porque ahí se sabe si
+        el redondeo inteligente funciona y qué n hace falta.
+     3. Después de las Fases 2–3 (grafo y certificado guardados), antes de la
+        validación y del notebook.
+
+     Dónde sirve el server
+
+     Server: GTX 1080 Ti (11 GB), 12 núcleos, 46 GB de RAM, torch 2.14 + CUDA.
+     - Fases 0–3: CPU. Son problemas de 7 a ~50 variables (SDP, Newton, LLL,
+       intervalos). Lo útil son
+       los 12 núcleos para los barridos de la Fase 0 (--procesos 12).
+     - La 1080 Ti es lenta en float64 (≈ 1/32 de su float32). Por eso:
+       - el Hessiano denso de la Fase 4 (n ≤ 5·10⁴, hasta ~20 GB en float64)
+         conviene en CPU con los
+         46 GB de RAM y BLAS multihilo;
+       - la GPU se usa para lo que es memoria/FFT: producto Hessiano·vector por
+         FFT en bloques, Lanczos y
+         la simulación de la dinámica para n de 10⁶–10⁷ (FFT en float64 está
+         limitada por memoria, no por
+         flops, así que la 1080 Ti rinde bien), y opcionalmente para evaluar en
+         lote candidatos enteros en
+         float32 como prefiltro (el aceptado se recertifica en exacto).
+     - Los scripts largos reciben --procesos y --dispositivo cpu|cuda, e
+       imprimen el comando para el
+       server en su docstring.
+
+     Estilo y restricciones
+
+     Nombres en español, sin for de una línea ni ;, docstrings cortos, modular.
+     Reutilizar
+     fuerzas/splitting/matriz_clusters/jacobiano_fuerzas (lib = np/mp/iv). No
+     commitear.
+
+     Verificación
+
+     - tests/test_blowup.py: (i) blow-up denso con g chico tiene grados exactos
+       d_ab y velocidad ~0 en las
+       fases de la plantilla; (ii) el espectro denso coincide con la unión de
+       los espectros de Fourier H_m;
+       (iii) transporte con filas/columnas correctas; (iv) redondeo reticulado ≥
+       ingenuo en λ_min.
+     - Control negativo: una plantilla con q > q* o redondeo ingenuo con D chico
+       debe fallar el certificado.
+     - Fase 4 sobre el grafo final: chequeo denso o Lanczos coincide con el
+       certificado.
+     - pytest sigue en verde (hoy 21).
+
+     Expectativa honesta
+
+     - La escala del redondeo inteligente (D ~ 1/λ) es una hipótesis; la Fase
+       0–1 la confirma o la refuta.
+     - Peor caso (solo redondeo ingenuo funciona): n ~ 10⁸–10¹⁰ para μ > 11/16;
+       igual es explícito y
+       ~75 órdenes de magnitud menor que O'Keeffe.
+     - Mejor caso: n ~ 10⁵–10⁶ con μ ≈ 0.689, comparable en tamaño a lo que
+       verificamos densamente.
+
+● Aprobado. Empiezo por la Fase 0: la curva de la plantilla S7, μ contra el
+  margen del SDP.
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● Con h=0.01 el óptimo del SDP da μ≈0.6901 (margen 10⁻³, modos blandos λ≈10⁻⁷) o
+  μ≈0.6919 (margen 10⁻⁵, λ≈10⁻⁹), y el cociente W/mitad resulta 1+q≈1.65.
+  Fijaré los tamaños desde el inicio con racionales chicos para solo tener que
+  redondear los grados, y ahora escribo el módulo de la Fase 0.
+
+● Write(src/enteros.py)
+  ⎿  Wrote 177 lines to src/enteros.py
+       1 """Plantillas S7 con datos enteros: el paso de una plantilla a u
+       2
+         Cp, W):
+       4   tamaños   n_a = k_a·g, con k = (k_A, …, k_A, k_W): seis mitade
+       5   grados    d_ab = vecinos que tiene un vértice de a en b (enter
+       6             y d_aa = n_a − 1 (cada cluster es un clique)
+          y μ = (δ + 1)/n = min_a d_a.
+       8
+          y la optimización solo mueve los
+         ue redondear son los grados.
+     … +194 lines (ctrl+o to expand)
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● El SDP solo equilibra la plantilla hasta su tolerancia (~10⁻⁹), lo que
+  desplaza las fases ~10⁻⁵ para cualquier n; no es un problema de redondeo. Voy
+  a añadir un paso de "pulido" que lleve el equilibrio a exacto en alta
+  precisión antes de redondear, similar a _corregir_equilibrio de s7.py.
+
+● Update(src/enteros.py)
+  ⎿  Added 36 lines
+       72      return mu, s, P
+       73  
+       74  
+       75 +def pulir(x, phi, P, dps=60):                                 
+       76 +    """Corrige P con el menor cambio (mínima norma) para que F
+          +(φ) = 0 exacto en alta precisión.                             
+       77 +                                                              
+       78 +    El SDP deja F ≈ 1e-9, y como el Jacobiano del equilibrio e
+          +s casi singular eso movería las fases                         
+       79 +    mucho más que el redondeo. F es lineal en P, así que basta
+          + un problema de mínimos cuadrados.                            
+       80 +    Solo se tocan los pares a < b con 0 < P_ab < 1 (los comple
+          +tos y vacíos quedan fijos).                                   
+       81 +    """                                                       
+       82 +    m = len(x)                                                
+       83 +    with mp.workdps(dps):                                     
+       84 +        pares = []                                            
+       85 +        for a in range(m):                                    
+       86 +            for b in range(a + 1, m):                         
+       87 +                if 1e-9 < P[a][b] < 1 - 1e-9:                 
+       88 +                    pares.append((a, b))                      
+       89 +        x_mp = [mp.mpf(float(v)) for v in x]                  
+       90 +        phi_mp = [mp.mpf(float(v)) for v in phi]              
+       91 +        P_mp = []                                             
+       92 +        for fila in P:                                        
+       93 +            P_mp.append([mp.mpf(float(v)) for v in fila])     
+       94 +        A = mp.matrix(m, len(pares))                          
+       95 +        for j, (a, b) in enumerate(pares):                    
+       96 +            seno = mp.sin(phi_mp[a] - phi_mp[b])              
+       97 +            A[a, j] = x_mp[b] * seno                          
+       98 +            A[b, j] = -x_mp[a] * seno                         
+       99 +        F = mp.matrix(m, 1)                                   
+      100 +        for a in range(m):                                    
+      101 +            for b in range(m):                                
+      102 +                if b != a:                                    
+      103 +                    F[a] += P_mp[a][b] * x_mp[b] * mp.sin(phi_
+          +mp[a] - phi_mp[b])                                            
+      104 +        delta = A.T * mp.lu_solve(A * A.T, -F)                
+      105 +        for j, (a, b) in enumerate(pares):                    
+      106 +            P_mp[a][b] += delta[j]                            
+      107 +            P_mp[b][a] = P_mp[a][b]                           
+      108 +        return x_mp, phi_mp, P_mp                             
+      109 +                                                              
+      110 +                                                              
+      111  def espectro_s7(x, phi, P):
+      112      """Autovalores de L fuera de la rotación, min c y número d
+           e condición del Jacobiano del equilibrio."""
+      113      reporte = analizar(x, phi, P)
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+9 -6)
+       91          P_mp = []
+       92          for fila in P:
+       93              P_mp.append([mp.mpf(float(v)) for v in fila])
+       94 -        A = mp.matrix(m, len(pares))                          
+       94 +        # La ecuación del último cluster sobra: se deduce de Σ
+          + x_a F_a ≡ 0.                                                 
+       95 +        A = mp.matrix(m - 1, len(pares))                      
+       96          for j, (a, b) in enumerate(pares):
+       97              seno = mp.sin(phi_mp[a] - phi_mp[b])
+       97 -            A[a, j] = x_mp[b] * seno                          
+       98 -            A[b, j] = -x_mp[a] * seno                         
+       99 -        F = mp.matrix(m, 1)                                   
+      100 -        for a in range(m):                                    
+       98 +            if a < m - 1:                                     
+       99 +                A[a, j] = x_mp[b] * seno                      
+      100 +            if b < m - 1:                                     
+      101 +                A[b, j] = -x_mp[a] * seno                     
+      102 +        F = mp.matrix(m - 1, 1)                               
+      103 +        for a in range(m - 1):                                
+      104              for b in range(m):
+      105                  if b != a:
+      106                      F[a] += P_mp[a][b] * x_mp[b] * mp.sin(phi_
+           mp[a] - phi_mp[b])
+     ...
+      143          d[a][a] = n_a[a] - 1
+      144          for b in range(a + 1, m):
+      145              paso = paso_grado(k, a, b)
+      143 -            j = int(round(P[a][b] * n_a[b] / paso))           
+      146 +            j = int(mp.nint(P[a][b] * n_a[b] / paso))         
+      147              j = max(0, min(j, n_a[b] // paso))
+      148              d[a][b] = j * paso
+      149              d[b][a] = d[a][b] * n_a[a] // n_a[b]
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+14 -1)
+      72      return mu, s, P
+      73  
+      74  
+      75 +def _a_mp(valor):                                              
+      76 +    """Fraction o float → mpf (exacto para Fraction)."""       
+      77 +    if isinstance(valor, Fraction):                            
+      78 +        return mp.mpf(valor.numerator) / valor.denominator     
+      79 +    return mp.mpf(float(valor))                                
+      80 +                                                               
+      81 +                                                               
+      82 +def tamanos_exactos(k):                                        
+      83 +    """x_a = k_a/K como Fraction."""                           
+      84 +    K = sum(int(ka) for ka in k)                               
+      85 +    return [Fraction(int(ka), K) for ka in k]                  
+      86 +                                                               
+      87 +                                                               
+      88  def pulir(x, phi, P, dps=60):
+      89      """Corrige P con el menor cambio (mínima norma) para que F(
+          φ) = 0 exacto en alta precisión.
+      90  
+     ...
+       99              for b in range(a + 1, m):
+      100                  if 1e-9 < P[a][b] < 1 - 1e-9:
+      101                      pares.append((a, b))
+       89 -        x_mp = [mp.mpf(float(v)) for v in x]                  
+      102 +        x_mp = [_a_mp(v) for v in x]                          
+      103          phi_mp = [mp.mpf(float(v)) for v in phi]
+      104          P_mp = []
+      105          for fila in P:
+  ⎿  (timeout 10m)
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+23 -6)
+       85      return [Fraction(int(ka), K) for ka in k]
+       86  
+       87  
+       88 +def pares_libres(P, tolerancia=1e-7):                         
+       89 +    """Pares a < b con densidad estrictamente entre 0 y 1 (los
+          + demás son vacíos o completos)."""                            
+       90 +    m = len(P)                                                
+       91 +    pares = []                                                
+       92 +    for a in range(m):                                        
+       93 +        for b in range(a + 1, m):                             
+       94 +            if tolerancia < float(P[a][b]) < 1 - tolerancia:  
+       95 +                pares.append((a, b))                          
+       96 +    return pares                                              
+       97 +                                                              
+       98 +                                                              
+       99 +def _ajustar_extremo(valor, tolerancia=1e-7):                 
+      100 +    """Lleva a 0 o 1 exactos las densidades que el SDP dejó a 
+          +menos de tolerancia de un extremo."""                         
+      101 +    valor = float(valor)                                      
+      102 +    if valor < tolerancia:                                    
+      103 +        return mp.mpf(0)                                      
+      104 +    if valor > 1 - tolerancia:                                
+      105 +        return mp.mpf(1)                                      
+      106 +    return mp.mpf(valor)                                      
+      107 +                                                              
+      108 +                                                              
+      109  def pulir(x, phi, P, dps=60):
+      110      """Corrige P con el menor cambio (mínima norma) para que F
+           (φ) = 0 exacto en alta precisión.
+      111  
+     ...
+      115      """
+      116      m = len(x)
+      117      with mp.workdps(dps):
+       97 -        pares = []                                            
+       98 -        for a in range(m):                                    
+       99 -            for b in range(a + 1, m):                         
+      100 -                if 1e-9 < P[a][b] < 1 - 1e-9:                 
+      101 -                    pares.append((a, b))                      
+      118 +        pares = pares_libres(P)                               
+      119          x_mp = [_a_mp(v) for v in x]
+      120          phi_mp = [mp.mpf(float(v)) for v in phi]
+      121          P_mp = []
+      122          for fila in P:
+     … 5 more lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● La sensibilidad confirma el diagnóstico: con 13 densidades libres y solo 3
+  condiciones lineales, un error de redondeo de 1/n destruye los modos blandos
+  salvo n ≳ 10¹². Probaré el redondeo por reticulado, usando LLL seguido de
+  Babai.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● La predicción lineal mejora mucho pero el autovalor real no, por la no
+  linealidad en el movimiento de fases. Ahora agregaré esas componentes blandas
+  de fase al reticulado.
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● El movimiento de fases coincide en orden con lo predicho, pero el error es
+  grande por granularidad: con (20,33) la resolución de P_AW es 153/n en vez de
+  1/n, mientras que con (3,5) baja a 23/n. Ahora probaré (3,5) con un
+  refinamiento iterativo que re-linealiza en cada punto entero.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Confirmo que la plantilla (3,5) se vuelve estricta en torno a n ≈ 10⁸–10⁹, y
+  el cuello de botella depende de la frontera entre μ y λ definida en la Fase 0.
+  Ahora escribo el script del barrido para explorarla.
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+14 -5)
+      18  
+      19  from .busqueda import FamiliaParticiones, base_c4, sdp_interno
+      20  from .certificado import fases_newton
+      21 -from .plantillas import analizar, jacobiano_fuerzas            
+      21 +from .plantillas import analizar, jacobiano_fuerzas, matriz_clu
+         +sters, splitting                                               
+      22  from .s7 import esquina
+      23  
+      24  PIEZAS_S7 = (2, 2, 2, 1)
+     ...
+      141          return x_mp, phi_mp, P_mp
+      142  
+      143  
+      144 +def autovalores_normalizados(x, phi, P):                      
+      145 +    """Autovalores de X^{-1/2} L X^{-1/2} sin el 0 de la rotac
+          +ión (la misma normalización que analizar con mp)."""          
+      146 +    x = np.asarray(x, dtype=float)                            
+      147 +    L = np.array(matriz_clusters(x, phi, P), dtype=float)     
+      148 +    raices = np.sqrt(x)                                       
+      149 +    autovalores = np.linalg.eigvalsh(L / np.outer(raices, raic
+          +es))                                                          
+      150 +    indice_rotacion = np.argmin(np.abs(autovalores))          
+      151 +    return np.sort(np.delete(autovalores, indice_rotacion))   
+      152 +                                                              
+      153 +                                                              
+      154  def espectro_s7(x, phi, P):
+      145 -    """Autovalores de L fuera de la rotación, min c y número d
+          -e condición del Jacobiano del equilibrio."""                  
+      146 -    reporte = analizar(x, phi, P)                             
+      155 +    """Autovalores normalizados de L, min c y número de condic
+          +ión del Jacobiano del equilibrio."""                          
+      156      J = np.array(jacobiano_fuerzas(x, phi, P))
+      157      return {
+      149 -        "autovalores": sorted(reporte["autovalores L"]),      
+      150 -        "min c": reporte["min c"],                            
+      158 +        "autovalores": autovalores_normalizados(x, phi, P).tol
+          +ist(),                                                        
+      159 +        "min c": float(min(splitting(x, phi, P))),            
+      160          "condicion": float(np.linalg.cond(J)),
+      161      }
+      162  
+  ⎿  Created scripts/curva_s7.py (+80 -0)
+       1 +"""Fase 0 del grafo explícito: frontera entre μ y el margen de 
+         +los modos de cluster en la familia S7.                         
+       2 +                                                               
+       3 +Para cada h (separación de las mitades), cada margen ε del SDP 
+         +(L/h² ⪰ ε) y cada par de tamaños                               
+       4 +racionales (k_mitad, k_W), optimiza los desplazamientos s (Neld
+         +er–Mead) y las densidades P (SDP),                             
+       5 +y guarda μ, los autovalores normalizados de L, min c, la condic
+         +ión del Jacobiano del equilibrio y                             
+       6 +el menor n con el que el redondeo ingenuo de los grados sigue s
+         +iendo estricto.                                                
+       7 +                                                               
+       8 +Salida: data/s7_curva.json.                                    
+       9 +                                                               
+      10 +Ejemplos:                                                      
+      11 +  .venv/bin/python scripts/curva_s7.py --procesos 8            
+         +     # local                                                   
+      12 +  OMP_NUM_THREADS=1 python scripts/curva_s7.py --procesos 12   
+         +     # server (12 núcleos)                                     
+      13 +"""                                                            
+      14 +import argparse                                                
+      15 +import sys                                                     
+      16 +import time                                                    
+      17 +from pathlib import Path                                       
+      18 +                                                               
+      19 +import numpy as np                                             
+      20 +                                                               
+      21 +sys.path.insert(0, str(Path(__file__).resolve().parents[1]))   
+      22 +from src.enteros import (  # noqa: E402                        
+      23 +    espectro_s7, fases_s7, n_minimo_ingenuo, optimizar_s7, puli
+         +r, tamanos_exactos, tamanos_racionales,                        
+      24 +)                                                              
+      25 +from src.experimentos import correr_en_paralelo, guardar_json  
+         +# noqa: E402                                                   
+      26 +                                                               
+      27 +TAMANOS = [(3, 5), (5, 8), (20, 33)]                           
+      28 +                                                               
+      29 +                                                               
+      30 +def un_punto(trabajo):                                         
+      31 +    """Optimiza S7 para (h, margen, tamaños) y mide su espectro
+         + y el redondeo ingenuo."""                                     
+      32 +    h, margen, (k_mitad, k_w), con_ingenuo = trabajo           
+      33 +    inicio = time.time()                                       
+      34 +    x = tamanos_racionales(k_mitad, k_w)                       
+      35 +    mu, s, P = optimizar_s7(x, h, margen)                      
+      36 +    fila = {"h": h, "margen": margen, "k": [k_mitad, k_w], "mu"
+         +: mu}                                                          
+      37 +    if mu is None:                                             
+      38 +        return fila                                            
+      39 +    phi = fases_s7(h, s)                                       
+      40 +    fila.update(espectro_s7(x, phi, P))                        
+     … 40 more lines (ctrl+o to expand)
+  ⎿  Created data/s7_curva.json (+284 -0)
+        1 +[                                                             
+        2 + {                                                            
+        3 +  "h": 0.01,                                                  
+        4 +  "margen": 0.001,                                            
+        5 +  "k": [                                                      
+        6 +   3,                                                         
+        7 +   5                                                          
+        8 +  ],                                                          
+        9 +  "mu": 0.6896133248296094,                                   
+       10 +  "autovalores": [                                            
+       11 +   5.92653822725106e-07,                                      
+       12 +   7.622053428018142e-07,                                     
+       13 +   0.00010594441242273983,                                    
+       14 +   0.26081525504617464,                                       
+       15 +   0.26091245915342876,                                       
+       16 +   0.2609285679865434                                         
+       17 +  ],                                                          
+       18 +  "min c": 0.21746456354651242,                               
+       19 +  "condicion": 1007397.6710858884,                            
+       20 +  "s": [                                                      
+       21 +   -0.9999413830847406,                                       
+       22 +   0.9834493451472268,                                        
+       23 +   -1.4035404204207345,                                       
+       24 +   1.4027424852968688,                                        
+       25 +   -1.0110803287061871,                                       
+       26 +   1.0269446767482322                                         
+       27 +  ],                                                          
+       28 +  "P": [                                                      
+       29 +   [                                                          
+       30 +    0.9999999992012754,                                       
+       31 +    0.9999931098975922,                                       
+       32 +    0.9999909237390937,                                       
+       33 +    0.6336713124393814,                                       
+       34 +    -2.1241399915885613e-09,                                  
+       35 +    -2.2592706132035367e-09,                                  
+       36 +    0.9920317939427429                                        
+       37 +   ],                                                         
+       38 +   [                                                          
+       39 +    0.9999931098975922,                                       
+       40 +    0.9999999992778374,                                       
+     … 245 more lines (ctrl+o to expand)
+  ⎿  (timeout 5m 20s)
+
+● (5, 8) pierde mucho: su cociente 1.6 está lejos de 1 + q ≈ 1.65. Lo reemplazo
+  por (11, 18) y lanzo el barrido completo en segundo plano: 120 puntos, unos 10
+  minutos en las 8 CPUs locales.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Mientras corre el barrido, paso el redondeo por reticulado del scratchpad a
+  src/: un módulo src/reticulado.py con LLL y Babai, y las funciones de la Fase
+  1 en src/enteros.py.
+
+● Write(src/reticulado.py)
+  ⎿  Wrote 76 lines to src/reticulado.py
+       1 """Reticulados chicos (dimensión ≲ 30) en float: reducción LLL y
+       2
+       3 Se usan para el redondeo inteligente de src/enteros.py: elegir e
+         nteros cerca de un objetivo real de
+         tores del reticulado son las filas de B.
+       5 """
+       7
+       8
+       9 def gram_schmidt(B):
+          Σ_{j<i} μ_ij B*_j."""
+     … +80 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Bash(cat >> src/enteros.py <<'EOF'…)
+  ⎿  Updated src/enteros.py (+152 -1)
+      18  
+      19  from .busqueda import FamiliaParticiones, base_c4, sdp_interno
+      20  from .certificado import fases_newton
+      21 -from .plantillas import analizar, jacobiano_fuerzas, matriz_clu
+         -sters, splitting                                               
+      21 +from .plantillas import analizar, fuerzas, jacobiano_fuerzas, m
+         +atriz_clusters, splitting                                      
+      22 +from .reticulado import enteros_cercanos                       
+      23  from .s7 import esquina
+      24  
+      25  PIEZAS_S7 = (2, 2, 2, 1)
+     ...
+      254              break
+      255          n_min = n
+      256      return n_min, resultados
+      257 +                                                              
+      258 +                                                              
+      259 +# ------------------------------------------------------------
+          +---- redondeo por reticulado                                  
+      260 +                                                              
+      261 +def _newton_mp(x, P, phi0, iteraciones=40):                   
+      262 +    """Fases del equilibrio exacto (φ_0 fijo) para datos mpmat
+          +h, con la precisión vigente."""                               
+      263 +    phi = list(phi0)                                          
+      264 +    m = len(x)                                                
+      265 +    tolerancia = mp.mpf(10) ** (-mp.mp.dps + 10)              
+      266 +    for _ in range(iteraciones):                              
+      267 +        F = mp.matrix(fuerzas(x, phi, P, mp)[1:])             
+      268 +        if mp.norm(F) < tolerancia:                           
+      269 +            break                                             
+      270 +        J = mp.matrix(jacobiano_fuerzas(x, phi, P, mp))       
+      271 +        paso = mp.lu_solve(J, F)                              
+      272 +        for a in range(1, m):                                 
+      273 +            phi[a] -= paso[a - 1]                             
+      274 +    return phi                                                
+      275 +                                                              
+      276 +                                                              
+      277 +def _matriz_normalizada(x, phi, P):                           
+      278 +    """M = X^{-1/2} L X^{-1/2} en mpmath (su vector de rotació
+          +n es √x)."""                                                  
+      279 +    L = matriz_clusters(x, phi, P, mp)                        
+      280 +    m = len(x)                                                
+      281 +    raices = [mp.sqrt(v) for v in x]                          
+      282 +    M = mp.matrix(m, m)                                       
+      283 +    for a in range(m):                                        
+      284 +        for b in range(m):                                    
+     … 122 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● Confirmo que n = 10⁹ funciona pero 10⁸ todavía no, lo que sugiere que el error
+  se reduce como R^{−7/6} por las 6 formas restringidas y 13 enteros, con 2-3
+  direcciones de fase dominando el problema. Ahora probaré con menos formas, ya
+  que las fases estables deberían mantener controladas las formas de la matriz
+  blanda.
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+9 -5)
+      291      autovalores, V = mp.eigsy(M)
+      292      m = len(x)
+      293      raices = [mp.sqrt(v) for v in x]
+      294 +    cantidad = max(cantidad, 1)                               
+      295      solapes = []
+      296      for i in range(m):
+      297          solapes.append(abs(sum(V[a, i] * raices[a] for a in ra
+           nge(m))))
+     ...
+      323              P_movida[a][b] += delta
+      324              P_movida[b][a] += delta
+      325              phi_movida = _newton_mp(x, P_movida, phi)
+      325 -            derivada = V.T * ((_matriz_normalizada(x, phi_movi
+          -da, P_movida) - M) / delta) * V                               
+      326              componentes = []
+      327 +            if blandos > 0:                                   
+      328 +                derivada = V.T * ((_matriz_normalizada(x, phi_
+          +movida, P_movida) - M) / delta) * V                           
+      329              for i in range(blandos):
+      330                  for j in range(i, blandos):
+      331                      componentes.append(float(derivada[i, j]))
+     ...
+      336              filas_fases.append(movimiento)
+      337      sensibilidad_fases = np.array(filas_fases).T
+      338      U, _, _ = np.linalg.svd(sensibilidad_fases)
+      337 -    formas = np.vstack([np.array(filas_matriz).T, U[:, :fases]
+          -.T @ sensibilidad_fases])                                     
+      339 +    formas = U[:, :fases].T @ sensibilidad_fases              
+      340 +    if blandos > 0:                                           
+      341 +        formas = np.vstack([np.array(filas_matriz).T, formas])
+      342      return phi, [float(v) for v in autovalores], formas
+      343  
+      344  
+     ...
+      384      return (candidato["ok"], candidato["menor autovalor"]) > (
+           actual["ok"], actual["menor autovalor"])
+      385  
+      386  
+      383 -def redondeo_reticulado(x, P, phi, h, k, g, radios=(30, 300), 
+          -iteraciones=4, formas=None):                                  
+      387 +def redondeo_reticulado(x, P, phi, h, k, g, radios=(30, 300), 
+          +iteraciones=4, formas=None, blandos=2, fases=3):              
+      388      """Grados enteros que mantienen la estrictez: Newton enter
+           o sobre un reticulado.
+      389  
+      390      Arranca del redondeo ingenuo. En cada paso linealiza en lo
+           s datos enteros actuales y elige, con
+     ...
+      393      """
+      394      pares = pares_libres(P)
+      395      if formas is None:
+      392 -        _, _, formas = linealizacion(x, P, phi, pares)        
+      396 +        _, _, formas = linealizacion(x, P, phi, pares, blandos
+          +, fases)                                                      
+     … 10 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● Detecté un error conceptual: la re-linealización debía apuntar a las fases y
+  la matriz blanda de la plantilla, no a sus densidades, ya que ambas coinciden
+  solo a primer orden. Lo corrijo usando las bases fijas de la plantilla con el
+  desvío real como objetivo.
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+8 -2)
+      221      además que las fases no se alejen más de h/4 de φ0, para s
+           eguir en la forma de S7.
+      222      """
+      223      x, P = plantilla_entera(k, g, d)
+      224 -    phi = fases_newton(x, P, list(phi0), dps=dps)             
+      224 +    try:                                                      
+      225 +        phi = fases_newton(x, P, list(phi0), dps=dps)         
+      226 +    except ZeroDivisionError:                                 
+      227 +        return {"ok": False, "menor autovalor": -np.inf, "min 
+          +c": np.nan, "movimiento fases": np.inf, "phi": None}          
+      228      with mp.workdps(dps):
+      229          x_mp = [mp.mpf(v.numerator) / v.denominator for v in x
+           ]
+      230          P_mp = []
+     ...
+      441      for radio in radios:
+      442          d = inicial
+      443          for _ in range(iteraciones):
+      441 -            desvio, J = linealizacion(x_entero, densidades_ent
+          -eras(d, k, g), phi, pares, base)                              
+      444 +            try:                                              
+      445 +                desvio, J = linealizacion(x_entero, densidades
+          +_enteras(d, k, g), phi, pares, base)                          
+      446 +            except ZeroDivisionError:                         
+      447 +                break                                         
+      448              d = corregir_grados(d, k, g, pares, desvio, J, rad
+           io)
+      449              evaluacion = evaluar_enteros(k, g, d, phi, h)
+      450              if _mejor(evaluacion, mejor_evaluacion):
+  ⎿  … 1 more file changed
+  ⎿  (timeout 10m)
+
+● Background command "Run full Phase 0 sweep in background" completed (exit code
+0)
+
+● Terminó el barrido de la Fase 0. Antes de mirarlo, depuro el paso de Newton
+  entero: ninguna corrección mejora al redondeo ingenuo, lo que indica un error.
+
+  Ran 4 shell commands (ctrl+o to expand)
+
+● El problema es que el Newton de _newton_mp no converge en 40 iteraciones
+  porque el Jacobiano casi singular hace oscilar al Newton puro desde una
+  desviación de 3·10⁻⁴. Voy a agregar búsqueda lineal (damping) y aumentar las
+  iteraciones.
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+20 -6)
+      261  
+      262  # ------------------------------------------------------------
+           ---- redondeo por reticulado
+      263  
+      264 -def _newton_mp(x, P, phi0, iteraciones=40):                   
+      265 -    """Fases del equilibrio exacto (φ_0 fijo) para datos mpmat
+          -h, con la precisión vigente."""                               
+      264 +def _newton_mp(x, P, phi0, iteraciones=100):                  
+      265 +    """Fases del equilibrio exacto (φ_0 fijo) para datos mpmat
+          +h, con la precisión vigente.                                  
+      266 +                                                              
+      267 +    Newton amortiguado: si el paso completo no baja |F|, se lo
+          + divide por 2 (el Jacobiano es casi                           
+      268 +    singular y el Newton puro puede oscilar lejos de la soluci
+          +ón).                                                          
+      269 +    """                                                       
+      270      phi = list(phi0)
+      271      m = len(x)
+      272      tolerancia = mp.mpf(10) ** (-mp.mp.dps + 10)
+      273 +    F = mp.matrix(fuerzas(x, phi, P, mp)[1:])                 
+      274      for _ in range(iteraciones):
+      270 -        F = mp.matrix(fuerzas(x, phi, P, mp)[1:])             
+      271 -        if mp.norm(F) < tolerancia:                           
+      275 +        norma = mp.norm(F)                                    
+      276 +        if norma < tolerancia:                                
+      277              break
+      278          J = mp.matrix(jacobiano_fuerzas(x, phi, P, mp))
+      279          paso = mp.lu_solve(J, F)
+      275 -        for a in range(1, m):                                 
+      276 -            phi[a] -= paso[a - 1]                             
+      280 +        factor = mp.mpf(1)                                    
+      281 +        for _ in range(30):                                   
+      282 +            candidato = list(phi)                             
+      283 +            for a in range(1, m):                             
+      284 +                candidato[a] -= factor * paso[a - 1]          
+      285 +            F_candidato = mp.matrix(fuerzas(x, candidato, P, m
+          +p)[1:])                                                       
+      286 +            if mp.norm(F_candidato) < norma:                  
+      287 +                break                                         
+      288 +            factor /= 2                                       
+      289 +        phi = candidato                                       
+      290 +        F = F_candidato                                       
+      291      return phi
+      292  
+      293  
+  ⎿  (timeout 10m)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Descubrí que, cerca de S7, el equilibrio está junto a un pliegue (silla-nodo),
+  lo que explica por qué Newton se estancaba y por qué el redondeo ingenuo
+  requería n ~ 1/λ². Ahora reescribiré esa parte aplicando una reducción de
+  Lyapunov–Schmidt: resolver las ecuaciones rígidas, medir el residuo de las
+  blandas, y usar el reticulado para anularlo.
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/enteros.py (+76 -143)
+      214      return Fraction(min(grados) + 1, n)
+      215  
+      216  
+      217 -def evaluar_enteros(k, g, d, phi0, h, dps=40):                
+      217 +def evaluar_enteros(k, g, d, phi0, h, dps=40, phi_referencia=N
+          +one):                                                         
+      218      """Resuelve el equilibrio exacto de los datos enteros y mi
+           ra si es estricto (en alta precisión).
+      219  
+      220      Devuelve un dict con ok, el menor autovalor de L, min c y 
+           cuánto se movieron las fases. Se exige
+      221 -    además que las fases no se alejen más de h/4 de φ0, para s
+          -eguir en la forma de S7.                                      
+      221 +    además que las fases no se alejen más de h/4 de phi_refere
+          +ncia (por defecto φ0), para seguir en                         
+      222 +    la forma de S7.                                           
+      223      """
+      224 +    if phi_referencia is None:                                
+      225 +        phi_referencia = phi0                                 
+      226      x, P = plantilla_entera(k, g, d)
+      227      try:
+      228          phi = fases_newton(x, P, list(phi0), dps=dps)
+     ...
+      234          for fila in P:
+      235              P_mp.append([mp.mpf(v.numerator) / v.denominator f
+           or v in fila])
+      236          reporte = analizar(x_mp, phi, P_mp, lib=mp, dps=dps)
+      234 -        movimiento = max(abs(a - b) for a, b in zip(phi, phi0)
+          -)                                                             
+      237 +        movimiento = max(abs(a - b) for a, b in zip(phi, phi_r
+          +eferencia))                                                   
+      238      menor = float(min(reporte["autovalores L"]))
+      239      min_c = float(reporte["min c"])
+      240      max_F = float(reporte["max|F|"])
+     ...
+      263  
+      264  
+      265  # ------------------------------------------------------------
+           ---- redondeo por reticulado
+      266 +#                                                             
+      267 +# Cerca de S7 el Jacobiano J del equilibrio tiene valores sing
+          +ulares muy chicos: el mínimo estricto                         
+      268 +# está al lado de un pliegue (silla-nodo). Si el error de redo
+          +ndeo empuja el residuo de las ecuaciones                      
+      269 +# blandas más allá de ~λ²/c, el equilibrio deja de existir. Re
+          +ducción de Lyapunov–Schmidt: con                              
+      270 +# J = U S Vᵀ, las direcciones rígidas (valores singulares gran
+          +des) se resuelven exactamente, y queda el                     
+      271 +# residuo blando g = U_blandoᵀ F, bien definido aunque no haya
+          + equilibrio y casi lineal en los grados.                      
+      272  
+      264 -def _newton_mp(x, P, phi0, iteraciones=100):                  
+      265 -    """Fases del equilibrio exacto (φ_0 fijo) para datos mpmat
+          -h, con la precisión vigente.                                  
+      273 +def base_blanda(x, P, phi, cantidad=2):                       
+      274 +    """Vectores singulares de J en la plantilla: (U_blando, U_
+          +rígido, V_blando, V_rígido) en float."""                      
+      275 +    J = np.array(jacobiano_fuerzas([float(v) for v in x], [flo
+          +at(v) for v in phi], np.array(P, dtype=float)))               
+     … 248 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Confirmo que hay 3 direcciones blandas (no 2), cada una con su propia
+  tolerancia según σ_k², así que voy a ponderar cada forma del reticulado por
+  1/σ_k² en lugar de normalizarlas todas igual.
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/reticulado.py (+3 -4)
+      60  def enteros_cercanos(formas, objetivo, radio, peso=1e3):
+      61      """u ∈ Z^m con |u − objetivo| del orden de radio y formas·(
+          u − objetivo) ≈ 0.
+      62  
+      63 -    Encaje de Kannan: el reticulado tiene filas (e_i/radio, pes
+         -o·formas[:, i]). Cada forma se normaliza                       
+      64 -    a máximo 1 para que pesen parecido.                        
+      63 +    Encaje de Kannan: el reticulado tiene filas (e_i/radio, pes
+         +o·formas[:, i]). Las formas se escalan                         
+      64 +    todas por el mismo factor (máximo 1), así que el que llama 
+         +decide cuánto pesa cada una.                                   
+      65      """
+      66      formas = np.asarray(formas, dtype=float)
+      67 -    escala = np.maximum(np.abs(formas).max(axis=1, keepdims=Tru
+         -e), 1e-300)                                                    
+      68 -    formas = formas / escala                                   
+      67 +    formas = formas / max(np.abs(formas).max(), 1e-300)        
+      68      m = formas.shape[1]
+      69      factor = peso * radio
+      70      B = np.hstack([np.eye(m) / radio, factor * formas.T])
+  ⎿  Updated src/enteros.py (+13 -8)
+      273  def base_blanda(x, P, phi, cantidad=2):
+      274      """Vectores singulares de J en la plantilla: (U_blando, U_
+           rígido, V_blando, V_rígido) en float."""
+      275      J = np.array(jacobiano_fuerzas([float(v) for v in x], [flo
+           at(v) for v in phi], np.array(P, dtype=float)))
+      276 -    U, _, Vt = np.linalg.svd(J)                               
+      276 +    U, singulares, Vt = np.linalg.svd(J)                      
+      277      corte = J.shape[0] - cantidad
+      278      return {"U_blando": U[:, corte:], "U_rigido": U[:, :corte]
+           ,
+      279 -            "V_blando": Vt[corte:].T, "V_rigido": Vt[:corte].T
+          -}                                                             
+      279 +            "V_blando": Vt[corte:].T, "V_rigido": Vt[:corte].T
+          +, "singulares": singulares[corte:]}                           
+      280  
+      281  
+      282  def _fuerzas_vector(x, phi, P):
+     ...
+      344      return P
+      345  
+      346  
+      347 -def corregir_grados(d, k, g, pares, residuo, derivada, radio):
+      348 -    """Un paso de Newton entero: grados cuyo cambio anula (en 
+          -lo posible) el residuo blando."""                             
+      347 +def corregir_grados(d, k, g, pares, residuo, derivada, radio, 
+          +tolerancias):                                                 
+      348 +    """Un paso de Newton entero: grados cuyo cambio anula (en 
+          +lo posible) el residuo blando.                                
+      349 +                                                              
+      350 +    Cada componente del residuo se mide en unidades de su tole
+          +rancia (la distancia al pliegue, ~σ_k²).                      
+      351 +    """                                                       
+      352      n_a = tamanos_enteros(k, g)
+      353      pasos = []
+      354      actuales = []
+     ...
+      358          pasos.append(paso)
+      359          actuales.append(d[a][b] // paso)
+      360          escalas.append(paso / n_a[b])
+      358 -    formas = derivada * np.array(escalas)[None, :]            
+      359 -    objetivo = np.linalg.lstsq(formas, -residuo, rcond=None)[0
+          -]                                                             
+      361 +    pesos = 1 / np.asarray(tolerancias)                       
+      362 +    formas = pesos[:, None] * derivada * np.array(escalas)[Non
+          +e, :]                                                         
+      363 +    objetivo = np.linalg.lstsq(formas, -pesos * residuo, rcond
+          +=None)[0]                                                     
+      364      u = enteros_cercanos(formas, objetivo, radio)
+      365      nuevos = [fila[:] for fila in d]
+      366      for i, (a, b) in enumerate(pares):
+     ...
+      377      return (candidato["ok"], candidato["menor autovalor"]) > (
+           actual["ok"], actual["menor autovalor"])
+      378  
+      379  
+      376 -def redondeo_reticulado(x, P, phi, h, k, g, radios=(3, 10, 30)
+          -, iteraciones=3, cantidad=2):                                 
+     … 19 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● Confirmo que n=10⁸ sigue fallando: el límite teórico (n ~ σ^{-1.23}) da n~10⁹,
+  consistente con lo observado, muy por debajo de lo que sugería el redondeo
+  ingenuo (n~10¹³); dividir los clusters en sub-piezas podría bajarlo a n~C/σ.
+  Ahora reviso la curva de la Fase 0 para identificar qué σ dan los márgenes más
+  grandes.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● La curva de la Fase 0 revela la frontera útil: para μ > 11/16, el mejor
+  equilibrio está en h = 0.02–0.03 con ε = 10⁻³, dando μ ≈ 0.6885–0.6892 y σ ≈
+  1–2·10⁻⁶. Ahora pruebo el reticulado sobre el mejor candidato para obtener un
+  n concreto.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Obtuve resultados concretos: n=3·10⁷ da μ=0.68847 y n=10⁸ da μ=0.68918, ambos
+  estrictos y superando 11/16 y la cota de Canale, mientras el redondeo ingenuo
+  falla en esos mismos n. Guardo esto en alta precisión (aún sin certificar con
+  intervalos) junto con un script reproducible y lo anoto en las notas antes de
+  hacer /compact.
+
+● Write(scripts/s7_entero.py)
+  ⎿  Wrote 96 lines to scripts/s7_entero.py
+       1 """Fase 1 del grafo explícito: grados enteros para plantillas S7
+       2
+       3 Para cada candidato (h, ε, k_mitad, k_W) y cada n de la grilla,
+         compara el redondeo ingenuo de los
+         siduo blando, src/enteros.py) y
+       5 guarda si el equilibrio exacto de los datos enteros es estricto,
+       6
+       7 Salida: data/s7_enteros.json.
+       8
+      10   .venv/bin/python scripts/s7_entero.py --procesos 8
+     … +106 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Mientras corre, escribo el estado en notes/blowup_explicito.md.
+
+● Write(notes/blowup_explicito.md)
+  ⎿  Wrote 92 lines to notes/blowup_explicito.md
+       1 # Grafo explícito tipo S7: de la plantilla de O'Keeffe a un graf
+       2
+       3 **Estado:** Fases 0 y 1 hechas (plantilla y grados enteros). Fal
+       4 certificado del grafo completo (Fase 3), la validación independi
+       5
+       6 ## Motivación
+          S7, pero el grafo que certifica
+       8   tiene n > 9·10⁸⁴ y nunca lo escribe. El tamaño viene de dos la
+       9   - D ≈ 3·10⁴²: racionaliza un miembro que está a 6·10⁻¹⁹ de ser
+      10   - n = D²ℓ: el blow-up aleatorio de su Lema 2.
+     … +125 lines (ctrl+o to expand)
+
+● Background command "Run Phase 1 integer-degree grid in background" completed
+(exit code 0)
+
+  Read 1 file (ctrl+o to expand)
+
+● Bash(OMP_NUM_THREADS=1 timeout 900 .venv/bin/python scripts/s7_entero.py
+      --candidatos 0.01:1e-3:3:5 --ns 1e9 --procesos 1 2>&1 | head -1; git
+      checkout -- data/s7_ent…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (a git step in this command can move the working tree, so these may be
+     its changes, not edits) (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● Al correr un solo caso sobrescribí data/s7_enteros.json (no estaba en git). Lo
+  regenero en segundo plano con la grilla completa, que ahora incluye 10⁹.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Update(notes/blowup_explicito.md)
+  ⎿  Added 1 line, removed 1 line
+      74  | h = 0.03, ε = 1e-3, (3, 5) | 3·10⁷ | no | **sí** (λ = 5.3e-6)
+           | **0.688468** |
+      75  | h = 0.02, ε = 1e-3, (3, 5) | 3·10⁷ | no | no | — |
+      76  | h = 0.02, ε = 1e-3, (3, 5) | 1·10⁸ | no | **sí** (λ = 1.1e-6)
+           | **0.689183** |
+      77 -| h = 0.01, ε = 1e-3, (3, 5) | 1·10⁹ | no | **sí** | 0.689611 |
+      77 +| h = 0.01, ε = 1e-3, (3, 5) | 1·10⁹ | no | no (λ = −8e-8, por 
+         +poco) | — |                                                    
+      78  
+      79  Comparación: Canale tiene 0.6874 con n = 10⁴, y O'Keeffe 0.6929
+           con n > 10⁸⁵, sin escribir el grafo.
+      80  
+
+● Mientras regenera, agrego tests rápidos para el reticulado y los datos
+  enteros.
+
+● Write(tests/test_enteros.py)
+  ⎿  Wrote 78 lines to tests/test_enteros.py
+      1 """Tests del paso plantilla → datos enteros (src/enteros.py) y de
+        l reticulado (src/reticulado.py)."""
+      2 import sys
+      3 from pathlib import Path
+      4
+      5 import mpmath as mp
+      6 import numpy as np
+      7 import pytest
+      8
+      9 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+     … +75 lines (ctrl+o to expand)
+
+● Update(tests/test_enteros.py)  ⎿  Added 1 line, removed 6 lines
+      56      for a in range(7):
+      57          assert d[a][a] == n_a[a] - 1
+      58          for b in range(7):
+      59 -            assert n_a[a] * d[a][b] == n_b_por_d(n_a, d, b, a) 
+      59 +            assert n_a[a] * d[a][b] == n_a[b] * d[b][a]        
+      60  
+      61  
+      62 -def n_b_por_d(n_a, d, b, a):                                   
+      63 -    """n_b · d_ba."""                                          
+      64 -    return n_a[b] * d[b][a]                                    
+      65 -                                                               
+      66 -                                                               
+      62  def test_grado_entero_guardado_es_estricto():
+      63      exitos = [r for r in cargar_json("s7_enteros.json") if r["r
+          eticulado_ok"]]
+      64      if not exitos:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Background command "Regenerate full Phase 1 grid including 1e9" completed
+(exit code 0)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Terminé las Fases 0 y 1 y estoy en el punto de decisión del plan. Tenemos
+  datos enteros de un grafo de 3·10⁷ nodos con μ = 0.68847 > 11/16. Los
+  verifiqué en alta precisión, pero todavía no con el certificado de intervalos
+  (eso es la Fase 3). El grafo en sí todavía no está armado. Pasan los 26 tests
+  y no hice commit.
+
+  Resultados
+
+  ┌────────────┬───────┬───────────┬────────────────────────┬──────────────┐
+  │ plantilla  │   n   │  μ del    │    redondeo ingenuo    │  reticulado  │
+  │     S7     │       │   grafo   │                        │              │
+  ├────────────┼───────┼───────────┼────────────────────────┼──────────────┤
+  │ h = 0.03   │ 3·10⁷ │ 0.68847   │ falla (recién funciona │ estricto     │
+  │            │       │           │  con 10⁹)              │              │
+  ├────────────┼───────┼───────────┼────────────────────────┼──────────────┤
+  │ h = 0.02   │ 10⁸   │ 0.68918   │ falla (necesita ~10¹⁰) │ estricto     │
+  ├────────────┼───────┼───────────┼────────────────────────┼──────────────┤
+  │ h = 0.01   │ 10⁹   │ —         │ falla                  │ falla por    │
+  │            │       │           │                        │ poco         │
+  └────────────┴───────┴───────────┴────────────────────────┴──────────────┘
+
+  Para comparar: Canale llega a 0.6874 con 10⁴ nodos, y O'Keeffe usa más de 10⁸⁵
+  nodos y nunca escribe el grafo.
+
+  Lo que aprendimos (y corrige mi estimación anterior)
+  - Por qué el redondeo es caro: cerca de S7 el equilibrio está al lado de un
+    pliegue. Si el redondeo empuja el residuo de las ecuaciones blandas más allá
+    de ~σ², el equilibrio deja de existir (σ es el menor valor singular del
+    Jacobiano del equilibrio). Por eso el redondeo ingenuo necesita n ~ 1/σ², no
+    1/σ.
+  - Son 3 direcciones blandas, no 2: son los tres modos neutros de C4.
+  - Qué hace el método: se resuelven primero las ecuaciones bien condicionadas,
+    y después se usa un reticulado (LLL + Babai) para anular el residuo de las 3
+    ecuaciones blandas.
+  - Cuánto se gana: con 13 grados libres el costo baja a n ~ σ^{−1.23}, es
+    decir, entre 30 y 100 veces menos nodos. Mi estimación optimista de 10⁵–10⁶
+    nodos no se cumplió.
+  - Un detalle técnico: el óptimo del SDP no está en equilibrio exacto, así que
+    primero hay que "pulirlo" en alta precisión.
+
+  Archivos nuevos
+  - src/enteros.py y src/reticulado.py
+  - scripts/curva_s7.py y scripts/s7_entero.py
+  - tests/test_enteros.py
+  - notes/blowup_explicito.md, con todo lo anterior
+  - data/s7_curva.json y data/s7_enteros.json
+
+  La GPU todavía no hizo falta: todo esto es de 7 a 13 variables. Sigo pensando
+  usarla en la validación de la Fase 4.
+
+  Decisión: hay dos caminos.
+  - A (recomendado): seguir con las Fases 2–3 sobre el candidato de 3·10⁷ nodos
+    para tener cuanto antes un grafo explícito certificado por encima de 11/16.
+  - B: antes de eso, partir los clusters en sub-piezas con la misma fase. Eso
+    suma más grados libres y podría bajar n hacia ~C/σ, quizás 10⁶–10⁷. Se puede
+    hacer después de A como mejora.
+
+  Este es un buen momento para correr /compact. El estado quedó guardado en las
+  notas y en los JSON, así que no se pierde nada. Decime si sigo con A o con B.
+
+● Terminé las Fases 0 y 1 y estoy en el punto de decisión del plan. Tenemos
+  datos enteros de un grafo de 3·10⁷ nodos con μ = 0.68847 > 11/16. Los
+  verifiqué en alta precisión, pero todavía no con el certificado de intervalos
+  (eso es la Fase 3). El grafo en sí todavía no está armado. Pasan los 26 tests
+  y no hice commit.
+
+  Resultados
+
+  ┌────────────┬───────┬───────────┬────────────────────────┬──────────────┐
+  │ plantilla  │   n   │  μ del    │    redondeo ingenuo    │  reticulado  │
+  │     S7     │       │   grafo   │                        │              │
+  ├────────────┼───────┼───────────┼────────────────────────┼──────────────┤
+  │ h = 0.03   │ 3·10⁷ │ 0.68847   │ falla (recién funciona │ estricto     │
+  │            │       │           │  con 10⁹)              │              │
+  ├────────────┼───────┼───────────┼────────────────────────┼──────────────┤
+  │ h = 0.02   │ 10⁸   │ 0.68918   │ falla (necesita ~10¹⁰) │ estricto     │
+  ├────────────┼───────┼───────────┼────────────────────────┼──────────────┤
+  │ h = 0.01   │ 10⁹   │ —         │ falla                  │ falla por    │
+  │            │       │           │                        │ poco         │
+  └────────────┴───────┴───────────┴────────────────────────┴──────────────┘
+
+  Para comparar: Canale llega a 0.6874 con 10⁴ nodos, y O'Keeffe usa más de 10⁸⁵
+  nodos y nunca escribe el grafo.
+
+  Lo que aprendimos (y corrige mi estimación anterior)
+  - Por qué el redondeo es caro: cerca de S7 el equilibrio está al lado de un
+    pliegue. Si el redondeo empuja el residuo de las ecuaciones blandas más allá
+    de ~σ², el equilibrio deja de existir (σ es el menor valor singular del
+    Jacobiano del equilibrio). Por eso el redondeo ingenuo necesita n ~ 1/σ², no
+    1/σ.
+  - Son 3 direcciones blandas, no 2: son los tres modos neutros de C4.
+  - Qué hace el método: se resuelven primero las ecuaciones bien condicionadas,
+    y después se usa un reticulado (LLL + Babai) para anular el residuo de las 3
+    ecuaciones blandas.
+  - Cuánto se gana: con 13 grados libres el costo baja a n ~ σ^{−1.23}, es
+    decir, entre 30 y 100 veces menos nodos. Mi estimación optimista de 10⁵–10⁶
+    nodos no se cumplió.
+  - Un detalle técnico: el óptimo del SDP no está en equilibrio exacto, así que
+    primero hay que "pulirlo" en alta precisión.
+
+  Archivos nuevos
+  - src/enteros.py y src/reticulado.py
+  - scripts/curva_s7.py y scripts/s7_entero.py
+  - tests/test_enteros.py
+  - notes/blowup_explicito.md, con todo lo anterior
+  - data/s7_curva.json y data/s7_enteros.json
+
+  La GPU todavía no hizo falta: todo esto es de 7 a 13 variables. Sigo pensando
+  usarla en la validación de la Fase 4.
+
+  Decisión: hay dos caminos.
+  - A (recomendado): seguir con las Fases 2–3 sobre el candidato de 3·10⁷ nodos
+    para tener cuanto antes un grafo explícito certificado por encima de 11/16.
+  - B: antes de eso, partir los clusters en sub-piezas con la misma fase. Eso
+    suma más grados libres y podría bajar n hacia ~C/σ, quizás 10⁶–10⁷. Se puede
+    hacer después de A como mejora.
+
+  Este es un buen momento para correr /compact. El estado quedó guardado en las
+  notas y en los JSON, así que no se pierde nada. Decime si sigo con A o con B.
+
+❯ /compact
+  ⎿  Compacted
+  ⎿  Read tests/test_enteros.py (74 lines)
+  ⎿  Read notes/blowup_explicito.md (93 lines)
+  ⎿  Read ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-
+     investighaton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/sc
+     ratchpad/enteros.log (23 lines)
+  ⎿  Read scripts/s7_entero.py (97 lines)
+  ⎿  Read src/reticulado.py (76 lines)
+  ⎿  Plan file referenced
+     (~/.claude/plans/primero-lee-la-presentacion-floating-wadler.md)
+
+❯ Comenza con A, pero mantene en mente el camino de B asi continuamos con eso
+  despues
+
+● Arranco con la Fase 2. Primero miro el código existente que voy a reutilizar.
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● Antes de escribir el módulo, verifico numéricamente si la cota uniforme para
+  los modos m ≠ 0 es suficiente, usando Gershgorin con |N̂(m)| ≤ min(t, g−t),
+  independiente de los conjuntos de desplazamientos elegidos.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● El margen de Gershgorin sobra (≥0.217·n para todo modo m≠0) e independiente de
+  los desplazamientos usados, así que el certificado completo se reduce al
+  cociente más dos cotas de Gershgorin 7×7. Ahora escribo src/blowup.py.
+
+● Write(src/blowup.py)
+  ⎿  Wrote 177 lines to src/blowup.py
+       1 """Blow-up circulante explícito de datos enteros (k, g, d) y cot
+       2
+         años distintos):
+       4   - El cluster a tiene k_a bloques, cada uno una copia de Z_g. V
+       5   - Dentro de un cluster: clique (cada bloque es Z_g ∖ {0} y blo
+       6   - Entre clusters a < b: (a, i, v) ~ (b, j, v + s) con s ∈ N_ij
+       7     el k-spinning de Canale). La tabla t (k_a × k_b) tiene filas
+          que suman d_ab y columnas que suman
+         ne exactamente d_ab vecinos en b.
+      10 El Hessiano H = diag(Σ
+     … +203 lines (ctrl+o to expand)
+
+● Ahora hago que certificar devuelva la caja de Krawczyk, para poder evaluar los
+  cos por intervalos sobre la misma caja.
+
+● Bash(python3 - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/certificado.py (+6 -2)
+      149  # ------------------------------------------------------------
+           ---- certificado completo
+      150  
+      151  def certificar(xq, Pq, phi_centro, radio="1e-40", dps=100, ver
+           bose=True):
+      152 -    """Corre todos los pasos del certificado. Devuelve un dict
+          -; ok = True solo si todos pasan."""                           
+      152 +    """Corre todos los pasos del certificado. Devuelve un dict
+          +; ok = True solo si todos pasan.                              
+      153 +                                                              
+      154 +    La clave "caja" tiene la caja de fases (intervalos) donde 
+          +Krawczyk garantiza la solución.                               
+      155 +    """                                                       
+      156      iv.dps = dps
+      157      mp.mp.dps = dps
+      158      m = len(xq)
+     ...
+      184      resultado["distintas"] = resultado["min |sin(Δφ/2)| (cota 
+           inf)"] > 0
+      185  
+      186      resultado["mu"] = min(grados(xq, Pq))
+      187 +    resultado["caja"] = caja                                  
+      188      resultado["ok"] = (resultado["krawczyk"] and resultado["c>
+           0"]
+      189                         and resultado["cholesky"] and resultado
+           ["distintas"])
+      190      if verbose:
+     ...
+      195  def imprimir_certificado(resultado):
+      196      """Imprime cada paso del certificado y el μ exacto."""
+      197      for clave, valor in resultado.items():
+      194 -        if clave == "mu":                                     
+      198 +        if clave in ("mu", "caja"):                           
+      199              continue
+      200          texto = valor if isinstance(valor, bool) else mp.nstr(
+           valor, 6)
+      201          print(f"  {clave:28s} {texto}")
+
+● Ahora los tests del blow-up.
+
+● Write(tests/test_blowup.py)
+  ⎿  Wrote 90 lines to tests/test_blowup.py
+       1 """Tests del blow-up circulante (src/blowup.py): grados exactos,
+          espectro por Fourier y cotas."""
+       2 import sys
+       3 from pathlib import Path
+       4
+       6 import pytest
+       7
+       8 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+       9
+      10 from src.blowup import (  # noqa: E402
+     … +92 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Los 7 tests pasan: el espectro denso coincide con la unión de los bloques de
+  Fourier y las cotas de Gershgorin son válidas. Ahora continúo con el script
+  del certificado, incluyendo un control negativo con el redondeo ingenuo.
+
+● Write(scripts/certificar_grafo_s7.py)
+  ⎿  Wrote 116 lines to scripts/certificar_grafo_s7.py
+      1 """Fase 3 del grafo explícito: certificado riguroso de los blow-u
+      2
+      3 Para cada solución entera estricta (reticulado_ok) arma el grafo
+      4 aritmética de intervalos, que tiene un equilibrio estricto no sin
+      5   1. Cociente (modos constantes por cluster): `certificado.certif
+        icar` sobre x = n_a/n, P = d_ab/n_b
+        tintas). Devuelve la caja de fases.
+      7   2. Resto de los modos (H_m con m ≠ 0, y la parte de H_0 ortogon
+      8      margen de Gershgorin > 0 con los cos evaluados en intervalos
+      9      (`blowup.margenes_gershgorin`).
+     … +138 lines (ctrl+o to expand)
+
+● Bash(time .venv/bin/python scripts/certificar_grafo_s7.py --control-negativo
+      2>&1 | tail -20)
+  ⎿  1 file changed (binary, mode only or too large to show)
+
+● Los 7 grafos del reticulado quedan certificados con intervalos: los controles
+  ingenuos fallan como se esperaba, y solo h = 0.03 con n = 10⁹ pasa,
+  coincidiendo con la Fase 1. Ahora muevo la función del certificado a
+  src/blowup.py para que el notebook y los tests la reutilicen.
+
+● Bash(python3 - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated scripts/certificar_grafo_s7.py (+5 -41)
+       7    2. Resto de los modos (H_m con m ≠ 0, y la parte de H_0 ortog
+          onal a los modos de cluster):
+       8       margen de Gershgorin > 0 con los cos evaluados en interval
+          os sobre esa caja
+       9       (`blowup.margenes_gershgorin`).
+      10 +Todo eso lo hace `blowup.certificar_blowup`.                   
+      11    3. μ = (δ + 1)/n exacto y > 11/16 en aritmética racional.
+      12  Con --control-negativo agrega el redondeo ingenuo del mismo n, 
+          que tiene que fallar.
+      13  
+     ...
+      19  import argparse
+      20  import sys
+      21  import time
+      21 -from fractions import Fraction                                 
+      22  from pathlib import Path
+      23  
+      24 -import mpmath as mp                                            
+      24  import numpy as np
+      26 -from mpmath import iv                                          
+      25  
+      26  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+      29 -from src.blowup import descripcion_compacta, margenes_gershgori
+         -n  # noqa: E402                                                
+      30 -from src.certificado import certificar, fases_newton  # noqa: E
+         -402                                                            
+      31 -from src.enteros import fases_s7, grados_ingenuos, mu_entero, p
+         -lantilla_entera, pulir, tamanos_exactos  # noqa: E402          
+      27 +from src.blowup import certificar_blowup, descripcion_compacta 
+         + # noqa: E402                                                  
+      28 +from src.enteros import fases_s7, grados_ingenuos, pulir, taman
+         +os_exactos  # noqa: E402                                       
+      29  from src.experimentos import cargar_json, guardar_json  # noqa:
+           E402
+      30  
+      34 -UMBRAL = Fraction(11, 16)                                      
+      35 -                                                               
+      36 -                                                               
+      37 -def certificar_grafo(k, g, d, fases, dps=100, radio="1e-40"):  
+      38 -    """Certificado completo del blow-up de (k, g, d) con fases 
+         -iniciales `fases`. Devuelve un dict."""                        
+      39 -    x, P = plantilla_entera(k, g, d)                           
+      40 -    try:                                                       
+      41 -        phi = fases_newton(x, P, fases, dps=dps + 20)          
+      42 -    except ZeroDivisionError:                                  
+      43 -        return {"ok": False, "motivo": "Newton no converge"}   
+      44 -    cociente = certificar(x, P, phi, radio=radio, dps=dps, verb
+         -ose=False)                                                     
+      45 -    margenes = margenes_gershgorin(k, g, d, cociente["caja"], l
+         -ib=iv)                                                         
+      46 -    menor_fourier = min(mp.mpf(v.a) for v in margenes["fourier"
+         -])                                                             
+      47 -    menor_cero = min(mp.mpf(v.a) for v in margenes["cero"])    
+      48 -    mu = mu_entero(k, g, d)                                    
+     … 37 more lines (ctrl+o to expand)
+  ⎿  Updated src/blowup.py (+44 -1)
+      11  todos los bloques, así que se parte en g matrices K × K (K = Σ 
+          k_a), una por frecuencia m:
+      12    H_m[(a,i),(b,j)] = δ·Σ_c d_ac cos_ac − cos_ab · N̂_ij(m),   N̂(
+          m) = Σ_{s∈N} e^{2πi m s/g}.
+      13  """
+      14 +from fractions import Fraction                                 
+      15 +                                                               
+      16 +import mpmath as mp                                            
+      17  import numpy as np
+      18 +from mpmath import iv                                          
+      19  
+      16 -from .enteros import tamanos_enteros                           
+      20 +from .certificado import certificar, fases_newton              
+      21 +from .enteros import mu_entero, plantilla_entera, tamanos_enter
+         +os                                                             
+      22  
+      23 +UMBRAL = Fraction(11, 16)                                      
+      24  
+      25 +                                                               
+      26  # -------------------------------------------------------------
+          --- construcción
+      27  
+      28  def tabla_transporte(d_ab, k_a, k_b, g):
+     ...
+      182                      total = total - abs(cos[b]) * lib.sqrt(s[a
+           ][b])
+      183              margenes[nombre].append(total)
+      184      return margenes
+      185 +                                                              
+      186 +                                                              
+      187 +# ------------------------------------------------------------
+          +---- certificado del grafo completo                           
+      188 +                                                              
+      189 +def certificar_blowup(k, g, d, fases, dps=100, radio="1e-40"):
+      190 +    """Certificado riguroso del blow-up de (k, g, d), con fase
+          +s iniciales `fases`. Devuelve un dict.                        
+      191 +                                                              
+      192 +    ok = True si: Krawczyk + c > 0 + Cholesky de L + fases dis
+          +tintas en el cociente (`certificar`),                         
+      193 +    márgenes de Gershgorin > 0 sobre la caja de Krawczyk (rest
+          +o de los modos) y μ > 11/16 exacto.                           
+      194 +    """                                                       
+      195 +    x, P = plantilla_entera(k, g, d)                          
+      196 +    try:                                                      
+      197 +        phi = fases_newton(x, P, fases, dps=dps + 20)         
+      198 +    except ZeroDivisionError:                                 
+      199 +        return {"ok": False, "motivo": "Newton no converge"}  
+      200 +    cociente = certificar(x, P, phi, radio=radio, dps=dps, ver
+          +bose=False)                                                   
+      201 +    margenes = margenes_gershgorin(k, g, d, cociente["caja"], 
+          +lib=iv)                                                       
+      202 +    menor_fourier = min(mp.mpf(v.a) for v in margenes["fourier
+          +"])                                                           
+     … 18 more lines (ctrl+o to expand)
+● Arreglo el espaciado del script, agrego los tests sobre el grafo guardado y
+  corro todo.
+
+● Bash(python3 - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated scripts/certificar_grafo_s7.py (+1 -0)
+      28  from src.enteros import fases_s7, grados_ingenuos, pulir, taman
+          os_exactos  # noqa: E402
+      29  from src.experimentos import cargar_json, guardar_json  # noqa:
+           E402
+      30  
+      31 +                                                               
+      32  def control_ingenuo(r):
+      33      """Grados del redondeo ingenuo para el mismo (h, ε, k, n) q
+          ue la fila r de s7_enteros.json."""
+      34      fila = [f for f in cargar_json("s7_curva.json") if f["h"] =
+          = r["h"] and f["margen"] == r["margen"]
+  ⎿  Updated tests/test_blowup.py (+29 -1)
+       8  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+       9  
+      10  from src.blowup import (  # noqa: E402
+      11 -    adyacencia_densa, desplazamientos_cluster, fases_vertices, 
+         -hessiano_denso, hessiano_fourier,                              
+      11 +    adyacencia_densa, certificar_blowup, tablas_bloques, despla
+         +zamientos_cluster, fases_vertices, hessiano_denso, hessiano_fou
+         +rier,                                                          
+      12      margenes_gershgorin, tabla_transporte,
+      13  )
+      14  from src.enteros import paso_grado, tamanos_enteros  # noqa: E4
+          02
+      15 +from src.experimentos import cargar_json  # noqa: E402         
+      16  
+      17  K_CHICO = [1, 2, 3]
+      18  G_CHICO = 5
+     ...
+       89          complemento = Q[:, len(k):]
+       90          menor = np.linalg.eigvalsh(complemento.T @ H0 @ comple
+           mento).min()
+       91          assert menor >= min(margenes["cero"]) - 1e-9
+       92 +                                                              
+       93 +                                                              
+       94 +def _grafo_mas_chico():                                       
+       95 +    """Grafo certificado más chico de data/grafos_s7.json (o s
+          +kip si no hay)."""                                            
+       96 +    grafos = [f for f in cargar_json("grafos_s7.json") if f["r
+          +edondeo"] == "reticulado" and f["certificado"]["ok"]]         
+       97 +    if not grafos:                                            
+       98 +        pytest.skip("no hay grafos certificados en data/grafos
+          +_s7.json")                                                    
+       99 +    return min(grafos, key=lambda f: f["grafo"]["n"])["grafo"]
+      100 +                                                              
+      101 +                                                              
+      102 +def test_tablas_guardadas_dan_los_grados():                   
+      103 +    grafo = _grafo_mas_chico()                                
+      104 +    k = grafo["k"]                                            
+      105 +    g = grafo["g"]                                            
+      106 +    for (a, b), t in tablas_bloques(k, g, grafo["grados"]).ite
+          +ms():                                                         
+      107 +        t = np.array(t)                                       
+      108 +        assert (t.sum(axis=1) == grafo["grados"][a][b]).all() 
+      109 +        assert (t.sum(axis=0) == grafo["grados"][b][a]).all() 
+      110 +        assert t.min() >= 0 and t.max() <= g                  
+      111 +        assert grafo["tablas"][f"{a},{b}"] == t.tolist()      
+      112 +                                                              
+      113 +                                                              
+      114 +def test_grafo_guardado_se_recertifica():                     
+      115 +    grafo = _grafo_mas_chico()                                
+      116 +    resultado = certificar_blowup(grafo["k"], grafo["g"], graf
+          +o["grados"], grafo["fases"])                                  
+     … 2 more lines (ctrl+o to expand)
+  ⎿  Updated data/grafos_s7.json (+7 -7)
+      3    "h": 0.03,
+      4    "margen": 0.001,
+      5    "redondeo": "reticulado",
+      6 -  "segundos": 0.03807258605957031,                              
+      6 +  "segundos": 0.03860974311828613,                              
+      7    "certificado": {
+      8     "ok": true,
+      9     "krawczyk": true,
+     ...
+      1026    "h": 0.03,
+      1027    "margen": 0.001,
+      1028    "redondeo": "reticulado",
+      1029 -  "segundos": 0.036379098892211914,                          
+      1029 +  "segundos": 0.036717891693115234,                          
+      1030    "certificado": {
+      1031     "ok": true,
+      1032     "krawczyk": true,
+     ...
+      2049    "h": 0.02,
+      2050    "margen": 0.001,
+      2051    "redondeo": "reticulado",
+      2052 -  "segundos": 0.03661155700683594,                           
+      2052 +  "segundos": 0.03725290298461914,                           
+      2053    "certificado": {
+      2054     "ok": true,
+      2055     "krawczyk": true,
+     ...
+      3072    "h": 0.03,
+      3073    "margen": 0.001,
+      3074    "redondeo": "reticulado",
+      3075 -  "segundos": 0.036772966384887695,                          
+      3075 +  "segundos": 0.037136077880859375,                          
+      3076    "certificado": {
+      3077     "ok": true,
+      3078     "krawczyk": true,
+     ...
+      4095    "h": 0.02,
+      4096    "margen": 0.001,
+      4097    "redondeo": "reticulado",
+      4098 -  "segundos": 0.03767538070678711,                           
+      4098 +  "segundos": 0.037390947341918945,                          
+      4099    "certificado": {
+      4100     "ok": true,
+      4101     "krawczyk": true,
+     … 16 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● Ordeno el import largo y actualizo las notas con las Fases 2–3 y el camino B.
+
+● Bash(python3 - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated tests/test_blowup.py (+2 -2)
+       8  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+       9  
+      10  from src.blowup import (  # noqa: E402
+      11 -    adyacencia_densa, certificar_blowup, tablas_bloques, despla
+         -zamientos_cluster, fases_vertices, hessiano_denso, hessiano_fou
+         -rier,                                                          
+      12 -    margenes_gershgorin, tabla_transporte,                     
+      11 +    adyacencia_densa, certificar_blowup, desplazamientos_cluste
+         +r, fases_vertices, hessiano_denso,                             
+      12 +    hessiano_fourier, margenes_gershgorin, tabla_transporte, ta
+         +blas_bloques,                                                  
+      13  )
+      14  from src.enteros import paso_grado, tamanos_enteros  # noqa: E4
+          02
+      15  from src.experimentos import cargar_json  # noqa: E402
+
+● Bash(python3 - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated notes/blowup_explicito.md (+59 -11)
+      1  # Grafo explícito tipo S7: de la plantilla de O'Keeffe a un graf
+         o con n "chico"
+      2  
+      3 -**Estado:** Fases 0 y 1 hechas (plantilla y grados enteros). Fal
+        -tan el blow-up circulante (Fase 2), el                          
+      4 -certificado del grafo completo (Fase 3), la validación independi
+        -ente (Fase 4) y el notebook.                                    
+      3 +**Estado:** Fases 0–3 hechas. Hay un grafo explícito, no pesado 
+        +y **certificado por intervalos** con                            
+      4 +n = 30 000 004 y μ = 10327019/15000002 ≈ 0.688468 > 11/16. Falta
+        +n la validación independiente                                   
+      5 +(Fase 4), el notebook y la mejora de sub-piezas (camino B).     
+      6  
+      7  ## Motivación
+      8  - O'Keeffe (arXiv 2610.21271) prueba μ_c ≥ 0.6929 con la familia
+          S7, pero el grafo que certifica
+     ...
+       79  
+       80  Comparación: Canale tiene 0.6874 con n = 10⁴, y O'Keeffe 0.692
+           9 con n > 10⁸⁵, sin escribir el grafo.
+       81  
+       82 +## Fase 2: blow-up circulante (`src/blowup.py`)               
+       83 +- **Vértices:** el cluster a tiene k_a bloques, cada uno una c
+          +opia de Z_g; el vértice es (a, i, v).                         
+       84 +- **Dentro de un cluster:** clique (cada bloque es Z_g ∖ {0} y
+          + los bloques se unen completos).                              
+       85 +- **Entre clusters a < b:** (a, i, v) ~ (b, j, v + s) con s ∈ 
+          +{0, …, t_ij − 1}, un intervalo como en                        
+       86 +  el k-spinning de Canale.                                    
+       87 +- **Tabla t (k_a × k_b), un problema de transporte:** filas d_
+          +ab, columnas d_ba, entradas en                                
+       88 +  {base, base + 1}.                                           
+       89 +  - Los "+1" de la fila i van en las columnas cíclicas i·e, …,
+          + i·e + e − 1, con e = d_ab − k_b·base.                        
+       90 +  - Así cada columna recibe los mismos y no hace falta que g s
+          +ea múltiplo de nada.                                          
+       91 +- **Grados exactos:** cada vértice de a tiene exactamente d_ab
+          + vecinos en b, así que las fases de la                        
+       92 +  plantilla entera son un equilibrio exacto del grafo.        
+       93 +- **Descripción publicada** (`descripcion_compacta`): k, g, d,
+          + las tablas y las fases. Son unos pocos                       
+       94 +  KB por grafo.                                               
+       95 +                                                              
+       96 +## Fase 3: certificado del grafo completo (`blowup.certificar_
+          +blowup`, `scripts/certificar_grafo_s7.py`)                    
+       97 +- **Descomposición de Fourier.** El Hessiano conmuta con v → v
+          + + 1, así que se parte en g bloques                           
+       98 +  H_m de K × K (K = 23).                                      
+       99 +  - Lo verifica `tests/test_blowup.py`: el espectro denso es l
+          +a unión de los espectros de H_m.                              
+      100 +- **Modos de cluster** (los vectores constantes por cluster, d
+          +entro de H_0): dan exactamente n²·L(y).                       
+      101 +  Los certifica `certificado.certificar` (Krawczyk + Cholesky 
+          +por intervalos), que además devuelve la                       
+      102 +  caja de fases.                                              
+      103 +- **Todos los demás modos:** cota de Schur + Gershgorin de 7 ×
+          + 7, con los cos en intervalos sobre la                        
+      104 +  caja. El margen del cluster a es Σ_b d_ab cos_ab + 1 − Σ_{b≠
+          +a} |cos_ab| √s_ab.                                            
+      105 +  - Para m ≠ 0: |N̂(m)| ≤ min(t, g − t), y entonces s_ab = min(
+          +d_ab, n_b − d_ab)·min(d_ba, n_a − d_ba).                      
+      106 +    **No depende de qué conjuntos de desplazamientos se elijan
+          +.**                                                           
+      107 +  - Para H_0 ortogonal a los modos de cluster: solo actúa E = 
+          +t − base, con filas y columnas ≤ k.                           
+      108 +  - Margen medido: ≥ 0.217·n en todos los casos. Es enorme por
+          +que las densidades intermedias están                          
+     … 41 more lines (ctrl+o to expand)
+
+● Update(notes/blowup_explicito.md)
+  ⎿  Added 2 lines, removed 2 lines
+      129    dos mitades con densidades distintas hacia los vecinos).
+      130    - Suma enteros libres sin agregar ecuaciones blandas (las su
+           b-piezas tienen la misma fase, así que
+      131      el residuo blando sigue siendo de 3 componentes).
+      132 -  - Con m enteros libres y 3 restricciones, el reticulado deja
+          - un residuo ~n^{−(1 + m/3)}·…; más m                          
+      133 -    acerca n a C/σ (hoy C·σ^{−1.23}).                         
+      132 +  - Con más enteros libres por restricción, el vector más cerc
+          +ano del reticulado deja un residuo                            
+      133 +    blando menor sin mover mucho las densidades, y eso acerca 
+          +n a C/σ (hoy C·σ^{−1.23}).                                    
+      134    - Hay que cuidar que la plantilla siga estricta, porque las 
+           sub-piezas agregan modos de cluster
+      135      nuevos. En el cociente se verifica con el mismo `certifica
+           r`, que ya acepta cualquier cantidad de
+      136      clusters.
+
+● Ya hay un grafo explícito, no pesado y certificado (las Fases 2 y 3 están
+  completas): tiene n = 30 000 004 nodos y μ = 10327019/15000002 ≈ 0.688468 >
+  11/16. El certificado usa aritmética de intervalos y la comparación μ > 11/16
+  se hace con fracciones exactas. El grafo se reconstruye entero desde una
+  descripción de pocos KB guardada en data/grafos_s7.json.
+
+  La construcción está en src/blowup.py:
+  - Cada cluster a se forma con k_a bloques, y cada bloque es una copia de Z_g.
+    Dentro de un cluster todos los vértices están unidos (clique).
+  - Entre dos clusters, cada vértice se une con un intervalo de desplazamientos,
+    como en el k-spinning de Canale.
+  - Los tamaños de esos intervalos salen de un problema de transporte que tiene
+    solución explícita. Así cada vértice tiene exactamente el grado pedido hacia
+    cada cluster, y las fases de la plantilla son un equilibrio exacto del
+    grafo.
+
+  El certificado:
+  - Ventaja de la estructura circulante: el Hessiano del grafo se parte en g
+    bloques de Fourier de 23×23. Lo verifiqué contra el Hessiano denso en un
+    test.
+  - Modos de cluster: los vectores constantes en cada cluster reproducen
+    exactamente la plantilla de 7×7. Ahí se aplica el certificado de intervalos
+    que ya teníamos: Krawczyk para el equilibrio y Cholesky por intervalos para
+    la estabilidad.
+  - Los demás modos: una cota de Gershgorin de 7×7, también por intervalos, da
+    un margen de al menos 0.217·n. Esa cota no depende de qué desplazamientos
+    concretos se elijan.
+  - Consecuencia: el blow-up no agrega dificultad, y toda la dificultad sigue
+    estando en el cociente de 7 clusters.
+
+  Resultados: el script scripts/certificar_grafo_s7.py tarda 1.6 s en total.
+  - Los 7 grafos que salieron del método de reticulado quedan certificados: h =
+    0.03 desde n = 3·10⁷, y h = 0.02 desde n = 10⁸ con μ ≈ 0.689183.
+  - Control negativo: con el redondeo ingenuo para el mismo n, el equilibrio
+    existe pero no es estable (el Cholesky falla). La única excepción es h =
+    0.03 con n = 10⁹, que coincide con lo que vimos en la Fase 1.
+
+  Los tests pasan (35 en total, 9 de ellos nuevos en tests/test_blowup.py).
+  Cambié una sola cosa del código existente: certificar ahora también devuelve
+  la caja de fases. No hice commit.
+
+  El camino B quedó anotado en notes/blowup_explicito.md:
+  - Consiste en partir los clusters en sub-piezas con la misma fase. Eso da más
+    enteros libres sin agregar ecuaciones difíciles, que son las 3 del redondeo.
+  - El blow-up y las cotas de Gershgorin sirven sin cambios. Solo hay que volver
+    a hacer la Fase 1 con más clusters.
+
+  Siguiente: la Fase 4 es la validación ciega del grafo de 3·10⁷ nodos y es
+  donde sirve tu GPU.
+  - Primero chequeo los grados y que la velocidad sea nula, partiendo de la
+    descripción compacta.
+  - Después busco el menor autovalor del Hessiano con Lanczos, usando un
+    producto matriz-vector implícito que no arma la matriz. Se espera ≈ 150,
+    contra una norma del Hessiano de ~4·10⁷.
+  - Cuando el script esté listo te paso el comando exacto para correr en el
+    server.
+
+  Llegamos al tercer punto de /compact del plan: el estado está guardado en las
+  notas y en data/grafos_s7.json. Conviene correrlo ahora, antes de la Fase 4 y
+  el notebook.
+
+● Ya hay un grafo explícito, no pesado y certificado (las Fases 2 y 3 están
+  completas): tiene n = 30 000 004 nodos y μ = 10327019/15000002 ≈ 0.688468 >
+  11/16. El certificado usa aritmética de intervalos y la comparación μ > 11/16
+  se hace con fracciones exactas. El grafo se reconstruye entero desde una
+  descripción de pocos KB guardada en data/grafos_s7.json.
+
+  La construcción está en src/blowup.py:
+  - Cada cluster a se forma con k_a bloques, y cada bloque es una copia de Z_g.
+    Dentro de un cluster todos los vértices están unidos (clique).
+  - Entre dos clusters, cada vértice se une con un intervalo de desplazamientos,
+    como en el k-spinning de Canale.
+  - Los tamaños de esos intervalos salen de un problema de transporte que tiene
+    solución explícita. Así cada vértice tiene exactamente el grado pedido hacia
+    cada cluster, y las fases de la plantilla son un equilibrio exacto del
+    grafo.
+
+  El certificado:
+  - Ventaja de la estructura circulante: el Hessiano del grafo se parte en g
+    bloques de Fourier de 23×23. Lo verifiqué contra el Hessiano denso en un
+    test.
+  - Modos de cluster: los vectores constantes en cada cluster reproducen
+    exactamente la plantilla de 7×7. Ahí se aplica el certificado de intervalos
+    que ya teníamos: Krawczyk para el equilibrio y Cholesky por intervalos para
+    la estabilidad.
+  - Los demás modos: una cota de Gershgorin de 7×7, también por intervalos, da
+    un margen de al menos 0.217·n. Esa cota no depende de qué desplazamientos
+    concretos se elijan.
+  - Consecuencia: el blow-up no agrega dificultad, y toda la dificultad sigue
+    estando en el cociente de 7 clusters.
+
+  Resultados: el script scripts/certificar_grafo_s7.py tarda 1.6 s en total.
+  - Los 7 grafos que salieron del método de reticulado quedan certificados: h =
+    0.03 desde n = 3·10⁷, y h = 0.02 desde n = 10⁸ con μ ≈ 0.689183.
+  - Control negativo: con el redondeo ingenuo para el mismo n, el equilibrio
+    existe pero no es estable (el Cholesky falla). La única excepción es h =
+    0.03 con n = 10⁹, que coincide con lo que vimos en la Fase 1.
+
+  Los tests pasan (35 en total, 9 de ellos nuevos en tests/test_blowup.py).
+  Cambié una sola cosa del código existente: certificar ahora también devuelve
+  la caja de fases. No hice commit.
+
+  El camino B quedó anotado en notes/blowup_explicito.md:
+  - Consiste en partir los clusters en sub-piezas con la misma fase. Eso da más
+    enteros libres sin agregar ecuaciones difíciles, que son las 3 del redondeo.
+  - El blow-up y las cotas de Gershgorin sirven sin cambios. Solo hay que volver
+    a hacer la Fase 1 con más clusters.
+
+  Siguiente: la Fase 4 es la validación ciega del grafo de 3·10⁷ nodos y es
+  donde sirve tu GPU.
+  - Primero chequeo los grados y que la velocidad sea nula, partiendo de la
+    descripción compacta.
+  - Después busco el menor autovalor del Hessiano con Lanczos, usando un
+    producto matriz-vector implícito que no arma la matriz. Se espera ≈ 150,
+    contra una norma del Hessiano de ~4·10⁷.
+  - Cuando el script esté listo te paso el comando exacto para correr en el
+    server.
+
+  Llegamos al tercer punto de /compact del plan: el estado está guardado en las
+  notas y en data/grafos_s7.json. Conviene correrlo ahora, antes de la Fase 4 y
+  el notebook.
+
+❯ /compact
+  ⎿  Compacted
+  ⎿  Read notes/blowup_explicito.md (141 lines)
+  ⎿  Read tests/test_blowup.py (119 lines)
+  ⎿  Read scripts/certificar_grafo_s7.py (82 lines)
+  ⎿  Read src/blowup.py (221 lines)
+  ⎿  Read src/certificado.py (205 lines)
+  ⎿  Plan file referenced
+     (~/.claude/plans/primero-lee-la-presentacion-floating-wadler.md)
+
+❯ Okay indicame que correr en el server para la fase 4. Una vez te indique que
+  este corriendo hace una version inicial del notebook con lo que tenemos hasta
+  el momento y luego continuariamos con el camino B hasta que tenga el output
+  del server
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● No tengo torch en esta máquina, así que el validador funciona con numpy o con
+  torch indistintamente. Lo escribo, lo testeo contra el grafo denso y te paso
+  el comando.
+
+● Write(src/validacion.py)
+  ⎿  Wrote 260 lines to src/validacion.py
+       1 """Validación independiente del blow-up: productos W·y y H·x imp
+       2
+         src/blowup.py):
+       4   - (a, i, v) ~ (a, i', v') para todo par distinto dentro del mi
+       5   - (a, i, v) ~ (b, j, v + s mod g) con s ∈ {0, …, t_ij − 1}, pa
+       6 No usa la descomposición de Fourier ni las cotas de Gershgorin:
+       7 Las sumas sobre intervalos se hacen con sumas prefijas, así que
+         un producto cuesta O(n·k) y la
+          siempre en float64.
+      10 import numpy as np
+     … +308 lines (ctrl+o to expand)
+
+● Bash(sed -i 's/        for a, X in enumerate(self.por_cluster(x)):/        for
+      X in self.por_cluster(x):/' src/validacion.py && grep -n "for X in"
+      src/validacion.py)
+  ⎿  Updated src/validacion.py (+1 -1)
+      157      def quitar_medias_cluster(self, x):
+      158          """Proyección al complemento de los modos de cluster (
+           resta la media de cada cluster)."""
+      159          x = x.clone() if self.arreglos.torch is not None else 
+           x.copy()
+      160 -        for a, X in enumerate(self.por_cluster(x)):           
+      160 +        for X in self.por_cluster(x):                         
+      161              X -= X.mean()
+      162          return x
+      163  
+
+● Write(tests/test_validacion.py)
+  ⎿  Wrote 57 lines to tests/test_validacion.py
+       1 """Tests de la validación implícita (src/validacion.py) contra e
+         l grafo denso de src/blowup.py."""
+       2 import sys
+       4
+       5 import numpy as np
+       6
+       7 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+       9 from src.blowup import adyacencia_densa, descripcion_compacta, f
+         ases_vertices, hessiano_denso  # noqa: E402
+      10 from src.validacion import (  # noqa: E402
+     … +61 lines (ctrl+o to expand)
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/validacion.py (+3 -2)
+      225      """Lanczos sin reortogonalizar para el menor autovalor de 
+           un operador simétrico.
+      226  
+      227      El residuo ‖H y − θ y‖ del vector de Ritz es β_k·|s_k| (úl
+           timo componente), sin calcular y.
+      228 -    Corta cuando ese residuo es ≤ tolerancia·|θ|. `informar(fi
+          -la)` recibe el progreso cada `cada` pasos.                    
+      228 +    Corta cuando ese residuo es ≤ tolerancia·|θ|, o si β se an
+          +ula (el Krylov ya es invariante).                             
+      229 +    `informar(fila)` recibe el progreso cada `cada` pasos.    
+      230      """
+      231      q = proyectar(inicial)
+      232      q = q / arreglos.norma(q)
+     ...
+      244          beta = arreglos.norma(w)
+      245          alfas.append(alfa)
+      246          betas.append(beta)
+      246 -        final = paso == iteraciones or beta == 0              
+      247 +        final = paso == iteraciones or beta <= 1e-12 * max(abs
+          +(a) for a in alfas)                                           
+      248          if paso % cada == 0 or final:
+      249              menor, ultimo, mayor = _extremos_ritz(np.array(alf
+           as), np.array(betas))
+      250              fila = {"paso": paso, "menor": menor, "residuo": b
+           eta * abs(ultimo), "mayor": mayor}
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/validacion.py (+3 -1)
+      235      alfas = []
+      236      betas = []
+      237      historial = []
+      238 +    escala = 0.0                                              
+      239      for paso in range(1, iteraciones + 1):
+      240          w = proyectar(aplicar(q))
+      241          alfa = arreglos.punto(q, w)
+     ...
+      245          beta = arreglos.norma(w)
+      246          alfas.append(alfa)
+      247          betas.append(beta)
+      247 -        final = paso == iteraciones or beta <= 1e-12 * max(abs
+          -(a) for a in alfas)                                           
+      248 +        escala = max(escala, abs(alfa))                       
+      249 +        final = paso == iteraciones or beta <= 1e-12 * escala 
+      250          if paso % cada == 0 or final:
+      251              menor, ultimo, mayor = _extremos_ritz(np.array(alf
+           as), np.array(betas))
+      252              fila = {"paso": paso, "menor": menor, "residuo": b
+           eta * abs(ultimo), "mayor": mayor}
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Confirmo que el cero era un artefacto por agotamiento del espacio de Krylov
+  con n = 42, no un error real. Ajusto el test para que corte en cuanto
+  converge.
+
+● Bash(sed -i 's/arreglos, iteraciones=400, cada=5, tolerancia=1e-9)/arreglos,
+      iteraciones=400, cada=1, tolerancia=1e-9)/' tests/test_validacion.py &&
+      .venv/bin/python…)  ⎿  Updated tests/test_validacion.py (+1 -1)
+      47      descripcion, grafo, H, d = _caso(6)
+      48      arreglos = grafo.arreglos
+      49      resultado = lanczos(grafo.producto_hessiano, grafo.quitar_m
+          edias_cluster, arreglos.aleatorio(grafo.n, 0),
+      50 -                        arreglos, iteraciones=400, cada=5, tole
+         -rancia=1e-9)                                                   
+      50 +                        arreglos, iteraciones=400, cada=1, tole
+         +rancia=1e-9)                                                   
+      51      base = np.zeros((grafo.n, len(K)))
+      52      for a in range(len(K)):
+      53          base[grafo.inicios[a]: grafo.inicios[a] + K[a] * G, a] 
+          = 1
+
+● Ahora el script:
+
+● Write(scripts/validar_grafo.py)
+  ⎿  Wrote 133 lines to scripts/validar_grafo.py
+      1 """Fase 4 del grafo explícito: validación ciega, en float64, de u
+      2
+      3 Reconstruye el grafo a partir de su descripción compacta (k, g, t
+      4 ni Gershgorin, calcula con productos implícitos W·y y H·x (src/va
+      5   1. Grados: cuenta con W·1_b los vecinos de cada vértice en cada
+         cluster; tienen que ser d_ab exactos.
+        ser ~ error de redondeo).
+      7   3. Modos de cluster: Q_ab = 1_aᵀ H 1_b / √(n_a n_b) con H implí
+      8      Sus autovalores son los de H en los modos de cluster (uno es
+      9   4. Resto de l
+     … +173 lines (ctrl+o to expand)
+
+● Bash(timeout 900 .venv/bin/python scripts/validar_grafo.py --dispositivo numpy
+      --iteraciones 100 --cada 25 2>&1 | tail -20)
+  ⎿  Created data/validacion_s7_n30000004.json (+58 -0)
+       1 +{                                                              
+       2 + "h": 0.03,                                                    
+       3 + "n": 30000004,                                                
+       4 + "dispositivo": "numpy",                                       
+       5 + "mu_exacto": "10327019/15000002",                             
+       6 + "grados_ok": true,                                            
+       7 + "grado_min": 20654037,                                        
+       8 + "max_velocidad": 1.4634800038493267e-09,                      
+       9 + "Q_diferencia": 1.8044374883174896e-09,                       
+      10 + "autovalores_Q": [                                            
+      11 +  -2.4331828014817703e-10,                                     
+      12 +  157.51123332416952,                                          
+      13 +  210.46505861559484,                                          
+      14 +  22506.652914255596,                                          
+      15 +  7814829.355648811,                                           
+      16 +  7835505.222106498,                                           
+      17 +  7839017.081998625                                            
+      18 + ],                                                            
+      19 + "menor_cluster": 157.51123332416952,                          
+      20 + "cota_gershgorin": 6528339.816814319,                         
+      21 + "resto": {                                                    
+      22 +  "menor": -8.488171574630942e-10,                             
+      23 +  "residuo": 5.946515355915665e-10,                            
+      24 +  "mayor": 7946580.794242068,                                  
+      25 +  "pasos": 100,                                                
+      26 +  "convergio": false,                                          
+      27 +  "historial": [                                               
+      28 +   {                                                           
+      29 +    "paso": 25,                                                
+      30 +    "menor": -9.57638001364997e-11,                            
+      31 +    "residuo": 2.4198445389591814e-08,                         
+      32 +    "mayor": 7946580.794232298                                 
+      33 +   },                                                          
+      34 +   {                                                           
+      35 +    "paso": 50,                                                
+      36 +    "menor": 5.285073172767101e-11,                            
+      37 +    "residuo": 1.1067036329240624e-08,                         
+      38 +    "mayor": 7946580.7942420645                                
+      39 +   },                                                          
+      40 +   {                                                           
+     … 19 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● La validación detectó que, fuera del modo cluster, Lanczos converge a λ ≈ 0
+  pese a una cota certificada ≥ 6.5·10⁶. Voy a investigar si el error está en el
+  producto implícito o en el certificado antes de enviar al server.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Confirmo que es un artefacto numérico de Lanczos (reproducido también con
+  n=1380 contra el Hessiano denso): el espectro degenerado hace que β caiga a
+  ~10⁻¹⁰, amplificando el ruido de redondeo en las direcciones proyectadas
+  afuera. Voy a corregirlo reproyectando w antes de normalizar.
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/validacion.py (+3 -0)
+      242          w = w - alfa * q
+      243          if q_anterior is not None:
+      244              w = w - beta * q_anterior
+      245 +        # reproyectar: si β es chico, w/β amplifica el redonde
+          +o en las direcciones proyectadas                              
+      246 +        # (donde el operador proyectado vale 0) y aparece un v
+          +alor de Ritz espurio ≈ 0                                      
+      247 +        w = proyectar(w)                                      
+      248          beta = arreglos.norma(w)
+      249          alfas.append(alfa)
+      250          betas.append(beta)
+
+● Ahora coincide con el denso hasta 10⁻¹⁰. Pruebo también el Lanczos en 1^⊥ con
+  este grafo análogo y lo agrego como test de regresión.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Coincide con el denso en ambos casos. Además, el análogo con g = 60 (n = 1380)
+  sale inestable (λ = −0.007), como se espera para un n chico. Lo agrego como
+  test:
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated tests/test_validacion.py (+38 -1)
+       7  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+       8  
+       9  from src.blowup import adyacencia_densa, descripcion_compacta, 
+          fases_vertices, hessiano_denso  # noqa: E402
+      10 +from src.enteros import paso_grado, tamanos_enteros  # noqa: E4
+         +02                                                             
+      11  from src.validacion import (  # noqa: E402
+      12      Arreglos, GrafoImplicito, cociente_formula, cociente_implic
+          ito, grados_medidos, lanczos,
+      13  )
+      13 -from tests.test_blowup import grados_al_azar  # noqa: E402     
+      14 +from tests.test_blowup import _grafo_mas_chico, grados_al_azar 
+         + # noqa: E402                                                  
+      15  
+      16  K = [2, 3, 1]
+      17  G = 7
+     ...
+      56      complemento = Q[:, len(K):]
+      57      esperado = np.linalg.eigvalsh(complemento.T @ H @ complemen
+          to).min()
+      58      assert abs(resultado["menor"] - esperado) < 1e-6 * max(1, a
+          bs(esperado))
+      59 +                                                               
+      60 +                                                               
+      61 +def _complemento(base):                                        
+      62 +    """Base ortonormal del complemento de las columnas de `base
+         +`."""                                                          
+      63 +    n, m = base.shape                                          
+      64 +    Q, _ = np.linalg.qr(np.hstack([base, np.eye(n)]))          
+      65 +    return Q[:, m:]                                            
+      66 +                                                               
+      67 +                                                               
+      68 +def test_lanczos_con_densidades_del_grafo_certificado():       
+      69 +    """Mismas densidades y fases que el grafo certificado pero 
+         +g = 60: espectro muy degenerado."""                            
+      70 +    grande = _grafo_mas_chico()                                
+      71 +    k = grande["k"]                                            
+      72 +    g = 60                                                     
+      73 +    n_a = tamanos_enteros(k, g)                                
+      74 +    N_a = tamanos_enteros(k, grande["g"])                      
+      75 +    d = [[0] * len(k) for _ in k]                              
+      76 +    for a in range(len(k)):                                    
+      77 +        d[a][a] = n_a[a] - 1                                   
+      78 +        for b in range(a + 1, len(k)):                         
+      79 +            paso = paso_grado(k, a, b)                         
+      80 +            d[a][b] = int(round(grande["grados"][a][b] / N_a[b]
+         + * n_a[b] / paso)) * paso                                      
+      81 +            d[b][a] = d[a][b] * n_a[a] // n_a[b]               
+      82 +    fases = [float(p) for p in grande["fases"]]                
+      83 +    grafo = GrafoImplicito(descripcion_compacta(k, g, d, fases)
+         +, Arreglos())                                                  
+     … 11 more lines (ctrl+o to expand)
+
+● Los 39 tests pasan. Corro una prueba corta sobre el grafo real de 3·10⁷ nodos
+  en esta CPU para confirmar que el resto da ≈ 6.5·10⁶:
+
+● Bash(timeout 900 .venv/bin/python scripts/validar_grafo.py --dispositivo numpy
+      --iteraciones 50 --cada 10 2>&1 | grep -v "^   autoval" | tail -12; rm
+      data/validacion…)
+  ⎿  Deleted data/validacion_s7_n30000004.json (+0 -58)
+       1 -{                                                              
+       2 - "h": 0.03,                                                    
+       3 - "n": 30000004,                                                
+       4 - "dispositivo": "numpy",                                       
+       5 - "mu_exacto": "10327019/15000002",                             
+       6 - "grados_ok": true,                                            
+       7 - "grado_min": 20654037,                                        
+       8 - "max_velocidad": 1.4634800038493267e-09,                      
+       9 - "Q_diferencia": 1.8044374883174896e-09,                       
+      10 - "autovalores_Q": [                                            
+      11 -  -2.4331828014817703e-10,                                     
+      12 -  157.51123332416952,                                          
+      13 -  210.46505861559484,                                          
+      14 -  22506.652914255596,                                          
+      15 -  7814829.355648811,                                           
+      16 -  7835505.222106498,                                           
+      17 -  7839017.081998625                                            
+      18 - ],                                                            
+      19 - "menor_cluster": 157.51123332416952,                          
+      20 - "cota_gershgorin": 6528339.816814319,                         
+      21 - "resto": {                                                    
+      22 -  "menor": -8.488171574630942e-10,                             
+      23 -  "residuo": 5.946515355915665e-10,                            
+      24 -  "mayor": 7946580.794242068,                                  
+      25 -  "pasos": 100,                                                
+      26 -  "convergio": false,                                          
+      27 -  "historial": [                                               
+      28 -   {                                                           
+      29 -    "paso": 25,                                                
+      30 -    "menor": -9.57638001364997e-11,                            
+      31 -    "residuo": 2.4198445389591814e-08,                         
+      32 -    "mayor": 7946580.794232298                                 
+      33 -   },                                                          
+      34 -   {                                                           
+      35 -    "paso": 50,                                                
+      36 -    "menor": 5.285073172767101e-11,                            
+      37 -    "residuo": 1.1067036329240624e-08,                         
+      38 -    "mayor": 7946580.7942420645                                
+      39 -   },                                                          
+      40 -   {                                                           
+     … 19 more lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● Funciona: el resto da λ_min = 6.5372·10⁶ frente a una cota certificada de
+  6.5283·10⁶, casi justa. Ahora voy a instalar torch CPU en el scratchpad (sin
+  tocar el .venv) para probar ese camino antes de darte el comando final.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● El backend de torch coincide con numpy (diferencias ≤ 1.4·10⁻¹⁴). Reviso qué
+  archivos tiene que tener el server para correrlo:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Solo hacen falta 3 archivos nuevos y no hay dependencias nuevas aparte de
+  torch. Actualizo las notas con lo que ya se midió en CPU:
+
+● Update(notes/blowup_explicito.md)
+  ⎿  Added 18 lines, removed 4 lines
+      119    | 0.03 | 3.0·10⁷ | 10327019/15000002 ≈ 0.688468 | 1.6e-6 | 0
+           .218 n |
+      120    | 0.02 | 1.0·10⁸ | ≈ 0.689183 | 2.9e-7 | 0.217 n |
+      121  
+      122 +## Fase 4: validación ciega (`src/validacion.py`, `scripts/val
+          +idar_grafo.py`)                                               
+      123 +- **Sin Fourier ni Gershgorin.** Solo usa la regla de adyacenc
+          +ia de la descripción compacta.                                
+      124 +  - W·y implícito: el clique de cada cluster más las ventanas 
+          +cíclicas con sumas prefijas (cada bloque                      
+      125 +    centrado por su media para no perder precisión). Cuesta O(
+          +n·k) y la memoria es O(n).                                    
+      126 +  - H·x = h∘x − cosθ∘W(cosθ∘x) − sinθ∘W(sinθ∘x), en float64, c
+          +on numpy o torch (CPU/CUDA).                                  
+      127 +  - Tests contra el grafo denso, incluido un análogo con las d
+          +ensidades reales y g = 60.                                    
+      128 +- **Chequeos:** grados con W·1_b; velocidad; Q_ab = 1_aᵀH1_b/√
+          +(n_a n_b); Lanczos en el complemento de los                   
+      129 +  modos de cluster; y, con `--completo`, Lanczos en 1^⊥ desde 
+          +un vector al azar.                                            
+      130 +- **Detalle numérico de Lanczos:** el espectro del resto es mu
+          +y degenerado y β cae a ~1e-10 en pocos                        
+      131 +  pasos. Hay que reproyectar w antes de normalizar; si no, apa
+          +rece un valor de Ritz espurio ≈ 0.                            
+      132 +- **Resultados en CPU (n = 3·10⁷, 4.5 s por producto H·x):**  
+      133 +  - grados exactos; max |θ̇| = 1.5e-9 (≈ 5e-17·n);             
+      134 +  - |Q implícita − fórmula| = 2e-9; autovalores de Q: 0 (rotac
+          +ión), **157.5**, 210.5, 2.25e4 y tres                         
+      135 +    ≈ 7.8e6;                                                  
+      136 +  - resto: λ_min = 6.5372e6, contra la cota certificada de Ger
+          +shgorin 6.5283e6. La cota es casi justa.                      
+      137 +  - Por lo tanto λ_min(H en 1^⊥) = 157.5 > 0.                 
+      138 +- **Pendiente:** el Lanczos ciego en 1^⊥ (`--completo`) en la 
+          +GPU del server. Tiene que dar 157.5.                          
+      139 +                                                              
+      140  ## Pendiente
+      123 -- **Fase 4: validación ciega del grafo de 3·10⁷ nodos.**      
+      124 -  - Producto Hessiano·vector implícito con sumas prefijas (int
+          -ervalos).                                                     
+      125 -  - Lanczos en GPU para el menor autovalor (se espera ~n·5e-6 
+          -≈ 150 contra ‖H‖ ~ 4·10⁷).                                    
+      126 -  - Chequeo de grados y de velocidad nula a partir de la descr
+          -ipción compacta.                                              
+      141  - **Notebook** `notebooks/Grafo_explicito_S7.ipynb`.
+      142  - **Camino B, para bajar n:** partir cada cluster en sub-pieza
+           s con la misma fase (por ejemplo, W en
+      143    dos mitades con densidades distintas hacia los vecinos).
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated notes/blowup_explicito.md (+2 -2)
+      1  # Grafo explícito tipo S7: de la plantilla de O'Keeffe a un graf
+         o con n "chico"
+      2  
+      3  **Estado:** Fases 0–3 hechas. Hay un grafo explícito, no pesado 
+         y **certificado por intervalos** con
+      4 -n = 30 000 004 y μ = 10327019/15000002 ≈ 0.688468 > 11/16. Falta
+        -n la validación independiente                                   
+      5 -(Fase 4), el notebook y la mejora de sub-piezas (camino B).     
+      4 +n = 30 000 004 y μ = 10327019/15000002 ≈ 0.688468 > 11/16. La va
+        +lidación ciega en float64 (Fase 4)                              
+      5 +coincide; solo falta su Lanczos completo en GPU. Faltan también 
+        +el notebook y las sub-piezas (camino B).                        
+      6  
+      7  ## Motivación
+      8  - O'Keeffe (arXiv 2610.21271) prueba μ_c ≥ 0.6929 con la familia
+          S7, pero el grafo que certifica
+
+● El script de la Fase 4 está listo y probado. Para correrlo en el server,
+  primero tienen que llegar tres archivos nuevos: src/validacion.py,
+  scripts/validar_grafo.py y data/grafos_s7.json. No están commiteados, así que
+  hace falta tu commit y push y después un git pull en el server, o copiarlos
+  con scp. Además necesita numpy, scipy y torch.
+
+  Comando en el server (GPU, desde la raíz del repo, con el python que tiene
+  torch):
+
+  nohup python scripts/validar_grafo.py --dispositivo cuda --completo >
+  validacion_n3e7.log 2>&1 &
+  tail -f validacion_n3e7.log
+
+  El resultado queda en data/validacion_s7_n30000004.json; pasame ese JSON o el
+  log.
+
+  Qué hace. Rearma el grafo de n = 30 000 004 a partir de su descripción
+  compacta y lo revisa sin usar Fourier ni Gershgorin. Nunca arma la matriz: los
+  productos W·y y H·x se calculan con sumas prefijas sobre los intervalos de
+  desplazamientos.
+
+  Lo que ya medí en esta CPU (4.5 s por producto H·x):
+
+  ┌─────────────────┬───────────────────────────────────────────────────────┐
+  │     Chequeo     │                       Resultado                       │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ Grados          │ Exactamente d_ab en cada vértice                      │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ Velocidad       │ max |θ̇| = 1.5·10⁻⁹                                    │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ Modos de        │ Autovalores 0 (la rotación), 157.5, 210.5, 2.25·10⁴ y │
+  │ cluster         │  tres ≈ 7.8·10⁶                                       │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ Resto de los    │ λ_min = 6.5372·10⁶, contra la cota certificada        │
+  │ modos           │ 6.5283·10⁶                                            │
+  └─────────────────┴───────────────────────────────────────────────────────┘
+
+  En el resto, la cota de Gershgorin queda a un 0.14 % del valor real. Con esto,
+  λ_min del Hessiano en 1^⊥ es 157.5 > 0, que coincide con el certificado.
+
+  Lo que falta y es para la GPU es --completo: un Lanczos ciego sobre todo 1^⊥
+  que arranca de un vector al azar. Tiene que llegar a 157.5. Calculo que lleva
+  unos miles de pasos, porque 157.5 y 210.5 están muy cerca entre sí comparados
+  con ‖H‖ ≈ 8·10⁶. Eso debería ser menos de una hora en la 1080 Ti, pero no lo
+  medí.
+
+  Un problema que encontré y corregí. La primera versión de Lanczos daba un λ ≈
+  0 falso en el resto. El espectro del resto es tan degenerado que el redondeo
+  se amplificaba en las direcciones que se proyectan afuera. La solución fue
+  reproyectar en cada paso. Ahora coincide con el Hessiano denso en un análogo
+  chico con las densidades reales (g = 60). Quedó como test, y en total pasan 39
+  tests.
+
+  No commiteé nada; las notas están actualizadas. Avisame cuando esté corriendo
+  y armo la primera versión del notebook. Después sigo con el camino B.
+
+❯ esta corriendo
+
+● Mientras corre armo la primera versión del notebook. Empiezo por ver el
+  formato que usan los notebooks existentes, en particular la celda de Colab:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Ahora leo los módulos y scripts que el notebook tiene que explicar:
+
+  Searched for 1 pattern, read 1 file, ran 1 shell command (ctrl+o to expand)
+
+● Reviso los tiempos y campos de los JSON para decidir qué ejecutar en vivo en
+  el notebook, y en paralelo lanzo la validación local en CPU sin --completo
+  para tener datos de la Fase 4 mientras llega el JSON del server.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● El redondeo por reticulado tarda ~6 s para h = 0.03, así que puede correr en
+  vivo en el notebook. Reviso el patrón límite de S7 para describirlo bien:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Tengo todo lo que necesito para la teoría. Antes de escribir los gráficos
+  cargo la guía de visualización:
+● Skill(dataviz)
+  ⎿  Successfully loaded skill
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Voy a escribir en el scratchpad el generador del notebook, aplicando la paleta
+  categórica validada (azul, naranja, aqua en orden fijo), un solo eje por
+  gráfico y leyenda cuando haya más de una serie.
+
+  Made 1 scratchpad edit +948, ran 1 shell command (ctrl+o to expand)
+
+● Background command "Run CPU validation (no full Lanczos) in background"
+completed (exit code 0)
+
+● Bash(cd /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-
+      teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/scratchpad &&
+      tail -4 valida…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+● Se ejecutó en 8 s. Reviso las salidas de cada celda:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Todo ejecuta sin errores, pero encontré cuatro discrepancias entre el texto y
+  las salidas: el max|F| real, los valores singulares pequeños de J, la
+  estimación de n de la sección 5, y un "+1" inexistente en la tabla Am–W. Voy a
+  corregir estos cuatro puntos.
+
+● Bash(cd /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-
+      teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/scratchpad &&
+      /home/imagenes…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+  Read 2 files (ctrl+o to expand)
+
+● Las figuras se ven bien, pero con h = 0.01 y ε = 10⁻⁵ el menor autovalor
+  medido es ≤ 0, lo cual es ruido del SDP que distorsiona la curva en escala
+  log. Voy a filtrar ese punto y aclarar en el análisis que la curva de μ es
+  ruidosa.
+
+● Bash(cd /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-
+      teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f9061fb90e2d/scratchpad &&
+      /home/imagenes…)
+  ⎿  1 file changed (binary, mode only or too large to show)
+  ⎿  (timeout 10m)
+
+● El notebook funciona en ~8 s y ya está todo commiteado salvo el notebook y la
+  validación local. Ahora probaré el camino B: dividir W (k=5) en dos piezas
+  (2+3) con misma fase y densidades para ganar enteros libres sin romper el
+  equilibrio ni la forma de S7, esperando que el modo W1–W2 resulte rígido.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Partir solo W ya baja de 3·10⁷ a 10⁷. Además el modo W1–W2 es rígido: no
+  aparece ningún valor singular chico nuevo. Lanzo en paralelo las demás
+  particiones y una grilla más fina de n:
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● Partir W reduce el n mínimo hasta en 15 veces (mejor caso 2·10⁶ con W→(2,3) o
+  (1,2,2)), aunque el éxito no es monótono por tratarse de una búsqueda
+  heurística en el reticulado, así que conviene barrer varios g por cada n.
+  Antes de armar el script, voy a revisar dónde se usa la condición de fases
+  distintas, ya que basta un par de fases diferentes para mostrar que el estado
+  no está sincronizado.
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● Dejo distintas como dato informativo ya que también la usa el certificado de
+  S7 en Implementacion_papers. Agrego no sync (exige al menos un par de fases
+  certificadamente distintas) y hago que ok dependa de ella, además de
+  subdividir en src/enteros.py y un script para el barrido.
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated src/certificado.py (+11 -9)
+       7    3. Sobre toda la caja: c_a > 0, y la matriz de L sin la fila/
+          columna 0 (gauge y_0 = 0) admite
+       8       Cholesky por intervalos con pivotes positivos ⇒ L(y) > 0 s
+          alvo rotaciones.
+       9    4. Grados d_a y μ = min d_a en aritmética racional exacta.
+      10 -  5. Las fases son distintas dos a dos sobre toda la caja (el e
+         -stado no es sync).                                             
+      10 +  5. El estado no es sync: algún par de fases es distinto sobre
+         + toda la caja. Se informa además si                            
+      11 +     son distintas dos a dos (las sub-piezas de un cluster pued
+         +en compartir fase).                                            
+      12  """
+      13  from fractions import Fraction
+      14  
+     ...
+      136      return True, menor_pivote
+      137  
+      138  
+      138 -def _menor_separacion(caja):                                  
+      139 -    """Cota inferior de min_{a<b} |sin((φ_a − φ_b)/2)| sobre l
+          -a caja (> 0 ⇒ fases distintas)."""                            
+      139 +def _separaciones(caja):                                      
+      140 +    """Cotas inferiores de |sin((φ_a − φ_b)/2)| sobre la caja,
+          + para todos los pares a < b."""                               
+      141      m = len(caja)
+      141 -    menor = None                                              
+      142 +    cotas = []                                                
+      143      for a in range(m):
+      144          for b in range(a + 1, m):
+      144 -            cota = _cota_inferior(abs(iv.sin((caja[a] - caja[b
+          -]) / 2)))                                                     
+      145 -            menor = cota if menor is None else min(menor, cota
+          -)                                                             
+      146 -    return menor                                              
+      145 +            cotas.append(_cota_inferior(abs(iv.sin((caja[a] - 
+          +caja[b]) / 2))))                                              
+      146 +    return cotas                                              
+      147  
+      148  
+      149  # ------------------------------------------------------------
+           ---- certificado completo
+     ...
+      180      resultado["cholesky"] = exito
+      181      resultado["min pivote (cota inf)"] = menor_pivote
+      182  
+      183 -    resultado["min |sin(Δφ/2)| (cota inf)"] = _menor_separacio
+          -n(caja)                                                       
+      183 +    separaciones = _separaciones(caja)                        
+      184 +    resultado["min |sin(Δφ/2)| (cota inf)"] = min(separaciones
+          +)                                                             
+      185      resultado["distintas"] = resultado["min |sin(Δφ/2)| (cota 
+           inf)"] > 0
+      186 +    resultado["no sync"] = max(separaciones) > 0              
+      187  
+      188      resultado["mu"] = min(grados(xq, Pq))
+      189      resultado["caja"] = caja
+     … 6 more lines (ctrl+o to expand)
+  ⎿  Updated src/blowup.py (+2 -1)
+      189  def certificar_blowup(k, g, d, fases, dps=100, radio="1e-40"):
+      190      """Certificado riguroso del blow-up de (k, g, d), con fase
+           s iniciales `fases`. Devuelve un dict.
+      191  
+      192 -    ok = True si: Krawczyk + c > 0 + Cholesky de L + fases dis
+          -tintas en el cociente (`certificar`),                         
+      192 +    ok = True si: Krawczyk + c > 0 + Cholesky de L + estado no
+          + sync en el cociente (`certificar`),                          
+      193      márgenes de Gershgorin > 0 sobre la caja de Krawczyk (rest
+           o de los modos) y μ > 11/16 exacto.
+      194      """
+      195      x, P = plantilla_entera(k, g, d)
+     ...
+      210          "c>0": bool(cociente["c>0"]),
+      211          "cholesky": bool(cociente["cholesky"]),
+      212          "distintas": bool(cociente["distintas"]),
+      213 +        "no sync": bool(cociente["no sync"]),                 
+      214          "min pivote L (cota inf)": float(cociente["min pivote 
+           (cota inf)"]),
+      215          "margen fourier / n (cota inf)": float(menor_fourier /
+            n),
+      216          "margen cero / n (cota inf)": float(menor_cero / n),
+  ⎿  Updated src/enteros.py (+27 -0)
+       80      return mp.mpf(float(valor))
+       81  
+       82  
+       83 +def subdividir(x, phi, P, k, particion):                      
+       84 +    """Parte cada cluster a en piezas de la misma fase y las m
+          +ismas densidades: particion[a] = [k de cada pieza].           
+       85 +                                                              
+       86 +    Las piezas de un cluster quedan unidas completas entre sí 
+          +(P = P_aa = 1). Como cada pieza ve lo mismo                   
+       87 +    que el cluster original, el equilibrio F = 0 se mantiene e
+          +xacto. Devuelve (x, phi, P, k) nuevos.                        
+       88 +    """                                                       
+       89 +    origen = []                                               
+       90 +    x_nuevo = []                                              
+       91 +    phi_nuevo = []                                            
+       92 +    k_nuevo = []                                              
+       93 +    for a, piezas in enumerate(particion):                    
+       94 +        assert sum(piezas) == k[a], "las piezas tienen que sum
+          +ar k_a"                                                       
+       95 +        for k_pieza in piezas:                                
+       96 +            origen.append(a)                                  
+       97 +            x_nuevo.append(x[a] * Fraction(k_pieza, int(k[a]))
+          + if isinstance(x[a], Fraction)                                
+       98 +                           else x[a] * k_pieza / k[a])        
+       99 +            phi_nuevo.append(phi[a])                          
+      100 +            k_nuevo.append(k_pieza)                           
+      101 +    P_nuevo = []                                              
+      102 +    for i in origen:                                          
+      103 +        fila = []                                             
+      104 +        for j in origen:                                      
+      105 +            fila.append(P[i][j])                              
+      106 +        P_nuevo.append(fila)                                  
+      107 +    return x_nuevo, phi_nuevo, P_nuevo, k_nuevo               
+      108 +                                                              
+      109 +                                                              
+      110  def tamanos_exactos(k):
+      111      """x_a = k_a/K como Fraction."""
+      112      K = sum(int(ka) for ka in k)
+
+● Ahora el script del barrido:
+
+● Write(scripts/s7_subpiezas.py)
+  ⎿  Wrote 99 lines to scripts/s7_subpiezas.py
+      1 """Camino B: plantillas S7 con clusters partidos en sub-piezas de
+      2
+      3 Partir un cluster (por ejemplo W, k = 5, en piezas de k = 2 y 3)
+      4 ve lo mismo que el cluster original y las piezas quedan unidas co
+      5 entre ellas es rígido. Pero duplica los grados libres hacia los v
+        ecinos: el redondeo por reticulado
+        iones blandas, y alcanza con n menor.
+      7
+        éxito del reticulado no es monótono
+        o es estricto, el certifi
+     … +122 lines (ctrl+o to expand)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● El pkill mató también mi propio shell, porque el patrón aparecía en la línea
+  de comando. Lo vuelvo a correr sin él:
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Encontré un grafo certificado con n = 2.000.011 y μ ≈ 0,688463 (>11/16), 15
+  veces menor que el anterior, y las fases de W1 y W2 también difieren, pasando
+  el chequeo viejo. Ahora lanzo el barrido completo en esta máquina con 8
+  procesos, que tomará unos 10 minutos.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Mientras corre agrego un test de subdividir: el equilibrio se mantiene exacto,
+  cada pieza ve lo mismo que el cluster original y las piezas quedan unidas
+  completas.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated tests/test_enteros.py (+16 -1)
+       9  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+      10  
+      11  from src.enteros import (  # noqa: E402
+      12 -    evaluar_enteros, fases_s7, grados_ingenuos, pulir, tamanos_
+         -enteros, tamanos_exactos,                                      
+      12 +    evaluar_enteros, fases_s7, grados_ingenuos, pulir, subdivid
+         +ir, tamanos_enteros, tamanos_exactos,                          
+      13  )
+      14  from src.experimentos import cargar_json  # noqa: E402
+      15  from src.plantillas import fuerzas  # noqa: E402
+     ...
+      71      evaluacion = evaluar_enteros(k, r["g"], r["grados"], r["fas
+          es"], r["h"], phi_referencia=phi_plantilla)
+      72      assert evaluacion["ok"]
+      73      assert r["mu"] > 11 / 16
+      74 +                                                               
+      75 +                                                               
+      76 +def test_subdividir_mantiene_el_equilibrio():                  
+      77 +    """Partir W en piezas (2, 3): mismas fases, densidades copi
+         +adas, piezas completas entre sí, F = 0."""                     
+      78 +    fila = [f for f in cargar_json("s7_curva.json") if f["h"] =
+         += 0.03 and f["margen"] == 1e-3 and f["k"] == [3, 5]][0]        
+      79 +    k = [3] * 6 + [5]                                          
+      80 +    x, phi, P = pulir(tamanos_exactos(k), fases_s7(0.03, np.arr
+         +ay(fila["s"])), np.array(fila["P"]))                           
+      81 +    x2, phi2, P2, k2 = subdividir(x, phi, P, k, [[3]] * 6 + [[2
+         +, 3]])                                                         
+      82 +    assert k2 == [3] * 6 + [2, 3]                              
+      83 +    assert abs(sum(x2) - 1) < mp.mpf(10) ** -40                
+      84 +    assert phi2[6] == phi2[7] == phi[6]                        
+      85 +    assert P2[6][7] == P2[7][6] == 1                           
+      86 +    for b in range(6):                                         
+      87 +        assert P2[6][b] == P2[7][b] == P[6][b]                 
+      88 +    assert max(abs(f) for f in fuerzas(x2, phi2, P2, mp)) < mp.
+         +mpf(10) ** -40                                                 
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Es la precisión por defecto de mpmath (15 dígitos), no un error de subdividir.
+  Evalúo F dentro de mp.workdps(60):
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated tests/test_enteros.py (+2 -1)
+      85      assert P2[6][7] == P2[7][6] == 1
+      86      for b in range(6):
+      87          assert P2[6][b] == P2[7][b] == P[6][b]
+      88 -    assert max(abs(f) for f in fuerzas(x2, phi2, P2, mp)) < mp.
+         -mpf(10) ** -40                                                 
+      88 +    with mp.workdps(60):                                       
+      89 +        assert max(abs(f) for f in fuerzas(x2, phi2, P2, mp)) <
+         + mp.mpf(10) ** -40                                             
+
+● Los 40 tests pasan. Espero a que termine el barrido para escribir los
+  resultados en las notas.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Background command "Wait for variant runs and print logs" completed (exit code
+0)
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Background command "Run sub-piece sweep in background" completed (exit code 0)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Barrido completo: para h=0.03 el menor n certificado bajó a 1 500 014 (W→2+3),
+  mientras que h=0.02 no tuvo éxito hasta 3·10⁶; los 26 casos declarados
+  estrictos por el reticulado se confirmaron certificados. Como la tasa de éxito
+  cae en n grande, sospecho que el radio de búsqueda (3–100) se queda chico,
+  así que lo voy a probar con radios mayores.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Mientras corre esa sonda en segundo plano, agrego el camino B a las notas:
+
+● Update(notes/blowup_explicito.md)
+  ⎿  Added 24 lines
+      137    - Por lo tanto λ_min(H en 1^⊥) = 157.5 > 0.
+      138  - **Pendiente:** el Lanczos ciego en 1^⊥ (`--completo`) en la 
+           GPU del server. Tiene que dar 157.5.
+      139  
+      140 +## Camino B: sub-piezas de la misma fase (`enteros.subdividir`
+          +, `scripts/s7_subpiezas.py`)                                  
+      141 +- **Idea.** Partir un cluster en piezas con la misma fase y la
+          +s mismas densidades, unidas completas                         
+      142 +  entre sí. Por ejemplo, W (k = 5) en piezas de k = 2 y 3.    
+      143 +  - Cada pieza ve lo mismo que el cluster original, así que F 
+          += 0 sigue exacto.                                             
+      144 +  - El modo relativo entre las piezas es rígido: no aparece ni
+          +ngún valor singular chico nuevo en J.                         
+      145 +  - Cada par W–b se duplica, y el reticulado gana enteros libr
+          +es para las mismas 3 ecuaciones blandas.                      
+      146 +- **Certificado:** `certificar` ahora pide "no sync" (algún pa
+          +r de fases distinto), no fases distintas                      
+      147 +  dos a dos; `distintas` queda como dato informativo. El blow-
+          +up y Gershgorin no cambian.                                   
+      148 +- **Sonda** (h = 0.03; un solo g por n):                      
+      149 +  - sin partir: hace falta 3·10⁷;                             
+      150 +  - W → (2, 3) o W → (1, 2, 2): funciona desde 2·10⁶;         
+      151 +  - mitades → (1, 2) (30 enteros libres): 10⁷;                
+      152 +  - todo partido: 3·10⁶.                                      
+      153 +                                                              
+      154 +  Partir las mitades no ayuda; con más dimensiones, quizás los
+          + parámetros del reticulado (radios,                           
+      155 +  peso) quedan mal ajustados.                                 
+      156 +- **Barrido** (`data/s7_subpiezas.json`; 8 valores consecutivo
+          +s de g por cada n, porque el éxito del                        
+      157 +  reticulado no es monótono en n):                            
+      158 +  - h = 0.03, W → (2, 3): el menor certificado es **n = 1 500 
+          +014, μ = 1032699/1500014 ≈ 0.688463**.                        
+      159 +    Tasa de éxito: 3/8 con 1.5·10⁶, 7/8 con 2·10⁶, 2/8 con 3·1
+          +0⁶, y 0/8 con 10⁶ o menos.                                    
+      160 +  - h = 0.02: nada hasta 3·10⁶. En la sonda, W → (2, 3) pasa c
+          +on 3·10⁷ (sin partir hacía falta 10⁸).                        
+      161 +  - Todos los equilibrios que el reticulado declaró estrictos 
+          +(26) salieron certificados.                                   
+      162 +- Es una reducción de 20× sobre la versión sin partir.        
+      163 +                                                              
+      164  ## Pendiente
+      165  - **Notebook** `notebooks/Grafo_explicito_S7.ipynb`.
+      166  - **Camino B, para bajar n:** partir cada cluster en sub-pieza
+           s con la misma fase (por ejemplo, W en
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated notes/blowup_explicito.md (+3 -10)
+      163  
+      164  ## Pendiente
+      165  - **Notebook** `notebooks/Grafo_explicito_S7.ipynb`.
+      166 -- **Camino B, para bajar n:** partir cada cluster en sub-pieza
+          -s con la misma fase (por ejemplo, W en                        
+      167 -  dos mitades con densidades distintas hacia los vecinos).    
+      168 -  - Suma enteros libres sin agregar ecuaciones blandas (las su
+          -b-piezas tienen la misma fase, así que                        
+      169 -    el residuo blando sigue siendo de 3 componentes).         
+      170 -  - Con más enteros libres por restricción, el vector más cerc
+          -ano del reticulado deja un residuo                            
+      171 -    blando menor sin mover mucho las densidades, y eso acerca 
+          -n a C/σ (hoy C·σ^{−1.23}).                                    
+      172 -  - Hay que cuidar que la plantilla siga estricta, porque las 
+          -sub-piezas agregan modos de cluster                           
+      173 -    nuevos. En el cociente se verifica con el mismo `certifica
+          -r`, que ya acepta cualquier cantidad de                       
+      174 -    clusters.                                                 
+      175 -  - El blow-up y las cotas de Gershgorin no cambian.          
+      166 +- **Camino B, siguiente:** por qué el éxito no es monótono en 
+          +n (¿radios del reticulado?), particiones                      
+      167 +  con más piezas, y h = 0.02 (más μ).                         
+      168 +- **Notebook:** agregar la Fase 4 completa (GPU) y el camino B
+          +.                                                             
+      169  - **Otras mejoras:**
+      170    - optimizar la plantilla pidiendo σ_min ≥ objetivo en lugar 
+           de margen del SDP;
+      171    - mejor Nelder–Mead (la curva es ruidosa: (11, 18) a veces s
+           ale peor que (3, 5)).
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated notes/blowup_explicito.md (+0 -1)
+      162  - Es una reducción de 20× sobre la versión sin partir.
+      163  
+      164  ## Pendiente
+      165 -- **Notebook** `notebooks/Grafo_explicito_S7.ipynb`.          
+      165  - **Camino B, siguiente:** por qué el éxito no es monótono en 
+           n (¿radios del reticulado?), particiones
+      166    con más piezas, y h = 0.02 (más μ).
+      167  - **Notebook:** agregar la Fase 4 completa (GPU) y el camino B
+           .
+
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated notes/blowup_explicito.md (+3 -1)
+       2  
+       3  **Estado:** Fases 0–3 hechas. Hay un grafo explícito, no pesado
+           y **certificado por intervalos** con
+       4  n = 30 000 004 y μ = 10327019/15000002 ≈ 0.688468 > 11/16. La v
+          alidación ciega en float64 (Fase 4)
+       5 -coincide; solo falta su Lanczos completo en GPU. Faltan también
+         - el notebook y las sub-piezas (camino B).                      
+       5 +coincide; solo falta su Lanczos completo en GPU. Primera versió
+         +n del notebook en                                              
+       6 +`notebooks/Grafo_explicito_S7.ipynb`. Con el camino B (sub-piez
+         +as) hay uno certificado con                                    
+       7 +**n = 1 500 014** y μ = 1032699/1500014 ≈ 0.688463.            
+       8  
+       9  ## Motivación
+      10  - O'Keeffe (arXiv 2610.21271) prueba μ_c ≥ 0.6929 con la famili
+          a S7, pero el grafo que certifica
+
+  Read 1 file (ctrl+o to expand)
+
+● Mientras corre el server avancé dos cosas: la primera versión del notebook y
+  el camino B. El camino B ya dio un grafo certificado 20 veces más chico: n = 1
+  500 014, con μ = 1032699/1500014 ≈ 0.688463 > 11/16.
+
+  Notebook (notebooks/Grafo_explicito_S7.ipynb)
+  - Tiene la celda de Colab con GITHUB_TOKEN. Corre de punta a punta en unos 8 s
+    y lo ejecuté completo.
+  - Cada sección empieza por la teoría, sigue con el código de src/ que se usa
+    (impreso con inspect.getsource) y con el comando exacto y la máquina para
+    cada script largo, y recién después muestra los resultados.
+  - Lo rápido corre en vivo: el redondeo ingenuo contra el de reticulado para n
+    = 3·10⁷, el certificado y su control negativo, y Lanczos contra el Hessiano
+    denso en un análogo con n = 1380.
+  - La sección 9 lee data/validacion_s7_n30000004.json. Hoy ese archivo tiene la
+    corrida local en CPU, sin --completo. Cuando traigas el JSON del server,
+    con el mismo nombre, se reemplaza y la celda muestra también el Lanczos
+    ciego con su gráfico.
+  - Todavía no incluye el camino B.
+
+  Camino B: partir clusters en sub-piezas con la misma fase
+  - Partir W (k = 5) en piezas de 2 y 3 deja el equilibrio de la plantilla
+    exacto.
+  - El modo relativo entre las piezas es rígido, así que no aparece ninguna
+    dirección blanda nueva.
+  - A cambio, cada par W–b se duplica y el reticulado tiene más enteros libres
+    para anular las mismas 3 ecuaciones blandas.
+
+  Barrido con h = 0.03 y W → 2+3 (scripts/s7_subpiezas.py, 8 valores de g por
+  cada n):
+
+  ┌─────────────┬──────────────┐
+  │      n      │ certificados │
+  ├─────────────┼──────────────┤
+  │ 10⁶ o menos │ 0/8          │
+  ├─────────────┼──────────────┤
+  │ 1.5·10⁶     │ 3/8          │
+  ├─────────────┼──────────────┤
+  │ 2·10⁶       │ 7/8          │
+  ├─────────────┼──────────────┤
+  │ 3·10⁶       │ 2/8          │
+  └─────────────┴──────────────┘
+
+  - Los 26 equilibrios que el reticulado declaró estrictos salieron todos
+    certificados por intervalos.
+  - h = 0.02 (μ ≈ 0.68918) todavía no baja de 3·10⁷.
+  - Partir también las mitades no ayudó. Probablemente sea porque los parámetros
+    del reticulado no están ajustados para más dimensiones.
+  - La tasa de éxito no es monótona en n. Hay una sonda corriendo para ver si
+    radios de búsqueda más grandes la mejoran.
+
+  Cambios en el código
+  - certificar ahora exige "no sync" (algún par de fases distinto) en lugar de
+    fases distintas dos a dos, porque las sub-piezas pueden compartir fase.
+    distintas queda como dato informativo, y el certificado de
+    Implementacion_papers no cambia.
+  - Nuevo subdividir en src/enteros.py, con su test. Pasan los 40 tests.
+  - Las notas están actualizadas. No commiteé nada.
+
+  Cuando tengas el log o el JSON del server, pasámelo. Mientras tanto sigo con
+  el ajuste del reticulado para el camino B.
+
+● Background command "Probe larger lattice radii success rate" completed (exit
+code 0)
+
+  Read 1 file (ctrl+o to expand)
+
+● Los radios grandes (hasta 3000) mejoran el éxito en n=3·10⁶ (5/8) pero no
+  bajan el piso: por debajo de ~1.5·10⁶ sigue fallando todo. Voy a anotar esto
+  en las notas, concluyendo que hace falta más enteros libres con reticulado
+  ajustado o una plantilla con más margen.
+
+● Update(notes/blowup_explicito.md)
+  ⎿  Added 3 lines
+      162    - h = 0.02: nada hasta 3·10⁶. En la sonda, W → (2, 3) pasa c
+           on 3·10⁷ (sin partir hacía falta 10⁸).
+      163    - Todos los equilibrios que el reticulado declaró estrictos 
+           (26) salieron certificados.
+      164  - Es una reducción de 20× sobre la versión sin partir.
+      165 +- **Sonda de radios** (W → (2, 3), h = 0.03, 8 valores de g): 
+          +con radios hasta 3000 en lugar de 100, el                     
+      166 +  éxito con 3·10⁶ sube de 2/8 a 5/8. Con 7·10⁵ y 10⁶ sigue en 
+          +0/8. Los radios explican la falta de                          
+      167 +  monotonía, pero no mueven el piso de ~1.5·10⁶.              
+      168  
+      169  ## Pendiente
+      170  - **Camino B, siguiente:** por qué el éxito no es monótono en 
+           n (¿radios del reticulado?), particiones
+
+● Los radios de búsqueda más grandes no bajan el n mínimo del camino B. Explican
+  por qué el éxito no era monótono en n, pero por debajo de ~1.5·10⁶ sigue sin
+  funcionar ningún intento. El récord sigue siendo n = 1 500 014.
+
+  ┌───────┬──────────────────┬───────────────────┐
+  │   n   │ radios hasta 100 │ radios hasta 3000 │
+  ├───────┼──────────────────┼───────────────────┤
+  │ 7·10⁵ │ 0/8              │ 0/8               │
+  ├───────┼──────────────────┼───────────────────┤
+  │ 10⁶   │ 0/8              │ 0/8               │
+  ├───────┼──────────────────┼───────────────────┤
+  │ 3·10⁶ │ 2/8              │ 5/8               │
+  └───────┴──────────────────┴───────────────────┘
+
+  Es con h = 0.03, W partido en 2+3 y 8 valores de g por cada n. En 3·10⁶ el
+  radio original quedaba chico para ese n; ahí sí ayudó subirlo. Lo anoté en las
+  notas.
+
+  Para bajar más, las opciones que veo son:
+  - Más enteros libres que sirvan: partir las mitades no ayudó, así que habría
+    que ajustar el reticulado (radios y peso) para más dimensiones.
+  - Una plantilla con más margen: sacrificar algo de μ a cambio de un margen de
+    estabilidad mayor.
+
+  Sigo con eso hasta que me pases el resultado del server.
+
+● Background command "Wait for sweep completion" completed (exit code 0)
+
+● Esa notificación es la espera del barrido anterior que terminó. No hay
+  resultados nuevos; sigue todo como en el mensaje anterior y quedo esperando la
+  salida del server.
+
+❯ aca tenes el output del server
+
+● La validación ciega en GPU confirma el certificado. Guardo el JSON en data/ y
+  actualizo el notebook y las notas:
+
+● Bash(cat > data/validacion_s7_n30000004.json <<'EOF'
+      {…)
+  ⎿  Updated data/validacion_s7_n30000004.json (+40 -31)
+       1  {
+       2   "h": 0.03,
+       3   "n": 30000004,
+       4 - "dispositivo": "numpy",                                       
+       4 + "dispositivo": "cuda",                                        
+       5   "mu_exacto": "10327019/15000002",
+       6   "grados_ok": true,
+       7   "grado_min": 20654037,
+       8 - "max_velocidad": 1.4634800038493267e-09,                      
+       9 - "Q_diferencia": 1.8044374883174896e-09,                       
+       8 + "max_velocidad": 1.4634746747788085e-09,                      
+       9 + "Q_diferencia": 5.029141902923584e-08,                        
+      10   "autovalores_Q": [
+      11 -  -2.4331828014817703e-10,                                     
+      12 -  157.51123332416952,                                          
+      13 -  210.46505861559484,                                          
+      14 -  22506.652914255596,                                          
+      15 -  7814829.355648811,                                           
+      16 -  7835505.222106498,                                           
+      17 -  7839017.081998625                                            
+      11 +  -1.0637137418846922e-08,                                     
+      12 +  157.5112333309609,                                           
+      13 +  210.4650585886839,                                           
+      14 +  22506.652914247978,                                          
+      15 +  7814829.355648807,                                           
+      16 +  7835505.222106495,                                           
+      17 +  7839017.081998637                                            
+      18   ],
+      19 - "menor_cluster": 157.51123332416952,                          
+      19 + "menor_cluster": 157.5112333309609,                           
+      20   "cota_gershgorin": 6528339.816814319,
+      21   "resto": {
+      22 -  "menor": 6537170.0035356935,                                 
+      23 -  "residuo": 4.717569906221928,                                
+      24 -  "mayor": 7946580.794242065,                                  
+      25 -  "pasos": 30,                                                 
+      22 +  "menor": 6537169.171268379,                                  
+      23 +  "residuo": 0.051507938096880895,                             
+      24 +  "mayor": 7946580.794242089,                                  
+      25 +  "pasos": 100,                                                
+     … 53 more lines (ctrl+o to expand)
+
+● Lanczos convergió en solo 50 pasos (no en miles) porque el espectro tiene
+  pocos autovalores aislados seguidos de una banda lejana, algo que mi
+  estimación anterior no contemplaba. Voy a actualizar el texto del notebook y
+  quitar el gráfico, que con un solo punto no aporta nada.
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● Bash(sed -i 's/     Tiene que dar el menor autovalor de Q (es el más lento: ~
+      miles de pasos)./     Tiene que dar el menor autovalor de Q (con n = 3·10⁷
+      convergió en…)
+  ⎿  Updated scripts/validar_grafo.py (+3 -2)
+       9    4. Resto de los modos: Lanczos de H en el complemento de los 
+          modos de cluster. El certificado
+      10       garantiza λ ≥ (cota de Gershgorin); acá se mide λ_min de v
+          erdad.
+      11    5. Con --completo: Lanczos de H en 1^⊥ desde un vector al aza
+          r, sin separar los modos de cluster.
+      12 -     Tiene que dar el menor autovalor de Q (es el más lento: ~ 
+         -miles de pasos).                                               
+      12 +     Tiene que dar el menor autovalor de Q (con n = 3·10⁷ conve
+         +rgió en 50 pasos: el espectro son                              
+      13 +     pocos autovalores aislados más una banda lejana).         
+      14  Como los modos de cluster forman un subespacio invariante (por 
+          1), λ_min(H en 1^⊥) = min(3, 4).
+      15  
+      16  Salida: data/validacion_s7_n<n>.json.
+     ...
+      67      parser.add_argument("--iteraciones", type=int, default=3000
+          0)
+      68      parser.add_argument("--cada", type=int, default=50)
+      69      parser.add_argument("--tolerancia", type=float, default=1e-
+          6, help="residuo relativo para cortar Lanczos")
+      69 -    parser.add_argument("--completo", action="store_true", help
+         -="también Lanczos en 1^⊥ (lento)")                             
+      70 +    parser.add_argument("--completo", action="store_true", help
+         +="también Lanczos en 1^⊥ desde un vector al azar")             
+      71      parser.add_argument("--semilla", type=int, default=0)
+      72      args = parser.parse_args()
+      73  
+  ⎿  … 1 more file changed
+  ⎿  (timeout 10m)
+
+● Now the notes:
+● Bash(.venv/bin/python - <<'EOF'
+      from pathlib import Path…)
+  ⎿  Updated notes/blowup_explicito.md (+9 -3)
+      2  
+      3  **Estado:** Fases 0–3 hechas. Hay un grafo explícito, no pesado 
+         y **certificado por intervalos** con
+      4  n = 30 000 004 y μ = 10327019/15000002 ≈ 0.688468 > 11/16. La va
+         lidación ciega en float64 (Fase 4)
+      5 -coincide; solo falta su Lanczos completo en GPU. Primera versión
+        - del notebook en                                                
+      5 +coincide, incluido el Lanczos ciego en GPU. Primera versión del 
+        +notebook en                                                     
+      6  `notebooks/Grafo_explicito_S7.ipynb`. Con el camino B (sub-pieza
+         s) hay uno certificado con
+      7  **n = 1 500 014** y μ = 1032699/1500014 ≈ 0.688463.
+      8  
+     ...
+      137      ≈ 7.8e6;
+      138    - resto: λ_min = 6.5372e6, contra la cota certificada de Ger
+           shgorin 6.5283e6. La cota es casi justa.
+      139    - Por lo tanto λ_min(H en 1^⊥) = 157.5 > 0.
+      140 -- **Pendiente:** el Lanczos ciego en 1^⊥ (`--completo`) en la 
+          -GPU del server. Tiene que dar 157.5.                          
+      140 +- **GPU** (server, GTX 1080 Ti; 0.73 s por producto H·x, 83 s 
+          +en total, `data/validacion_s7_n30000004.json`):               
+      141 +  - repite los chequeos 1–4;                                  
+      142 +  - el Lanczos ciego en 1^⊥ desde un vector al azar da λ_min =
+          + 157.51123331 (residuo 7.5e-8), que                           
+      143 +    coincide con Q con diferencia relativa 1e-10.             
+      144 +  - Convergió en 50 pasos y no en miles como estimé: el espect
+          +ro son unos pocos autovalores aislados                        
+      145 +    más una banda lejana [6.5e6, 7.95e6].                     
+      146 +  - **Fase 4 completa:** la validación ciega confirma el certi
+          +ficado.                                                       
+      147  
+      148  ## Camino B: sub-piezas de la misma fase (`enteros.subdividir`
+           , `scripts/s7_subpiezas.py`)
+      149  - **Idea.** Partir un cluster en piezas con la misma fase y la
+           s mismas densidades, unidas completas
+     ...
+      175  ## Pendiente
+      176  - **Camino B, siguiente:** por qué el éxito no es monótono en 
+           n (¿radios del reticulado?), particiones
+      177    con más piezas, y h = 0.02 (más μ).
+      172 -- **Notebook:** agregar la Fase 4 completa (GPU) y el camino B
+          -.                                                             
+      178 +- **Notebook:** agregar el camino B (la Fase 4 completa ya est
+          +á).                                                           
+      179  - **Otras mejoras:**
+      180    - optimizar la plantilla pidiendo σ_min ≥ objetivo en lugar 
+           de margen del SDP;
+      181    - mejor Nelder–Mead (la curva es ruidosa: (11, 18) a veces s
+           ale peor que (3, 5)).
+
+● La corrida del server confirma el certificado del grafo de 3·10⁷ nodos: su
+  Hessiano en 1^⊥ es definido positivo con λ_min = 157.5. Con esto la Fase 4
+  queda completa.
+
+  ┌──────────────────┬──────────────────────────────────────────────────────┐
+  │     Chequeo      │                      Resultado                       │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Grados           │ Exactos en los 3·10⁷ vértices                        │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Velocidad        │ max |θ̇| = 1.5·10⁻⁹, error de redondeo para fuerzas   │
+  │                  │ de tamaño ~n                                         │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Modos de cluster │ Coincide con la fórmula (diferencia 5·10⁻⁸); menor   │
+  │  (Q)             │ autovalor no nulo 157.51                             │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Resto de los     │ λ_min = 6.53717·10⁶ ≥ cota certificada 6.52834·10⁶   │
+  │ modos            │                                                      │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Lanczos ciego en │ λ_min = 157.51123331, residuo 7.5·10⁻⁸; difiere de Q │
+  │  1^⊥             │  en 10⁻¹⁰ relativo                                   │
+  └──────────────────┴──────────────────────────────────────────────────────┘
+
+  - Tiempos en la GPU: 0.73 s por producto H·x (contra 4.5 s en CPU) y 83 s en
+    total.
+  - Corrección de mi estimación: el Lanczos ciego convergió en 50 pasos, no en
+    miles. El espectro tiene unos pocos autovalores aislados (157.5, 210.5 y
+    2.25·10⁴) y después una banda lejana entre 6.5·10⁶ y 7.95·10⁶. Lanczos
+    encuentra cada autovalor aislado en pocos pasos. Corregí la estimación en el
+    docstring de scripts/validar_grafo.py.
+
+  Lo que actualicé:
+  - Datos: guardé tu JSON en data/validacion_s7_n30000004.json, en lugar de la
+    corrida local en CPU.
+  - Notebook: lo regeneré y volví a ejecutar. La sección 9 ahora muestra los
+    resultados de la GPU, explica por qué la convergencia es rápida y cierra la
+    Fase 4.
+  - Notas: notes/blowup_explicito.md tiene los mismos resultados.
+
+  Sin commitear:
+  - Cambios en src/blowup.py, src/certificado.py, src/enteros.py,
+    tests/test_enteros.py, scripts/validar_grafo.py y las notas.
+  - Archivos nuevos: scripts/s7_subpiezas.py, data/s7_subpiezas.json,
+    data/validacion_s7_n30000004.json y el notebook.
+
+  Próximo paso: el camino B, con el récord actual de n = 1 500 014. Hay dos
+  opciones para bajar más:
+  - ajustar el reticulado para más dimensiones;
+  - usar una plantilla con más margen.
+
+  Antes de eso propongo correr /compact: la Fase 4 y la primera versión del
+  notebook ya están guardadas, y el estado del camino B está en las notas.
+
+● La corrida del server confirma el certificado del grafo de 3·10⁷ nodos: su
+  Hessiano en 1^⊥ es definido positivo con λ_min = 157.5. Con esto la Fase 4
+  queda completa.
+
+  ┌──────────────────┬──────────────────────────────────────────────────────┐
+  │     Chequeo      │                      Resultado                       │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Grados           │ Exactos en los 3·10⁷ vértices                        │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Velocidad        │ max |θ̇| = 1.5·10⁻⁹, error de redondeo para fuerzas   │
+  │                  │ de tamaño ~n                                         │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Modos de cluster │ Coincide con la fórmula (diferencia 5·10⁻⁸); menor   │
+  │  (Q)             │ autovalor no nulo 157.51                             │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Resto de los     │ λ_min = 6.53717·10⁶ ≥ cota certificada 6.52834·10⁶   │
+  │ modos            │                                                      │
+  ├──────────────────┼──────────────────────────────────────────────────────┤
+  │ Lanczos ciego en │ λ_min = 157.51123331, residuo 7.5·10⁻⁸; difiere de Q │
+  │  1^⊥             │  en 10⁻¹⁰ relativo                                   │
+  └──────────────────┴──────────────────────────────────────────────────────┘
+
+  - Tiempos en la GPU: 0.73 s por producto H·x (contra 4.5 s en CPU) y 83 s en
+    total.
+  - Corrección de mi estimación: el Lanczos ciego convergió en 50 pasos, no en
+    miles. El espectro tiene unos pocos autovalores aislados (157.5, 210.5 y
+    2.25·10⁴) y después una banda lejana entre 6.5·10⁶ y 7.95·10⁶. Lanczos
+    encuentra cada autovalor aislado en pocos pasos. Corregí la estimación en el
+    docstring de scripts/validar_grafo.py.
+
+  Lo que actualicé:
+  - Datos: guardé tu JSON en data/validacion_s7_n30000004.json, en lugar de la
+    corrida local en CPU.
+  - Notebook: lo regeneré y volví a ejecutar. La sección 9 ahora muestra los
+    resultados de la GPU, explica por qué la convergencia es rápida y cierra la
+    Fase 4.
+  - Notas: notes/blowup_explicito.md tiene los mismos resultados.
+
+  Sin commitear:
+  - Cambios en src/blowup.py, src/certificado.py, src/enteros.py,
+    tests/test_enteros.py, scripts/validar_grafo.py y las notas.
+  - Archivos nuevos: scripts/s7_subpiezas.py, data/s7_subpiezas.json,
+    data/validacion_s7_n30000004.json y el notebook.
+
+  Próximo paso: el camino B, con el récord actual de n = 1 500 014. Hay dos
+  opciones para bajar más:
+  - ajustar el reticulado para más dimensiones;
+  - usar una plantilla con más margen.
+
+  Antes de eso propongo correr /compact: la Fase 4 y la primera versión del
+  notebook ya están guardadas, y el estado del camino B está en las notas.
+
+❯ /compact
+  ⎿  Compacted
+  ⎿  Referenced file notes/blowup_explicito.md
+  ⎿  Read scripts/validar_grafo.py (135 lines)
+  ⎿  Read scripts/s7_subpiezas.py (100 lines)
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0d5e1533-6ead-4402-b3c4-f906
+     1fb90e2d/scratchpad/generar_notebook_s7.py
+  ⎿  Read tests/test_validacion.py (95 lines)
+  ⎿  Plan file referenced
+     (~/.claude/plans/primero-lee-la-presentacion-floating-wadler.md)
+  ⎿  Skills restored (dataviz)

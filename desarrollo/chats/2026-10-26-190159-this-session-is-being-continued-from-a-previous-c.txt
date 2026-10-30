@@ -1,0 +1,411 @@
+
+● Yes. Compacting only summarizes the conversation. The background run in
+  notebooks/ keeps going, and the hourly wakeup is already scheduled. When it
+  fires, I read the run log in the scratchpad, completa.log (full path below),
+  and the saved notebook, so I don't depend on what's in context.
+
+  The things a summary could blur, and that I'll need afterwards:
+  - Run log:
+    /tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-investighaton-teo-op
+    timizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75faa877752/scratchpad/completa.log
+  - Generator: the gen/ folder in the same scratchpad (generar.py and the
+    section files). It's the source of the notebook, so any fix gets made there
+    and the notebook is regenerated.
+  - Still pending:
+    - checking the outputs against the reference values;
+    - filling the time table in section 0 with the measured times;
+    - running .venv/bin/python -m pytest tests;
+    - asking you whether notebooks/resultados/ and notebooks/externos/ should go
+      in .gitignore.
+
+    Nothing gets committed unless you ask.
+
+  If the summary somehow drops the pending checks, a one-line reminder like
+  "check the full run" is enough for me to pick it up from those files.
+
+❯ /compact
+  ⎿  Compacted
+  ⎿  Read tests/test_notebook_final_sincronizado.py (81 lines)
+  ⎿  Read ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-investighaton-
+     investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75faa877752/sc
+     ratchpad/gen/s14_final.py (128 lines)
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75f
+     aa877752/scratchpad/gen/s07_fase1.py
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75f
+     aa877752/scratchpad/gen/s08_fase23.py
+  ⎿  Referenced file ../../../../../tmp/claude-1000/-home-imagenes-nicoyanez-inv
+     estighaton-investighaton-teo-optimizacion-2026/0c96ac9c-ecb8-4e2c-8409-f75f
+     aa877752/scratchpad/gen/s12_simetrico.py
+
+● Task "Full run of the notebook in notebooks/ with all heavy flags" still
+  running in background
+  ⎿  Plan file referenced (~/.claude/plans/bien-si-lees-el-playful-dewdrop.md)
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● The full run hasn't hit any errors so far. It has been going for about 51
+  minutes and is now at cell 71 of 193, the μ-vs-ε curve, which I estimated at
+  about 80 minutes.
+
+  - Measured so far: the partition exploration took about 35 minutes and the 0/1
+    case about 15 minutes. Both results are saved in notebooks/resultados/.
+  - Checks so far: the four values checked against the reference all match: q*,
+    w*, μ0 = 0.6929077 and the h = 0.03 template, μ = 0.688469.
+  - Still ahead: the validation and simulations of the n = 3·10⁷ graph, which
+    are the longest part at about 2 hours on CPU.
+
+  I'll check again at 16:49, or sooner if the run finishes first. When it's done
+  I'll check the remaining reference values, fill in the time table with what
+  was measured, and run pytest.
+
+● Background shell command didn't finish before the previous session ended
+
+❯ Se me corto la luz, fijate si es posible correrlo desde donde se quedo, o si
+  podemos dejarlo sin correr la parte de 3*10⁷ para el final
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● The power cut wiped /tmp, losing the runner, log, and notebook generator, but
+  the computed results in notebooks/resultados/ survived, including validation
+  and spectrum data for n = 3·10⁷. I'll now check the flags and simulation
+  section.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● I found the cutoff happened during the n = 3·10⁷ simulation, the last missing
+  step in the general part. I'll first save the existing timing outputs from the
+  notebook before rerunning, since the rerun will overwrite them, then check
+  what cell 146 does when the simulation is absent.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● I've recorded the completed step timings (particiones, caso 0/1, curva,
+  enteros, certificados, validación n=3·10⁷, espectro). Now I'll rewrite the
+  runner to enable every flag except simulaciones_n3e7, injecting it via a
+  hidden kernel line after the configuration cell instead of editing the
+  notebook.
+
+  Read 1 file, ran 3 shell commands (ctrl+o to expand)
+
+● Sí: se puede retomar desde donde se cortó, y ya está corriendo así, con la
+  parte de 3·10⁷ dejada para el final.
+
+  Qué se salvó. Cada paso pesado primero busca su resultado en
+  notebooks/resultados/ y, si ya está, lo carga. Esos resultados sobrevivieron
+  al corte: particiones, caso 0/1, curva, enteros, certificados, y la validación
+  y el espectro de n = 3·10⁷. El corte llegó durante la simulación de n =
+  3·10⁷, que no alcanzó a guardarse.
+
+  Qué se perdió. El reinicio borró /tmp y con él el scratchpad: el runner, el
+  log y el generador del notebook. El runner lo reescribí. Sin el generador, los
+  cambios que falten (por ejemplo la tabla de tiempos de la portada) los hago
+  directo sobre el notebook. Antes de relanzar guardé los tiempos medidos que
+  quedaban en las salidas:
+
+  ┌────────────────────────────┬─────────────────────────┐
+  │            paso            │ tiempo (8 núcleos, CPU) │
+  ├────────────────────────────┼─────────────────────────┤
+  │ particiones                │ 35 min                  │
+  ├────────────────────────────┼─────────────────────────┤
+  │ caso 0/1                   │ 15 min                  │
+  ├────────────────────────────┼─────────────────────────┤
+  │ curva μ vs ε               │ 9.7 min                 │
+  ├────────────────────────────┼─────────────────────────┤
+  │ grilla en n (Fase 1)       │ 40 s                    │
+  ├────────────────────────────┼─────────────────────────┤
+  │ certificados               │ 3 s                     │
+  ├────────────────────────────┼─────────────────────────┤
+  │ validación ciega n = 3·10⁷ │ 15 min                  │
+  ├────────────────────────────┼─────────────────────────┤
+  │ espectro n = 3·10⁷         │ 2 min                   │
+  └────────────────────────────┴─────────────────────────┘
+
+  Lo que corre ahora. El notebook se relanzó con todos los pasos activados salvo
+  simulaciones_n3e7; ese único cambio va en la memoria del kernel, sin tocar el
+  notebook. Los pasos ya calculados se cargan en segundos, y la parte simétrica
+  se calcula completa, incluidas sus simulaciones largas. Calculo entre 30 y 40
+  minutos. La celda de simulación de n = 3·10⁷ va a mostrar por ahora el aviso
+  de que esa simulación no se corrió.
+
+  Después, la de 3·10⁷. Cuando termine reviso errores y valores de referencia.
+  Después lanzo aparte las dos simulaciones de 3·10⁷ con el script
+  externos/simular.py, unas 2 h en CPU. Al terminar vuelvo a correr el notebook,
+  que carga todo de resultados/ en pocos minutos y muestra esas simulaciones.
+
+❯ Por donde anda ahora?
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Va por la celda 187 de 193, la última sección pesada: las simulaciones del
+  grafo simétrico. Las dos cortas, hasta t = 60, ya terminaron. Ahora corren las
+  dos largas, hasta t = 4000, que según la estimación tardan unos 15 minutos
+  cada una. Las celdas que quedan después son la comparación final y el
+  apéndice, que tardan segundos. Calculo que termina en unos 30 minutos.
+
+  Hasta ahora no hay ningún error, y todos los valores revisados coinciden con
+  la referencia:
+
+  - Esquina de S7: q*, w* y μ0 = 0.6929077.
+  - Plantilla h = 0.03: μ = 0.688469.
+  - Grafo general:
+    - n = 30 000 004
+    - μ = 10327019/15000002
+    - λ_min = 157.5112333
+  - Grafo simétrico:
+    - n = 299 989
+    - μ = 206565/299989
+    - λ_min = 1.2506252672
+
+  El grafo simétrico que se certificó es el de los desplazamientos de
+  referencia: la sección 13.6 eligió el más chico. Su validación ciega tardó 6 s
+  y su espectro 3 s.
+
+  Las simulaciones de n = 3·10⁷ siguen apagadas, como quedamos. Cuando termine
+  esta corrida las lanzo aparte.
+
+● Background command "Resume the notebook run, skipping the n=3e7 simulations"
+completed (exit code 0)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● La corrida terminó sin errores en 38 minutos. Ahora lanzo aparte las dos
+  simulaciones de n = 3·10⁷, con los mismos comandos que usa la celda 146.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Mientras tanto corro los tests.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Los tests pasan: 47 de 47. Ahora busco la tabla de tiempos de la portada para
+  completarla con lo medido.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● La tabla de portada todavía tiene tiempos estimados; la actualizaré con los
+  medidos cuando terminen las simulaciones de 3·10⁷. Ahora reviso cuánto lleva
+  avanzando la primera simulación.
+
+  Ran 1 shell command (ctrl+o to expand)
+● La corrida reanudada del notebook ya terminó, sin errores. Tardó 38 minutos y
+  todos los valores coinciden con la referencia. Los tests pasan (47 de 47).
+
+  Ahora corren las simulaciones de n = 3·10⁷, por fuera del notebook. Son dos
+  procesos seguidos: primero ruido 0.05 junto con fases al azar, y después ruido
+  0.5. Calculo unas 2 h en total. La primera recién empieza y la memoria está
+  bien: quedan 8 GB libres.
+
+  Simulaciones del grafo simétrico, cada una de unos 17 minutos hasta t = 4000:
+  - Con ruido 0.05: el sistema se queda en el estado certificado. La distancia
+    es de 10⁻⁴ en t = 4000 y la dinámica por clusters la lleva a 10⁻¹² en t =
+    10⁷.
+  - Con ruido 0.5: el sistema escapa cerca de t ≈ 800 y sincroniza (r = 1).
+    Coincide con lo que dice el texto: la cuenca es muy angosta en las
+    direcciones lentas.
+
+  Cuando terminen las simulaciones de 3·10⁷:
+  1. Actualizo la tabla de tiempos de la sección 0 con lo medido. La de hoy es
+     una estimación y en algunos pasos se quedó corta: el caso 0/1 tardó 15 min
+     en lugar de 5, y la validación 15 en lugar de 10.
+  2. Vuelvo a correr el notebook entero. Como todo se carga de resultados/,
+     tarda pocos minutos y deja las salidas completas, con las simulaciones de
+     3·10⁷ incluidas.
+
+  Para decidir vos: ¿agrego notebooks/resultados/ y notebooks/externos/ al
+  .gitignore, o preferís versionarlos? No hice ningún commit.
+
+❯ Por donde va?
+
+  Searched for 1 pattern, ran 1 shell command (ctrl+o to expand)
+
+● Va por la mitad de la segunda de las tres simulaciones de n = 3·10⁷. Cada una
+  tarda unos 42 minutos: unos 42 s de reloj por unidad de tiempo simulado, hasta
+  t = 60.
+
+  1. Ruido 0.05: terminó. Se queda en el estado certificado. La distancia es
+     1.0·10⁻⁴ en t = 60 y la dinámica por clusters la lleva a 1.6·10⁻¹² en t =
+     10⁷. Es lo mismo que en el grafo simétrico.
+  2. Fases al azar: en curso, en t = 30 de 60. Va sincronizando, como se
+     esperaba: r ya subió de 0 a 0.03. Le faltan unos 20 minutos.
+  3. Ruido 0.5: falta. Arranca cuando termine la anterior y le calculo unos 42
+     minutos.
+
+  Calculo que las simulaciones terminan cerca de las 19:05. Después actualizo la
+  tabla de tiempos de la portada y vuelvo a correr el notebook, que carga todo
+  de resultados/ y tarda unos minutos.
+
+  Sigue pendiente lo del .gitignore para notebooks/resultados/ y
+  notebooks/externos/.
+
+❯ Cuando te referis versionarlos que seria?
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● "Versionarlos" quiere decir guardarlos en git: incluirlos en los commits para
+  que queden en el historial del repo y en GitHub, como pasa con src/ o data/.
+  Ponerlos en .gitignore es lo contrario: git los deja de lado, existen solo en
+  tu máquina y git status deja de mostrarlos como archivos nuevos.
+
+  Las dos carpetas las genera el notebook:
+
+  - notebooks/resultados/ (2.8 MB, 13 archivos): los JSON de cada paso pesado y
+    las figuras.
+    - Si se versionan: quien clone el repo y abra el notebook lo ve completo en
+      minutos, porque cada paso encuentra su resultado y lo carga en vez de
+      recalcular. Se ahorra unas 3 h de particiones, caso 0/1, simulaciones,
+      etc.
+    - Si se ignoran: el notebook sigue siendo autocontenido, pero quien lo corra
+      desde cero tiene que recalcular todo, o correr la versión reducida con
+      las banderas apagadas.
+  - notebooks/externos/ (372 KB): los scripts que el notebook escribe y la
+    biblioteca que arma juntando sus celdas. Es una copia del código del
+    notebook y se regenera cada vez que se corre. Versionarlo duplica código, y
+    en cada corrida aparecerían cambios en git aunque no hayas tocado nada.
+
+  Mi recomendación:
+  - externos/: ignorarla, porque se regenera sola.
+  - resultados/: es decisión tuya. Versionarla tiene sentido si querés que otros
+    vean el notebook con todos los resultados sin esperar horas. Pesa poco,
+    menos que el .ipynb con sus salidas (4.5 MB). Igual, el notebook ya guarda
+    todas las salidas, así que verlo en GitHub o en el editor no necesita esa
+    carpeta.
+
+  Hoy el .gitignore no menciona ninguna de las dos. No toco nada hasta que me
+  digas.
+
+❯ Si ignoro externos, los que ya estan subidos, desaparecen?
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● No, no desaparecen. El .gitignore solo afecta a los archivos que git todavía
+  no sigue. Los que ya están en un commit los sigue rastreando igual.
+
+  Es tu caso: subiste externos/ en la rama in_progress (commits 433102a, 03bcf3a
+  y 87a41fb, ya en origin), y ya agregaste externos/ al .gitignore sin
+  commitear. Con eso solo:
+
+  - En GitHub: los 9 archivos de notebooks/externos/ siguen en el repo.
+  - En git localmente: los siguen rastreando. Cada vez que el notebook los
+    regenere, git status los va a mostrar modificados, aunque estén en el
+    .gitignore.
+
+  Para que el ignore haga efecto hay que sacarlos del índice sin borrarlos del
+  disco:
+
+  git rm -r --cached notebooks/externos
+  git commit -m "Dejar de versionar notebooks/externos"
+  git push
+
+  Con --cached los archivos se quedan en tu máquina y el notebook los sigue
+  usando; solo dejan de estar en el repo desde ese commit. En los commits
+  anteriores siguen existiendo, en el historial.
+
+  Un detalle de tu .gitignore: externos/ sin barra adelante ignora cualquier
+  carpeta que se llame así en todo el repo. Si querés que valga solo para esta,
+  poné notebooks/externos/. En la práctica da lo mismo, porque no hay otra con
+  ese nombre.
+
+  No toqué nada. Si querés, corro esos comandos, aunque el push lo hacés vos o
+  me lo pedís explícitamente.
+
+  Las simulaciones de n = 3·10⁷ siguen corriendo.
+
+❯ cuanto le falta?
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Le faltan unos 17 minutos, así que debería terminar cerca de las 18:58.
+
+  Va en la tercera y última simulación de n = 3·10⁷, la de ruido 0.5, por t = 36
+  de 60. Avanza a unos 38 s por unidad de tiempo, así que le quedan unos 15
+  minutos de simulación. Después hace la continuación por clusters y la figura,
+  que tardan alrededor de un minuto.
+
+  La de fases al azar ya terminó.
+
+  Cuando termine actualizo la tabla de tiempos y vuelvo a correr el notebook,
+  que carga todo de resultados/ y tarda unos minutos.
+
+● Background command "Run the two n=3e7 simulations outside the notebook"
+completed (exit code 0)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Las tres simulaciones de n = 3·10⁷ terminaron en 1 h 56 min en total. Ahora
+  actualizo la tabla de tiempos de la sección 0 con lo medido y vuelvo a correr
+  el notebook.
+
+● Bash(cd /home/imagenes/nicoyanez/investighaton/investighaton-teo-optimizacion-
+      2026; .venv/bin/python - <<'EOF'
+      import json…)
+  ⎿  (file diff unavailable for this command; 1 file changed)
+
+● Solo cambiaron las 9 líneas de la tabla. Ahora vuelvo a correr el notebook
+  completo: todo debería cargarse de resultados/.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Las simulaciones de n = 3·10⁷ terminaron en 1 h 56 min y dan lo mismo que el
+  grafo simétrico:
+
+  ┌────────────────┬───────────────────────┬────────────────────────────────┐
+  │   condición    │    t = 60, grafo      │ t = 10⁷, dinámica por clusters │
+  │    inicial     │       completo        │                                │
+  ├────────────────┼───────────────────────┼────────────────────────────────┤
+  │ ruido 0.05 rad │ distancia al estado   │ distancia 1.6·10⁻¹²: se queda  │
+  │                │ 1.0·10⁻⁴              │ en la trampa                   │
+  ├────────────────┼───────────────────────┼────────────────────────────────┤
+  │ ruido 0.5 rad  │ distancia 1.2·10⁻²    │ r = 1: escapa y sincroniza     │
+  ├────────────────┼───────────────────────┼────────────────────────────────┤
+  │ fases al azar  │ r = 1: sincroniza     │ r = 1                          │
+  └────────────────┴───────────────────────┴────────────────────────────────┘
+
+  Actualicé la tabla de tiempos de la sección 0. La columna de 8 núcleos ahora
+  tiene los tiempos medidos; la de Colab sigue estimada, porque no corrí nada en
+  Colab. De paso ajusté algunas estimaciones de Colab con lo medido (caso 0/1,
+  validación, simulaciones).
+
+  La última corrida del notebook quedó en segundo plano. Carga todo de
+  resultados/ y debería tardar unos minutos. Cuando termine reviso que no haya
+  errores y que aparezcan las tablas y figuras de la sección 11.2.
+
+● Background command "Rerun the whole notebook loading cached results" completed
+(exit code 0)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Terminé: notebooks/exploracion_s7_final.ipynb corrió de punta a punta y quedó
+  con todas las salidas, incluidas las simulaciones de n = 3·10⁷ en la sección
+  11.2. La última pasada tardó 2.5 minutos, sin errores, porque cargó todo de
+  resultados/. Todos los valores que se comparan con la referencia coinciden, y
+  los 47 tests pasan.
+
+  - Apéndice de tiempos: como en la última pasada no se calculó nada, el
+    apéndice del final quedó sin tabla. Los tiempos medidos (8 núcleos, sin GPU)
+    están en la tabla de la sección 0:
+
+  | paso                              | tiempo     |
+  |-----------------------------------|------------|
+  | particiones                       | 35 min     |
+  | caso 0/1                          | 15 min     |
+  | curva                             | 10 min     |
+  | validación n = 3·10⁷              | 15 min     |
+  | espectro n = 3·10⁷                | 2 min      |
+  | simulaciones n = 3·10⁷            | 1 h 56 min |
+  | simulaciones largas del simétrico | 35 min     |
+
+  - Cambios sin commitear:
+    - el notebook;
+    - notebooks/resultados/simulacion_n30000004.json, ahora con las tres
+      corridas;
+    - dos figuras nuevas en notebooks/resultados/figuras/;
+    - tu cambio en .gitignore.
+
+    No hice ningún commit.
+  - externos/ sigue en el repo: para que deje de estarlo falta el git rm -r
+    --cached notebooks/externos que te comenté. Si querés lo corro yo; el commit
+    y el push, solo si me los pedís.
+  - El generador ya no existe: se perdió con el corte de luz, así que desde
+    ahora los cambios al notebook se hacen sobre el notebook mismo.
