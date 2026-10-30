@@ -56,7 +56,7 @@ Ambos grafos han sido validados además sobre el grafo explícito completo media
 
 ---
 
-## ⚙️ Metodología en Fases
+## ⚙️ Metodología en Cuatro Fases
 
 ```mermaid
 flowchart LR
